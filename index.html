@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demande de devis — RECORD</title>
+<script>
+  window.addEventListener('error', function(e){
+    var b = document.createElement('div');
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#B8443B;color:#fff;padding:10px 14px;font-size:13px;z-index:99999;font-family:sans-serif;line-height:1.4;';
+    b.textContent = 'Erreur technique : ' + e.message + ' (ligne ' + e.lineno + ')';
+    document.body.appendChild(b);
+  });
+</script>
+<style>
+  :root{
+    --paper:#FAF8F3;
+    --paper-dim:#F0ECE2;
+    --ink:#1C2024;
+    --ink-soft:#5B6570;
+    --steel:#33495C;
+    --line:#C9CFC0;
+    --amber:#D98E1E;
+    --amber-dark:#A66A12;
+    --red:#B8443B;
+    --red-bg:#F6E4E1;
+    --green:#4C7A47;
+    --green-bg:#E7EFE1;
+    --mono:ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;
+    --sans:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --disp:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--paper-dim);}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    padding:20px 16px calc(90px + env(safe-area-inset-bottom));
+    min-height:100vh;
+  }
+  .fd-wrap{max-width:760px;margin:0 auto;}
+
+  .fd-ticket{
+    background:var(--steel);
+    color:var(--paper);
+    padding:22px 26px 26px;
+    position:relative;
+    border-radius:6px 6px 0 0;
+  }
+  .fd-ticket::after{
+    content:"";
+    position:absolute;left:0;right:0;bottom:-9px;height:18px;
+    background:radial-gradient(circle at 10px 0, transparent 9px, var(--steel) 9.5px) top left/20px 18px repeat-x;
+  }
+  .fd-eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:#C7D3DA;
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:8px;
+  }
+  .fd-title{
+    font-family:var(--disp);
+    font-weight:700;
+    font-size:30px;
+    letter-spacing:.01em;
+    text-transform:uppercase;
+    margin:0;
+  }
+  .fd-sub{font-size:14px;color:#B9C6CD;margin-top:4px;}
+
+  .fd-body{
+    background:var(--paper);
+    padding:32px 26px 26px;
+    border:1px solid var(--line);
+    border-top:none;
+    border-radius:0 0 6px 6px;
+  }
+
+  .fd-section{margin-bottom:28px;}
+  .fd-section-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .fd-num{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--paper);
+    background:var(--steel);
+    width:24px;height:24px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:4px;
+    flex-shrink:0;
+  }
+  .fd-section-title{
+    font-family:var(--disp);
+    font-weight:600;
+    font-size:15px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--steel);
+  }
+
+  .fd-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .fd-field{margin-bottom:0;}
+  .fd-field.full{grid-column:1/-1;}
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:7px;
+  }
+  label .req{color:var(--red);}
+
+  input[type=text],input[type=email],input[type=date],input[type=number],textarea,select{
+    width:100%;
+    font-family:var(--sans);
+    font-size:16px;
+    color:var(--ink);
+    background:#fff;
+    border:1.5px solid var(--line);
+    border-radius:6px;
+    padding:13px 14px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--steel);}
+  input.fd-mono{font-family:var(--mono);}
+  textarea{resize:vertical;min-height:90px;line-height:1.45;}
+
+  select{
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%235B6570" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>');
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    background-size:16px;
+    padding-right:38px;
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  .fd-add-row{display:flex;gap:8px;margin-top:8px;}
+  .fd-add-row input{flex:1;}
+  .fd-add-row.hidden{display:none;}
+  .fd-add-btn{
+    font-family:var(--sans);
+    font-weight:600;
+    font-size:14.5px;
+    padding:0 16px;
+    border-radius:6px;
+    border:1.5px solid var(--steel);
+    background:var(--steel);
+    color:#fff;
+    cursor:pointer;
+    white-space:nowrap;
+    min-height:44px;
+  }
+
+  .fd-toggle-row{display:flex;gap:10px;}
+  .fd-toggle{
+    flex:1;
+    text-align:center;
+    padding:12px 8px;
+    min-height:44px;
+    display:flex;align-items:center;justify-content:center;
+    border:1.5px solid var(--line);
+    border-radius:6px;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+    background:#fff;
+    color:var(--ink-soft);
+    user-select:none;
+  }
+  .fd-toggle.on{background:var(--steel);border-color:var(--steel);color:#fff;}
+
+  .fd-chip-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .fd-chip{
+    padding:12px 18px;
+    min-height:44px;
+    display:flex;align-items:center;
+    border-radius:22px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+    color:var(--ink-soft);
+    user-select:none;
+  }
+  .fd-chip[data-type="arret"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-chip[data-type="urgent"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-chip[data-type="preventif"].on{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+
+  .fd-photo-actions{display:flex;gap:10px;margin-top:4px;}
+  .fd-photo-btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:var(--sans);
+    font-weight:700;
+    font-size:14.5px;
+    padding:13px 16px;
+    min-height:48px;
+    border-radius:6px;
+    border:1.5px solid var(--steel);
+    background:#fff;
+    color:var(--steel);
+    cursor:pointer;
+    text-align:center;
+  }
+  .fd-photo-hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+  .fd-photo-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(84px,1fr));
+    gap:10px;
+    margin-top:12px;
+  }
+  .fd-photo-thumb{
+    position:relative;
+    border-radius:6px;
+    overflow:hidden;
+    border:1.5px solid var(--line);
+    aspect-ratio:1/1;
+    background:#eee;
+  }
+  .fd-photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .fd-photo-del{
+    position:absolute;top:3px;right:3px;
+    width:26px;height:26px;
+    border-radius:50%;
+    background:rgba(0,0,0,.6);
+    color:#fff;
+    border:none;
+    font-size:15px;
+    line-height:1;
+    cursor:pointer;
+  }
+
+  .fd-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:28px;
+    padding-top:22px;
+    border-top:1px dashed var(--line);
+  }
+  .fd-btn{
+    font-family:var(--sans);
+    font-weight:700;
+    font-size:15px;
+    padding:15px 16px;
+    min-height:50px;
+    border-radius:6px;
+    border:1.5px solid var(--steel);
+    background:var(--steel);
+    color:#fff;
+    cursor:pointer;
+  }
+  .fd-btn.secondary{background:#fff;color:var(--steel);}
+  .fd-btn.ghost{background:transparent;color:var(--ink-soft);border-color:var(--line);}
+  .fd-btn.wide{grid-column:1/-1;}
+  .fd-btn:active{opacity:.85;}
+  .fd-msg{
+    font-family:var(--sans);
+    font-size:15px;
+    font-weight:700;
+    text-align:center;
+    line-height:1.4;
+    margin-top:14px;
+    padding:0;
+    border-radius:8px;
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition:all .2s ease;
+  }
+  .fd-msg.show{
+    padding:14px 16px;
+    max-height:200px;
+    opacity:1;
+    border:2px solid;
+  }
+  .fd-msg.error{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .fd-msg.success{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+
+  .fd-list-wrap{max-width:760px;margin:30px auto 0;}
+  .fd-list-title{
+    font-family:var(--disp);
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:12px;
+    padding-left:2px;
+  }
+  .fd-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-left:5px solid var(--steel);
+    border-radius:6px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+  .fd-card.arret{border-left-color:var(--red);}
+  .fd-card-main{cursor:pointer;flex:1;min-width:0;padding:4px 0;}
+  .fd-card-site{font-weight:700;font-size:15.5px;}
+  .fd-card-meta{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:3px;
+    display:flex;gap:10px;flex-wrap:wrap;
+  }
+  .fd-card-badges{display:flex;gap:6px;margin-top:6px;}
+  .fd-badge{
+    font-size:11px;font-weight:700;
+    padding:3px 9px;border-radius:12px;
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .fd-badge.arret{background:var(--red-bg);color:var(--red);}
+  .fd-badge.urgent{background:var(--red-bg);color:var(--red);}
+  .fd-badge.preventif{background:var(--green-bg);color:var(--green);}
+  .fd-del{
+    background:none;border:none;color:var(--ink-soft);
+    font-size:22px;cursor:pointer;padding:8px;line-height:1;min-width:44px;min-height:44px;
+  }
+  .fd-empty{text-align:center;color:var(--ink-soft);font-size:14px;padding:22px 0;font-style:italic;}
+
+  .fd-footer-credit{
+    text-align:center;
+    max-width:760px;
+    margin:30px auto 8px;
+    padding:14px 0 0;
+    border-top:1px solid var(--line);
+  }
+  .fd-footer-credit .fd-credit-label{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .fd-footer-credit .fd-credit-name{
+    font-family:var(--disp);
+    font-weight:600;
+    font-size:13.5px;
+    letter-spacing:.03em;
+    color:var(--steel);
+  }
+
+  /* En dessous de ~640px (tablette en portrait / mode split), une seule colonne */
+  @media (max-width:640px){
+    .fd-grid{grid-template-columns:1fr;}
+    .fd-actions{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:420px){
+    .fd-actions{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="fd-wrap">
+  <div class="fd-ticket">
+    <div class="fd-eyebrow"><span>RECORD · MAINTENANCE TRAVAUX</span><span id="fd-ticket-no">FQ —</span></div>
+    <div class="fd-title">Demande de devis</div>
+    <div class="fd-sub">Relevé technicien à compléter sur site</div>
+  </div>
+
+  <div class="fd-body">
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Intervention</span></div>
+      <div class="fd-grid">
+        <div class="fd-field">
+          <label>Technicien <span class="req">*</span></label>
+          <input type="text" id="f-tech" placeholder="Nom du technicien">
+        </div>
+        <div class="fd-field"><label>Date</label><input type="date" id="f-date"></div>
+        <div class="fd-field full"><label>Nom du site / Ville <span class="req">*</span></label><input type="text" id="f-site" placeholder="Ex. Entrepôt Logidis, Aubagne"></div>
+        <div class="fd-field full">
+          <label>Mail client <span class="req">*</span></label>
+          <input type="email" id="f-mail" placeholder="contact@client.fr">
+          <div class="fd-photo-hint">Info à titre indicatif, reprise dans le texte — ce n'est pas l'adresse de destination de l'envoi.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Équipement</span></div>
+      <div class="fd-grid">
+        <div class="fd-field"><label>N° équipement <span class="req">*</span></label><input type="text" class="fd-mono" id="f-equip" placeholder="EQ-000000"></div>
+        <div class="fd-field"><label>N° FQ</label><input type="text" class="fd-mono" id="f-fq" placeholder="FQ-000000"></div>
+        <div class="fd-field full"><label>Localisation</label><input type="text" id="f-loc" placeholder="Bâtiment / quai / porte n°"></div>
+        <div class="fd-field"><label>Marque</label><input type="text" id="f-marque" placeholder="Ex. Record"></div>
+        <div class="fd-field"><label>Modèle</label><input type="text" id="f-modele" placeholder="Ex. Speedor 2"></div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Moyens & statut</span></div>
+      <div class="fd-grid">
+        <div class="fd-field"><label>Temps par technicien (heures) <span class="req">*</span></label><input type="number" step="0.5" min="0" id="f-temps" placeholder="0"></div>
+        <div class="fd-field"><label>Nombre de techniciens <span class="req">*</span></label><input type="number" step="1" min="1" id="f-nbtech" placeholder="1"></div>
+        <div class="fd-field"><label>Nacelle nécessaire <span class="req">*</span></label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="nacelle" data-val="oui">Oui</div>
+            <div class="fd-toggle" data-field="nacelle" data-val="non">Non</div>
+          </div>
+        </div>
+        <div class="fd-field"><label>PIRL nécessaire <span class="req">*</span></label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="pirl" data-val="oui">Oui</div>
+            <div class="fd-toggle" data-field="pirl" data-val="non">Non</div>
+          </div>
+        </div>
+        <div class="fd-field full"><label>Statut de l'intervention <span class="req">*</span></label>
+          <div class="fd-chip-row">
+            <div class="fd-chip" data-type="arret">Porte à l'arrêt</div>
+            <div class="fd-chip" data-type="urgent">Urgent</div>
+            <div class="fd-chip" data-type="preventif">Préventif</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Pièces & photos</span></div>
+      <div class="fd-field full">
+        <label>Descriptif des pièces (référence si possible) <span class="req">*</span></label>
+        <textarea id="f-pieces" placeholder="Ex. Moteur tri 0.75kW réf. XXXX, courroie crantée réf. XXXX..."></textarea>
+      </div>
+      <div class="fd-field full">
+        <label>Photos <span class="req">*</span> (au moins 1 obligatoire)</label>
+        <div class="fd-photo-actions">
+          <label class="fd-photo-btn" for="f-photo-input">📷 Prendre / ajouter une photo</label>
+          <input type="file" id="f-photo-input" accept="image/*" multiple style="display:none;">
+        </div>
+        <div class="fd-photo-hint">Les photos seront jointes directement au partage (mail, WhatsApp...).</div>
+        <div class="fd-photo-grid" id="fd-photo-grid"></div>
+      </div>
+    </div>
+
+    <div class="fd-actions">
+      <button class="fd-btn wide" id="btn-mail">Partager (mail / photos)</button>
+      <button class="fd-btn secondary" id="btn-save">Enregistrer la fiche</button>
+      <button class="fd-btn secondary" id="btn-copy">Copier le texte</button>
+      <button class="fd-btn ghost wide" id="btn-new">Nouvelle fiche</button>
+    </div>
+    <div class="fd-msg" id="fd-msg"></div>
+  </div>
+</div>
+
+<div class="fd-list-wrap">
+  <div class="fd-list-title">Fiches enregistrées sur cette tablette</div>
+  <div id="fd-list"></div>
+</div>
+
+<div class="fd-footer-credit">
+  <div class="fd-credit-label">Réalisation</div>
+  <div class="fd-credit-name">Christophe BATAILLE</div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fields = ['tech','date','site','mail','equip','fq','loc','marque','modele','temps','nbtech','pieces'];
+  let toggles = { nacelle:null, pirl:null };
+  let chips = { arret:false, urgent:false, preventif:false };
+  let currentId = null;
+  let photos = []; // dataURLs (jpeg compressés)
+
+  function resizeImage(file){
+    return new Promise((resolve)=>{
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const img = new Image();
+        img.onload = function(){
+          const maxDim = 1280;
+          let w = img.width, h = img.height;
+          if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.65));
+        };
+        img.onerror = function(){ resolve(null); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function(){ resolve(null); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderPhotoGrid(){
+    const grid = $('fd-photo-grid');
+    grid.innerHTML = '';
+    photos.forEach((src, i)=>{
+      const div = document.createElement('div');
+      div.className = 'fd-photo-thumb';
+      div.innerHTML = '<img src="'+src+'" alt="photo"><button type="button" class="fd-photo-del" data-i="'+i+'">✕</button>';
+      grid.appendChild(div);
+    });
+    grid.querySelectorAll('.fd-photo-del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        photos.splice(parseInt(btn.dataset.i,10), 1);
+        renderPhotoGrid();
+      });
+    });
+  }
+
+  $('f-photo-input').addEventListener('change', async (e)=>{
+    const files = Array.from(e.target.files || []);
+    for(const file of files){
+      const dataUrl = await resizeImage(file);
+      if(dataUrl) photos.push(dataUrl);
+    }
+    renderPhotoGrid();
+    e.target.value = '';
+  });
+
+  async function dataUrlToFile(dataUrl, name){
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], name, { type: 'image/jpeg' });
+  }
+
+  // --- Stockage local (fonctionne hors-ligne, propre à cette tablette/navigateur) ---
+  function lsGet(key){
+    try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; }
+  }
+  function lsSet(key, val){
+    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+  }
+
+  $('f-date').value = new Date().toISOString().slice(0,10);
+
+  document.querySelectorAll('.fd-toggle').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      const field = t.dataset.field;
+      document.querySelectorAll('.fd-toggle[data-field="'+field+'"]').forEach(x=>x.classList.remove('on'));
+      t.classList.add('on');
+      toggles[field] = t.dataset.val;
+    });
+  });
+
+  document.querySelectorAll('.fd-chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const type = c.dataset.type;
+      chips[type] = !chips[type];
+      c.classList.toggle('on', chips[type]);
+    });
+  });
+
+  function readForm(){
+    const data = { toggles: {...toggles}, chips: {...chips}, photos: [...photos] };
+    fields.forEach(f => data[f] = $('f-'+f).value.trim());
+    return data;
+  }
+
+  function fillForm(data){
+    fields.forEach(f => { if(f in data) $('f-'+f).value = data[f]; });
+    photos = Array.isArray(data.photos) ? [...data.photos] : [];
+    renderPhotoGrid();
+    toggles = {...data.toggles};
+    chips = {...data.chips};
+    document.querySelectorAll('.fd-toggle').forEach(t=>{
+      t.classList.toggle('on', toggles[t.dataset.field] === t.dataset.val);
+    });
+    document.querySelectorAll('.fd-chip').forEach(c=>{
+      c.classList.toggle('on', !!chips[c.dataset.type]);
+    });
+  }
+
+  function resetForm(){
+    fields.forEach(f => $('f-'+f).value = '');
+    $('f-date').value = new Date().toISOString().slice(0,10);
+    photos = [];
+    renderPhotoGrid();
+    toggles = { nacelle:null, pirl:null };
+    chips = { arret:false, urgent:false, preventif:false };
+    document.querySelectorAll('.fd-toggle').forEach(t=>t.classList.remove('on'));
+    document.querySelectorAll('.fd-chip').forEach(c=>c.classList.remove('on'));
+    currentId = null;
+    $('fd-ticket-no').textContent = 'FQ —';
+  }
+
+  function statusLabel(data){
+    const l = [];
+    if(data.chips.arret) l.push("Porte à l'arrêt");
+    if(data.chips.urgent) l.push('Urgent');
+    if(data.chips.preventif) l.push('Préventif');
+    return l;
+  }
+
+  function formatText(data){
+    const statuts = statusLabel(data).join(', ') || '—';
+    return [
+      'DEMANDE DE DEVIS',
+      '',
+      'Technicien : ' + (data.tech||'—'),
+      'Date : ' + (data.date||'—'),
+      'Site / Ville : ' + (data.site||'—'),
+      'Mail client : ' + (data.mail||'—'),
+      '',
+      'N° équipement : ' + (data.equip||'—'),
+      'N° FQ : ' + (data.fq||'—'),
+      'Localisation : ' + (data.loc||'—'),
+      'Marque : ' + (data.marque||'—'),
+      'Modèle : ' + (data.modele||'—'),
+      '',
+      'Temps par technicien (h) : ' + (data.temps||'—'),
+      'Nombre de techniciens : ' + (data.nbtech||'—'),
+      'Nacelle : ' + (data.toggles.nacelle || '—'),
+      'PIRL : ' + (data.toggles.pirl || '—'),
+      'Statut : ' + statuts,
+      '',
+      'Descriptif pièces :',
+      (data.pieces||'—'),
+      '',
+      'Photos jointes : ' + (data.photos && data.photos.length ? data.photos.length + ' photo(s) en pièce jointe' : 'aucune'),
+    ].join('\n');
+  }
+
+  let msgTimeout = null;
+  function showMsg(text, ok){
+    const el = $('fd-msg');
+    el.textContent = (ok===false ? '⚠️ ' : '✓ ') + text;
+    el.className = 'fd-msg show ' + (ok===false ? 'error' : 'success');
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    clearTimeout(msgTimeout);
+    msgTimeout = setTimeout(()=>{ el.classList.remove('show'); }, ok===false ? 7000 : 3500);
+  }
+
+  function validate(data){
+    if(!data.tech) return 'Le technicien est obligatoire.';
+    if(!data.site) return 'Le nom du site est obligatoire.';
+    if(!data.equip) return "Le n° d'équipement est obligatoire.";
+    if(!data.mail) return 'Le mail client est obligatoire.';
+    if(!data.temps) return 'Le temps par technicien est obligatoire.';
+    if(!data.nbtech) return 'Le nombre de techniciens est obligatoire.';
+    if(!toggles.nacelle) return 'Merci de préciser si une nacelle est nécessaire.';
+    if(!toggles.pirl) return 'Merci de préciser si un PIRL est nécessaire.';
+    if(!data.chips.arret && !data.chips.urgent && !data.chips.preventif) return "Le statut de l'intervention est obligatoire.";
+    if(!data.pieces) return 'Le descriptif des pièces est obligatoire.';
+    if(!data.photos || !data.photos.length) return 'Au moins une photo est obligatoire.';
+    return null;
+  }
+
+  function loadList(){ return lsGet('fiches-index') || []; }
+  function saveList(list){ lsSet('fiches-index', list); }
+
+  function renderList(){
+    const list = loadList();
+    const wrap = $('fd-list');
+    wrap.innerHTML = '';
+    if(!list.length){
+      wrap.innerHTML = '<div class="fd-empty">Aucune fiche enregistrée pour le moment.</div>';
+      return;
+    }
+    list.sort((a,b)=> (b.savedAt||0) - (a.savedAt||0));
+    list.forEach(item=>{
+      const d = item.data;
+      const card = document.createElement('div');
+      card.className = 'fd-card' + (d.chips.arret ? ' arret' : '');
+      const badges = statusLabel(d).map(s=>{
+        const cls = s==="Urgent" ? 'urgent' : (s==="Préventif" ? 'preventif' : 'arret');
+        return '<span class="fd-badge '+cls+'">'+s+'</span>';
+      }).join('');
+      card.innerHTML =
+        '<div class="fd-card-main">' +
+          '<div class="fd-card-site">' + (d.site || 'Site non renseigné') + '</div>' +
+          '<div class="fd-card-meta"><span>' + (d.date||'') + '</span><span>' + (d.fq ? 'FQ '+d.fq : '') + '</span></div>' +
+          (badges ? '<div class="fd-card-badges">'+badges+'</div>' : '') +
+        '</div>' +
+        '<button class="fd-del" title="Supprimer">✕</button>';
+      card.querySelector('.fd-card-main').addEventListener('click', ()=>{
+        fillForm(d);
+        currentId = item.id;
+        $('fd-ticket-no').textContent = d.fq ? ('FQ '+d.fq) : 'FQ —';
+        window.scrollTo({top:0, behavior:'smooth'});
+        showMsg('Fiche chargée.');
+      });
+      card.querySelector('.fd-del').addEventListener('click', (e)=>{
+        e.stopPropagation();
+        saveList(loadList().filter(x=>x.id!==item.id));
+        renderList();
+      });
+      wrap.appendChild(card);
+    });
+  }
+
+  $('btn-save').addEventListener('click', ()=>{
+    const data = readForm();
+    const err = validate(data);
+    if(err){ showMsg(err, false); return; }
+    const list = loadList();
+    const id = currentId || (Date.now()+''+Math.floor(Math.random()*1000));
+    const entry = { id, savedAt: Date.now(), data };
+    const idx = list.findIndex(x=>x.id===id);
+    if(idx>=0) list[idx] = entry; else list.push(entry);
+    saveList(list);
+    currentId = id;
+    $('fd-ticket-no').textContent = data.fq ? ('FQ '+data.fq) : 'FQ —';
+    showMsg('Fiche enregistrée.');
+    renderList();
+  });
+
+  $('btn-new').addEventListener('click', ()=>{
+    resetForm();
+    showMsg('Nouvelle fiche prête.');
+  });
+
+  $('btn-copy').addEventListener('click', async ()=>{
+    const text = formatText(readForm());
+    try{
+      await navigator.clipboard.writeText(text);
+      showMsg('Texte copié dans le presse-papiers.');
+    }catch(e){
+      showMsg("Copie impossible sur cet appareil.", false);
+    }
+  });
+
+  $('btn-mail').addEventListener('click', async ()=>{
+    const data = readForm();
+    const err = validate(data);
+    if(err){ showMsg(err, false); return; }
+    const text = formatText(data);
+    const subject = 'Demande de devis - ' + (data.site||'Site') + (data.fq ? ' - FQ '+data.fq : '');
+
+    if(navigator.share){
+      try{
+        let files = [];
+        try{
+          files = await Promise.all(data.photos.map((src,i)=>dataUrlToFile(src, 'photo-'+(i+1)+'.jpg')));
+        }catch(e){ files = []; }
+
+        const shareData = { title: subject, text: text };
+        if(files.length && navigator.canShare && navigator.canShare({ files })){
+          shareData.files = files;
+        }
+        await navigator.share(shareData);
+        showMsg('Partage envoyé.');
+      }catch(e){
+        if(e && e.name === 'AbortError') return; // annulé par l'utilisateur
+        showMsg("Le partage a échoué — utilise \"Copier le texte\" en secours.", false);
+      }
+    } else {
+      try{
+        const url = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
+        const a = document.createElement('a');
+        a.href = url; a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        showMsg("Mail ouvert sans les photos (non supporté ici) — à joindre manuellement.", false);
+      }catch(e){
+        showMsg("Partage indisponible sur cet appareil — utilise \"Copier le texte\".", false);
+      }
+    }
+  });
+
+  renderList();
+})();
+</script>
+</body>
+</html>
