@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Outils techniciens — RECORD</title>
+<style>
+  :root{
+    --paper:#FAF8F3;
+    --paper-dim:#F0ECE2;
+    --ink:#1C2024;
+    --ink-soft:#5B6570;
+    --steel:#33495C;
+    --line:#C9CFC0;
+    --red:#B8443B;
+    --red-bg:#F6E4E1;
+    --green:#4C7A47;
+    --green-bg:#E7EFE1;
+    --mono:ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;
+    --sans:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --disp:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--paper-dim);}
+  body{font-family:var(--sans);color:var(--ink);padding:20px 16px calc(40px + env(safe-area-inset-bottom));min-height:100vh;}
+  .fd-wrap{max-width:640px;margin:0 auto;}
+
+  .fd-ticket{background:var(--steel);color:var(--paper);padding:26px 26px 30px;position:relative;border-radius:6px 6px 0 0;}
+  .fd-ticket::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:18px;background:radial-gradient(circle at 10px 0, transparent 9px, var(--steel) 9.5px) top left/20px 18px repeat-x;}
+  .fd-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#C7D3DA;margin-bottom:8px;}
+  .fd-title{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.01em;text-transform:uppercase;margin:0;}
+  .fd-sub{font-size:14px;color:#B9C6CD;margin-top:4px;}
+
+  .fd-admin-btn{
+    position:absolute;top:14px;right:16px;width:34px;height:34px;border-radius:50%;
+    border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;
+    font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+
+  .fd-body{background:var(--paper);padding:28px 22px 22px;border:1px solid var(--line);border-top:none;border-radius:0 0 6px 6px;}
+
+  .fd-card{
+    display:flex;align-items:center;gap:16px;
+    text-decoration:none;color:inherit;background:#fff;
+    border:1.5px solid var(--line);border-radius:10px;padding:22px 20px;margin-bottom:16px;
+    transition:border-color .15s, transform .1s;
+  }
+  .fd-card:active{transform:scale(.98);}
+  .fd-card:hover{border-color:var(--steel);}
+  .fd-card-icon{font-size:32px;width:56px;height:56px;flex-shrink:0;background:var(--paper-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;}
+  .fd-card-title{font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--steel);margin-bottom:4px;}
+  .fd-card-desc{font-size:13px;color:var(--ink-soft);line-height:1.4;}
+  .fd-card-arrow{margin-left:auto;font-size:20px;color:var(--line);flex-shrink:0;}
+
+  .fd-footer-credit{text-align:center;max-width:640px;margin:30px auto 8px;padding:14px 0 0;border-top:1px solid var(--line);}
+  .fd-footer-credit .fd-credit-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);}
+  .fd-footer-credit .fd-credit-name{font-family:var(--disp);font-weight:600;font-size:13.5px;letter-spacing:.03em;color:var(--steel);}
+
+  /* --- Administration --- */
+  .fd-modal{position:fixed;inset:0;background:rgba(20,24,28,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9000;}
+  .fd-modal.hidden{display:none;}
+  .fd-modal-box{background:var(--paper);width:100%;max-width:640px;max-height:88vh;overflow-y:auto;border-radius:14px 14px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));}
+  .fd-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .fd-modal-head h3{font-family:var(--disp);font-weight:700;font-size:19px;text-transform:uppercase;letter-spacing:.03em;color:var(--steel);margin:0;}
+  .fd-modal-close{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);font-size:17px;cursor:pointer;}
+  .fd-modal-section{margin-bottom:24px;}
+  .fd-modal-section h4{font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px;}
+  .fd-admin-row{display:flex;gap:8px;margin-bottom:8px;}
+  .fd-admin-row input{flex:1;padding:10px 12px;font-size:15px;font-family:var(--sans);border:1.5px solid var(--line);border-radius:6px;}
+  .fd-admin-del{width:44px;height:44px;flex-shrink:0;border-radius:6px;border:1.5px solid var(--red);background:var(--red-bg);color:var(--red);font-size:18px;cursor:pointer;}
+  .fd-admin-empty{font-size:13px;color:var(--ink-soft);font-style:italic;margin-bottom:8px;}
+  .fd-add-btn{font-family:var(--sans);font-weight:600;font-size:14.5px;padding:0 16px;border-radius:6px;border:1.5px solid var(--steel);background:var(--steel);color:#fff;cursor:pointer;white-space:nowrap;min-height:44px;}
+  .fd-hint{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;line-height:1.4;}
+</style>
+</head>
+<body>
+
+<div class="fd-wrap">
+  <div class="fd-ticket">
+    <div class="fd-eyebrow">RECORD · MAINTENANCE TRAVAUX</div>
+    <div class="fd-title">Outils techniciens</div>
+    <div class="fd-sub">Choisis la fiche à remplir</div>
+    <button type="button" id="btn-admin" class="fd-admin-btn" title="Administration">⚙️</button>
+  </div>
+
+  <div class="fd-body">
+    <a class="fd-card" href="fiche-devis.html">
+      <div class="fd-card-icon">📋</div>
+      <div>
+        <div class="fd-card-title">Fiche devis</div>
+        <div class="fd-card-desc">Relevé technicien pour une demande de devis — photos, PDF, envoi mail direct.</div>
+      </div>
+      <div class="fd-card-arrow">›</div>
+    </a>
+
+    <a class="fd-card" href="vantaux-sav.html">
+      <div class="fd-card-icon">🚪</div>
+      <div>
+        <div class="fd-card-title">Descriptif vantaux SAV</div>
+        <div class="fd-card-desc">Vantail ou fixe cassé — configuration, cotes, profilé alu, schéma.</div>
+      </div>
+      <div class="fd-card-arrow">›</div>
+    </a>
+  </div>
+</div>
+
+<div class="fd-footer-credit">
+  <div class="fd-credit-label">Réalisation</div>
+  <div class="fd-credit-name">Christophe BATAILLE</div>
+</div>
+
+<div class="fd-modal hidden" id="admin-modal">
+  <div class="fd-modal-box">
+    <div class="fd-modal-head">
+      <h3>Administration</h3>
+      <button type="button" class="fd-modal-close" id="admin-close">✕</button>
+    </div>
+    <div class="fd-hint">Les techniciens et destinataires enregistrés ici sont proposés automatiquement dans la Fiche devis et le Descriptif vantaux SAV.</div>
+
+    <div class="fd-modal-section">
+      <h4>Techniciens enregistrés</h4>
+      <div id="admin-tech-list"></div>
+      <div class="fd-admin-row">
+        <input type="text" id="admin-tech-new" placeholder="Nouveau technicien">
+        <button type="button" class="fd-add-btn" id="admin-tech-add">Ajouter</button>
+      </div>
+    </div>
+
+    <div class="fd-modal-section">
+      <h4>Destinataires mail enregistrés</h4>
+      <div id="admin-dest-list"></div>
+      <div class="fd-admin-row">
+        <input type="email" id="admin-dest-new" placeholder="nouveau@record.fr">
+        <button type="button" class="fd-add-btn" id="admin-dest-add">Ajouter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const ADMIN_CODE = 'RECORD2026'; // à changer ici si besoin
+  const TECH_KEY = 'techniciens-preenregistres';
+  const DEST_KEY = 'destinataires-preenregistres';
+
+  function lsGet(key){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
+  function lsSet(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+  function loadPreList(key){ return lsGet(key) || []; }
+  function savePreList(key, list){ lsSet(key, list); }
+
+  function renderAdminList(containerId, key, inputType){
+    const container = $(containerId);
+    const list = loadPreList(key);
+    container.innerHTML = '';
+    if(!list.length){
+      container.innerHTML = '<div class="fd-admin-empty">Aucun enregistré pour le moment.</div>';
+      return;
+    }
+    list.forEach((val, i)=>{
+      const row = document.createElement('div');
+      row.className = 'fd-admin-row';
+      row.innerHTML =
+        '<input type="'+inputType+'" value="'+val.replace(/"/g,'&quot;')+'">' +
+        '<button type="button" class="fd-admin-del">✕</button>';
+      const input = row.querySelector('input');
+      const delBtn = row.querySelector('.fd-admin-del');
+      input.addEventListener('change', ()=>{
+        const l = loadPreList(key);
+        const v = input.value.trim();
+        if(v){ l[i] = v; savePreList(key, l); }
+      });
+      delBtn.addEventListener('click', ()=>{
+        const l = loadPreList(key);
+        l.splice(i, 1);
+        savePreList(key, l);
+        renderAdminList(containerId, key, inputType);
+      });
+      container.appendChild(row);
+    });
+  }
+
+  function renderAdminPanel(){
+    renderAdminList('admin-tech-list', TECH_KEY, 'text');
+    renderAdminList('admin-dest-list', DEST_KEY, 'email');
+  }
+
+  $('admin-tech-add').addEventListener('click', ()=>{
+    const input = $('admin-tech-new');
+    const v = input.value.trim();
+    if(!v) return;
+    const l = loadPreList(TECH_KEY);
+    if(!l.includes(v)) l.push(v);
+    savePreList(TECH_KEY, l);
+    input.value = '';
+    renderAdminPanel();
+  });
+  $('admin-dest-add').addEventListener('click', ()=>{
+    const input = $('admin-dest-new');
+    const v = input.value.trim();
+    if(!v) return;
+    const l = loadPreList(DEST_KEY);
+    if(!l.includes(v)) l.push(v);
+    savePreList(DEST_KEY, l);
+    input.value = '';
+    renderAdminPanel();
+  });
+
+  $('btn-admin').addEventListener('click', ()=>{
+    const code = prompt('Code administrateur :');
+    if(code === null) return;
+    if(code !== ADMIN_CODE){ alert('Code administrateur incorrect.'); return; }
+    renderAdminPanel();
+    $('admin-modal').classList.remove('hidden');
+  });
+  $('admin-close').addEventListener('click', ()=>{ $('admin-modal').classList.add('hidden'); });
+  $('admin-modal').addEventListener('click', (e)=>{
+    if(e.target.id === 'admin-modal') $('admin-modal').classList.add('hidden');
+  });
+})();
+</script>
+</body>
+</html>
