@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demande de devis — RECORD</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  window.addEventListener('error', function(e){
+    var b = document.createElement('div');
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#B3403A;color:#fff;padding:10px 14px;font-size:13px;z-index:99999;font-family:sans-serif;line-height:1.4;';
+    b.textContent = 'Erreur technique : ' + e.message + ' (ligne ' + e.lineno + ')';
+    document.body.appendChild(b);
+  });
+</script>
+<style>
+  :root{
+    --bg:#EDEFF3;
+    --surface:#FFFFFF;
+    --surface-2:#F6F8FA;
+    --ink:#12171C;
+    --ink-soft:#5A646E;
+    --ink-mute:#8A939C;
+    --steel:#1E3448;
+    --steel-2:#2F5674;
+    --steel-soft:#E9EEF3;
+    --line:#E3E6EB;
+    --line-2:#CCD3DB;
+    --amber:#C8811A;
+    --amber-dark:#9A6210;
+    --amber-soft:#FCF3E2;
+    --red:#B3403A;
+    --red-bg:#FBEAE8;
+    --green:#3F7A46;
+    --green-bg:#E9F1EA;
+    --paper:#FFFFFF;
+    --paper-dim:#EDEFF3;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --disp:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --r:16px;
+    --shadow:0 1px 2px rgba(18,23,28,.05),0 12px 30px -20px rgba(18,23,28,.45);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.45;
+    padding:18px 14px calc(48px + env(safe-area-inset-bottom));
+    min-height:100vh;
+  }
+  .fd-wrap{max-width:780px;margin:0 auto;}
+  a{color:var(--steel-2);}
+  a:hover{color:var(--steel);}
+
+  /* ---------- En-tête ---------- */
+  .fd-ticket{
+    background:var(--steel);
+    color:#fff;
+    padding:26px 24px 26px;
+    position:relative;
+    border-radius:20px;
+    box-shadow:0 18px 40px -26px rgba(18,23,28,.75);
+    overflow:hidden;
+  }
+  .fd-ticket::after{content:none;}
+  .fd-ticket::before{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--amber);
+  }
+  .fd-eyebrow{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(255,255,255,.62);display:flex;flex-wrap:wrap;justify-content:space-between;
+    align-items:center;gap:8px 12px;margin-bottom:14px;
+  }
+  .fd-eyebrow span:first-child{min-width:0;}
+  .fd-eyebrow span:last-child{
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);
+    padding:5px 11px;border-radius:999px;letter-spacing:.06em;color:#fff;
+    white-space:normal;text-align:right;max-width:100%;min-width:0;overflow-wrap:anywhere;
+  }
+  .fd-eyebrow span:only-child{background:none;border:none;padding:0;}
+  .fd-title{
+    font-family:var(--disp);font-weight:700;font-size:27px;line-height:1.15;
+    letter-spacing:-.015em;text-transform:none;margin:0;max-width:92%;
+  }
+  .fd-sub{font-size:14.5px;color:rgba(255,255,255,.68);margin-top:7px;}
+
+  .fd-admin-btn{
+    position:absolute;top:20px;right:20px;width:42px;height:42px;border-radius:13px;
+    border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#fff;
+    font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .fd-admin-btn:active{background:rgba(255,255,255,.18);}
+
+  /* ---------- Corps : sections en cartes ---------- */
+  .fd-body{background:transparent;padding:18px 0 0;border:none;border-radius:0;}
+
+  .fd-section{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:22px 20px;margin-bottom:14px;box-shadow:var(--shadow);
+  }
+  .fd-section-head{
+    display:flex;align-items:center;gap:12px;margin:0 0 20px;
+    padding-bottom:14px;border-bottom:1px solid var(--line);
+  }
+  .fd-num{
+    font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--steel);
+    background:var(--steel-soft);width:30px;height:30px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .fd-section-title{
+    font-family:var(--disp);font-weight:700;font-size:16px;letter-spacing:-.01em;
+    text-transform:none;color:var(--ink);
+  }
+
+  .fd-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .fd-field{margin-bottom:0;}
+  .fd-field.full{grid-column:1/-1;}
+  label{
+    display:block;font-size:11.5px;font-weight:700;color:var(--ink-mute);
+    text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;
+  }
+  label .req{color:var(--red);}
+
+  input[type=text],input[type=email],input[type=date],input[type=number],textarea,select{
+    width:100%;font-family:var(--sans);font-size:16.5px;color:var(--ink);background:#fff;
+    border:1.5px solid var(--line-2);border-radius:12px;padding:14px 15px;outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input::placeholder,textarea::placeholder{color:var(--ink-mute);}
+  input:focus,textarea:focus,select:focus{
+    border-color:var(--steel-2);box-shadow:0 0 0 4px rgba(47,86,116,.13);
+  }
+  input.fd-mono,select.fd-mono{font-family:var(--mono);letter-spacing:.02em;}
+  textarea{resize:vertical;min-height:110px;line-height:1.5;}
+  select{
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%235A646E" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>');
+    background-repeat:no-repeat;background-position:right 15px center;background-size:16px;
+    padding-right:40px;appearance:none;-webkit-appearance:none;
+  }
+  .fd-add-row{display:flex;gap:8px;margin-top:8px;}
+  .fd-add-row input{flex:1;}
+  .fd-add-row.hidden{display:none;}
+
+  .fd-toggle-row{display:flex;gap:10px;}
+  .fd-toggle{
+    flex:1;text-align:center;padding:12px 8px;min-height:52px;
+    display:flex;align-items:center;justify-content:center;
+    border:1.5px solid var(--line-2);border-radius:12px;font-size:15px;font-weight:650;
+    cursor:pointer;background:var(--surface-2);color:var(--ink-soft);user-select:none;
+    transition:background .12s,border-color .12s,color .12s;
+  }
+  .fd-toggle.on{
+    background:var(--steel);border-color:var(--steel);color:#fff;
+    box-shadow:0 8px 18px -12px rgba(30,52,72,.9);
+  }
+
+  .fd-chip-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .fd-chip{
+    padding:0 20px;min-height:50px;display:flex;align-items:center;border-radius:999px;
+    border:1.5px solid var(--line-2);background:var(--surface-2);font-size:15px;font-weight:650;
+    cursor:pointer;color:var(--ink-soft);user-select:none;
+  }
+  .fd-chip[data-type="arret"].on,.fd-chip[data-type="urgent"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-chip[data-type="preventif"].on{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+
+  .fd-hint,.fd-photo-hint{font-size:12.5px;color:var(--ink-mute);margin-top:8px;line-height:1.5;}
+
+  /* ---------- Alerte ---------- */
+  .fd-alert-box{
+    background:var(--amber-soft);border:1px solid #EBD4A8;border-radius:14px;
+    padding:15px 18px;margin-bottom:14px;text-align:left;
+    font-family:var(--disp);font-weight:700;font-size:14.5px;letter-spacing:0;
+    text-transform:none;color:var(--amber-dark);
+  }
+
+  /* ---------- Cartes visuelles ---------- */
+  .fd-visual-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(134px,1fr));gap:12px;margin-top:4px;}
+  .fd-visual-card{
+    border:1.5px solid var(--line);border-radius:14px;background:var(--surface-2);
+    padding:12px 10px;text-align:center;cursor:pointer;user-select:none;
+    transition:border-color .12s,background .12s,transform .1s;
+  }
+  .fd-visual-card:active{transform:scale(.985);}
+  .fd-visual-card.on{border-color:var(--steel-2);background:var(--steel-soft);box-shadow:0 0 0 1.5px var(--steel-2) inset;}
+  .fd-visual-card svg{display:block;margin:0 auto;}
+  .fd-visual-label{font-size:11.5px;font-weight:600;color:var(--ink-soft);margin-top:8px;line-height:1.35;}
+  .fd-visual-card.on .fd-visual-label{color:var(--steel);}
+  .fd-visual-code{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);margin-top:6px;}
+  .fd-visual-card.current{border-color:#E7CB97;background:var(--amber-soft);}
+  .fd-visual-card.current.on{border-color:var(--steel-2);background:var(--steel-soft);}
+  .fd-visual-badge{
+    display:inline-block;font-family:var(--disp);font-size:9px;font-weight:700;letter-spacing:.05em;
+    text-transform:uppercase;color:#fff;background:var(--amber);border-radius:999px;padding:3px 8px;margin-bottom:6px;
+  }
+  .fd-visual-card img{display:block;margin:0 auto;max-width:100%;height:auto;border-radius:8px;background:#fff;}
+
+  /* ---------- Sélection panneau cassé ---------- */
+  .fd-panel-box{
+    border:1.5px dashed var(--line-2);border-radius:14px;background:var(--surface-2);
+    padding:18px;margin-top:18px;
+  }
+  .fd-panel-title{
+    font-size:12.5px;font-weight:700;color:var(--ink-soft);text-transform:none;
+    letter-spacing:0;margin-bottom:14px;text-align:left;
+  }
+  .fd-panel-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-start;}
+  .fd-panel-btn{
+    border:1.5px solid var(--line-2);border-radius:12px;background:#fff;padding:13px 15px;
+    min-width:132px;min-height:62px;text-align:left;cursor:pointer;user-select:none;
+    font-size:13px;font-weight:650;color:var(--ink);
+  }
+  .fd-panel-btn .fd-panel-kind{
+    font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-mute);
+    display:block;margin-bottom:5px;font-weight:700;
+  }
+  .fd-panel-btn.broken{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-panel-btn.broken .fd-panel-kind{color:var(--red);}
+  .fd-panel-btn.broken::before{content:"\2715 CASSÉ  ";font-weight:800;}
+
+  /* ---------- Tableaux profilés ---------- */
+  .fd-profile-table{
+    width:100%;border-collapse:separate;border-spacing:0;margin-top:14px;font-size:13.5px;
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;
+  }
+  .fd-profile-table th,.fd-profile-table td{padding:11px 8px;text-align:center;}
+  .fd-profile-table th{
+    background:var(--surface-2);color:var(--ink-mute);font-weight:700;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line);
+  }
+  .fd-profile-table td{border-bottom:1px solid var(--line);font-family:var(--mono);}
+  .fd-profile-table tr:last-child td{border-bottom:none;}
+  .fd-profile-table td:first-child{font-weight:700;background:transparent;font-family:var(--sans);}
+  .fd-profile-table tr.fd-row-current td:first-child{color:var(--amber-dark);}
+  .fd-profile-table tr.fd-row-selected td{background:var(--steel-soft);}
+  .fd-profile-table tr.fd-row-selected td:first-child{background:var(--steel);color:#fff;}
+  .fd-mini-badge{font-size:9px;font-weight:700;color:var(--amber-dark);text-transform:uppercase;letter-spacing:.06em;}
+
+  .fd-schema-box{
+    border:1px solid var(--line);border-radius:14px;background:var(--surface);
+    padding:18px;margin-bottom:14px;display:flex;justify-content:center;
+  }
+
+  /* ---------- Photos ---------- */
+  .fd-photo-actions{display:block;margin-top:4px;}
+  .fd-photo-btn{
+    display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    font-family:var(--sans);font-weight:700;font-size:15px;padding:16px;min-height:68px;
+    border-radius:14px;border:2px dashed var(--line-2);background:var(--surface-2);
+    color:var(--steel);cursor:pointer;text-align:center;
+  }
+  .fd-photo-btn:active{background:var(--steel-soft);}
+  .fd-photo-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(96px,1fr));gap:12px;margin-top:14px;}
+  .fd-photo-thumb{
+    position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+    aspect-ratio:1/1;background:var(--surface-2);
+  }
+  .fd-photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .fd-photo-del{
+    position:absolute;top:5px;right:5px;width:28px;height:28px;border-radius:50%;
+    background:rgba(18,23,28,.62);color:#fff;border:none;font-size:14px;line-height:1;cursor:pointer;
+  }
+
+  /* ---------- Actions ---------- */
+  .fd-actions{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;
+    padding:18px;border:1px solid var(--line);border-top:1px solid var(--line);
+    border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);
+  }
+  .fd-btn{
+    font-family:var(--sans);font-weight:700;font-size:15.5px;padding:15px 16px;min-height:54px;
+    border-radius:12px;border:1.5px solid var(--steel);background:var(--steel);color:#fff;cursor:pointer;
+  }
+  #btn-mail{grid-column:1/-1;box-shadow:0 10px 22px -14px rgba(30,52,72,.95);}
+  .fd-btn.secondary{background:#fff;color:var(--steel);border-color:var(--line-2);}
+  .fd-btn.ghost{background:transparent;color:var(--ink-mute);border-color:var(--line);}
+  .fd-btn.wide{grid-column:1/-1;}
+  .fd-btn:active{transform:translateY(1px);opacity:.9;}
+
+  .fd-msg{
+    font-family:var(--sans);font-size:15px;font-weight:650;text-align:left;line-height:1.45;
+    margin-top:14px;padding:0;border-radius:14px;max-height:0;overflow:hidden;opacity:0;
+    transition:all .2s ease;
+  }
+  .fd-msg.show{padding:16px 18px;max-height:240px;opacity:1;border:1px solid;box-shadow:var(--shadow);}
+  .fd-msg.error{background:var(--red-bg);color:var(--red);border-color:#E9BEB9;}
+  .fd-msg.success{background:var(--green-bg);color:var(--green);border-color:#C3DAC6;}
+
+  /* ---------- Accueil ---------- */
+  .fd-card{
+    display:flex;align-items:center;gap:18px;text-decoration:none;color:inherit;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:20px;margin-bottom:14px;box-shadow:var(--shadow);
+    transition:border-color .15s,transform .12s;
+  }
+  .fd-card:active{transform:scale(.99);}
+  .fd-card:hover{border-color:var(--steel-2);}
+  .fd-card-icon{
+    font-size:26px;width:58px;height:58px;flex-shrink:0;background:var(--steel-soft);
+    border-radius:15px;display:flex;align-items:center;justify-content:center;
+  }
+  .fd-card-title{font-family:var(--disp);font-weight:700;font-size:17.5px;letter-spacing:-.01em;color:var(--ink);margin-bottom:5px;}
+  .fd-card-desc{font-size:13.5px;color:var(--ink-soft);line-height:1.5;}
+  .fd-card-arrow{margin-left:auto;font-size:24px;color:var(--line-2);flex-shrink:0;}
+  .fd-card-main{cursor:pointer;flex:1;min-width:0;}
+  .fd-empty{text-align:center;color:var(--ink-mute);font-size:14px;padding:22px 0;}
+
+  .fd-footer-credit{text-align:center;max-width:780px;margin:26px auto 8px;padding:0;border-top:none;}
+  .fd-footer-credit .fd-credit-label{
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);
+  }
+  .fd-footer-credit .fd-credit-name{
+    font-family:var(--disp);font-weight:650;font-size:13.5px;letter-spacing:.01em;color:var(--ink-soft);margin-top:2px;
+  }
+
+  /* ---------- Administration ---------- */
+  .fd-modal{position:fixed;inset:0;background:rgba(12,17,22,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9000;}
+  .fd-modal.hidden{display:none;}
+  .fd-modal-box{
+    background:var(--bg);width:100%;max-width:640px;max-height:88vh;overflow-y:auto;
+    border-radius:24px 24px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom));
+  }
+  .fd-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .fd-modal-head h3{
+    font-family:var(--disp);font-weight:700;font-size:20px;text-transform:none;
+    letter-spacing:-.01em;color:var(--ink);margin:0;
+  }
+  .fd-modal-close{
+    width:40px;height:40px;border-radius:13px;border:1px solid var(--line-2);
+    background:#fff;color:var(--ink-soft);font-size:16px;cursor:pointer;
+  }
+  .fd-modal-section{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:18px;margin-bottom:14px;
+  }
+  .fd-modal-section h4{
+    font-family:var(--disp);font-weight:700;font-size:11.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 0 14px;
+  }
+  .fd-admin-row{display:flex;gap:8px;margin-bottom:10px;}
+  .fd-admin-row input{flex:1;padding:12px 14px;font-size:16px;font-family:var(--sans);border:1.5px solid var(--line-2);border-radius:11px;}
+  .fd-admin-del{
+    width:48px;height:48px;flex-shrink:0;border-radius:11px;border:1.5px solid #E9BEB9;
+    background:var(--red-bg);color:var(--red);font-size:16px;cursor:pointer;
+  }
+  .fd-admin-empty{font-size:13px;color:var(--ink-mute);margin-bottom:10px;}
+  .fd-add-btn{
+    font-family:var(--sans);font-weight:700;font-size:15px;padding:0 18px;border-radius:11px;
+    border:1.5px solid var(--steel);background:var(--steel);color:#fff;cursor:pointer;
+    white-space:nowrap;min-height:48px;
+  }
+
+  @media (max-width:640px){
+    .fd-grid{grid-template-columns:1fr;}
+    .fd-actions{grid-template-columns:1fr 1fr;}
+    .fd-title{font-size:24px;}
+  }
+  @media (max-width:420px){
+    .fd-actions{grid-template-columns:1fr;}
+  }
+
+  /* ---------- Champ en erreur ---------- */
+  .fd-invalid{
+    border-color:var(--red)!important;
+    box-shadow:0 0 0 4px rgba(179,64,58,.14)!important;
+    background:#FFFCFC!important;
+  }
+  .fd-flag{
+    border-radius:14px;
+    box-shadow:0 0 0 2px var(--red),0 0 0 6px rgba(179,64,58,.13);
+  }
+
+  /* ---------- Ajustements ---------- */
+  #btn-new{grid-column:1/-1;justify-self:center;width:100%;max-width:300px;}
+  #grid-config{grid-template-columns:repeat(auto-fill, minmax(152px,1fr));}
+  #grid-config .fd-visual-card{display:flex;flex-direction:column;align-items:stretch;padding:10px 10px 12px;}
+  #grid-config svg{width:100%;height:auto;display:block;}
+  #grid-config .fd-visual-label{margin-top:auto;padding-top:8px;}
+</style>
+</head>
+<body>
+
+<div class="fd-wrap">
+  <div class="fd-ticket">
+    <div class="fd-eyebrow"><span>RECORD · MAINTENANCE TRAVAUX</span><span id="fd-ticket-no">FQ —</span></div>
+    <div class="fd-title">Demande de devis</div>
+    <div class="fd-sub">Relevé technicien à compléter sur site</div>
+  </div>
+
+  <div class="fd-body">
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Intervention</span></div>
+      <div class="fd-grid">
+        <div class="fd-field">
+          <label>Technicien <span class="req">*</span></label>
+          <input type="text" id="f-tech" list="dl-tech" placeholder="Nom du technicien" autocomplete="off">
+          <datalist id="dl-tech"></datalist>
+        </div>
+        <div class="fd-field full"><label>Nom du site / Ville <span class="req">*</span></label><input type="text" id="f-site" placeholder="Ex. Entrepôt Logidis, Aubagne"></div>
+        <div class="fd-field full">
+          <label>Mail client <span class="req">*</span></label>
+          <input type="email" id="f-mail" placeholder="contact@client.fr">
+          <div class="fd-photo-hint">Info à titre indicatif, reprise dans le texte — ce n'est pas l'adresse de destination de l'envoi.</div>
+        </div>
+        <div class="fd-field full">
+          <label>Destinataire (envoi du mail)</label>
+          <input type="email" id="f-dest" list="dl-dest" placeholder="destinataire@record.fr" autocomplete="off">
+          <datalist id="dl-dest"></datalist>
+          <div class="fd-photo-hint">Utilisé pour pré-remplir automatiquement le "à" lors de l'envoi par mail (quand le partage photo n'est pas disponible).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Équipement</span></div>
+      <div class="fd-grid">
+        <div class="fd-field"><label>N° équipement <span class="req">*</span></label><input type="text" class="fd-mono" id="f-equip" placeholder="EQ-000000"></div>
+        <div class="fd-field"><label>N° FQ</label><input type="text" class="fd-mono" id="f-fq" placeholder="FQ-000000"></div>
+        <div class="fd-field full"><label>Localisation</label><input type="text" id="f-loc" placeholder="Bâtiment / quai / porte n°"></div>
+        <div class="fd-field"><label>Marque</label><input type="text" id="f-marque" placeholder="Ex. Record"></div>
+        <div class="fd-field"><label>Modèle</label><input type="text" id="f-modele" placeholder="Ex. Speedor 2"></div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Moyens & statut</span></div>
+      <div class="fd-grid">
+        <div class="fd-field"><label>Temps par technicien (heures) <span class="req">*</span></label><input type="number" step="0.5" min="0" id="f-temps" placeholder="0"></div>
+        <div class="fd-field"><label>Nombre de techniciens <span class="req">*</span></label><input type="number" step="1" min="0" id="f-nbtech" value="0" placeholder="0"></div>
+        <div class="fd-field"><label>Nacelle nécessaire <span class="req">*</span></label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="nacelle" data-val="oui">Oui</div>
+            <div class="fd-toggle" data-field="nacelle" data-val="non">Non</div>
+          </div>
+        </div>
+        <div class="fd-field"><label>PIRL nécessaire <span class="req">*</span></label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="pirl" data-val="oui">Oui</div>
+            <div class="fd-toggle" data-field="pirl" data-val="non">Non</div>
+          </div>
+        </div>
+        <div class="fd-field full"><label>Statut de l'intervention <span class="req">*</span></label>
+          <div class="fd-chip-row">
+            <div class="fd-chip" data-type="arret">Porte à l'arrêt</div>
+            <div class="fd-chip" data-type="urgent">Urgent</div>
+            <div class="fd-chip" data-type="preventif">Préventif</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Pièces & photos</span></div>
+      <div class="fd-field full">
+        <label>Descriptif des pièces (référence si possible) <span class="req">*</span></label>
+        <textarea id="f-pieces" placeholder="Ex. Moteur tri 0.75kW réf. XXXX, courroie crantée réf. XXXX..."></textarea>
+      </div>
+      <div class="fd-field full">
+        <label>Photos <span class="req">*</span> (au moins 1 obligatoire)</label>
+        <div class="fd-photo-actions">
+          <label class="fd-photo-btn" for="f-photo-input">📷 Prendre / ajouter une photo</label>
+          <input type="file" id="f-photo-input" accept="image/*" multiple style="display:none;">
+        </div>
+        <div class="fd-photo-hint">Les photos seront jointes directement au partage (mail, WhatsApp...).</div>
+        <div class="fd-photo-grid" id="fd-photo-grid"></div>
+      </div>
+    </div>
+
+    <div class="fd-actions">
+      <button class="fd-btn" id="btn-mail">Partager (PDF + photos)</button>
+      <button class="fd-btn secondary" id="btn-pdf">Télécharger le PDF</button>
+      <button class="fd-btn secondary" id="btn-copy">Copier le texte</button>
+      <button class="fd-btn ghost" id="btn-new">Nouvelle fiche</button>
+    </div>
+    <div class="fd-photo-hint" style="text-align:center;margin-top:8px;">Le PDF reprend la mise en forme complète de la fiche, photos incluses.</div>
+    <div class="fd-msg" id="fd-msg"></div>
+  </div>
+</div>
+
+<div class="fd-footer-credit">
+  <div class="fd-credit-label">Réalisation</div>
+  <div class="fd-credit-name">Christophe BATAILLE</div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fields = ['tech','site','mail','dest','equip','fq','loc','marque','modele','temps','nbtech','pieces'];
+  let toggles = { nacelle:null, pirl:null };
+  let chips = { arret:false, urgent:false, preventif:false };
+  let photos = []; // dataURLs (jpeg compressés)
+
+  function resizeImage(file){
+    return new Promise((resolve)=>{
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const img = new Image();
+        img.onload = function(){
+          const maxDim = 1280;
+          let w = img.width, h = img.height;
+          if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.65), w, h });
+        };
+        img.onerror = function(){ resolve(null); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function(){ resolve(null); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function photoOf(p){
+    return (p && typeof p === 'object') ? p : { dataUrl: p, w: 4, h: 3 };
+  }
+
+  function renderPhotoGrid(){
+    const grid = $('fd-photo-grid');
+    grid.innerHTML = '';
+    photos.forEach((p, i)=>{
+      const ph = photoOf(p);
+      const div = document.createElement('div');
+      div.className = 'fd-photo-thumb';
+      div.innerHTML = '<img src="'+ph.dataUrl+'" alt="photo"><button type="button" class="fd-photo-del" data-i="'+i+'">✕</button>';
+      grid.appendChild(div);
+    });
+    grid.querySelectorAll('.fd-photo-del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        photos.splice(parseInt(btn.dataset.i,10), 1);
+        renderPhotoGrid();
+      });
+    });
+  }
+
+  $('f-photo-input').addEventListener('change', async (e)=>{
+    const files = Array.from(e.target.files || []);
+    for(const file of files){
+      const result = await resizeImage(file);
+      if(result) photos.push(result);
+    }
+    renderPhotoGrid();
+    e.target.value = '';
+  });
+
+  function dataUrlToFileSync(dataUrl, name){
+    const parts = dataUrl.split(',');
+    const mimeMatch = parts[0].match(/data:(.*?);base64/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const binary = atob(parts[1]);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for(let i=0;i<len;i++){ bytes[i] = binary.charCodeAt(i); }
+    return new File([bytes], name, { type: mime });
+  }
+
+  function generateFichePDF(data){
+    if(!window.jspdf || !window.jspdf.jsPDF){
+      throw new Error('Bibliothèque PDF non disponible (hors-ligne ?)');
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 18;
+    const contentW = pageW - margin*2;
+    const LABEL_X = 66;
+    let y = 0;
+
+    const STEEL=[30,52,72], INK=[18,23,28], SOFT=[100,110,120], LINE=[226,230,235],
+          SURF=[246,248,250], AMBER=[200,129,26], RED=[179,64,58], REDBG=[251,234,232],
+          GREEN=[63,122,70], GREENBG=[233,241,234];
+
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+    function setC(c){ doc.setTextColor(c[0],c[1],c[2]); }
+    function fillC(c){ doc.setFillColor(c[0],c[1],c[2]); }
+    function drawC(c){ doc.setDrawColor(c[0],c[1],c[2]); }
+
+    function header(){
+      fillC(STEEL);
+      doc.rect(0,0,pageW,46,'F');
+      fillC(AMBER);
+      doc.rect(0,46,pageW,1.4,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8);
+      doc.setTextColor(150,175,196);
+      doc.text("RECORD  ·  MAINTENANCE TRAVAUX", margin, 15, { charSpace:0.7 });
+      doc.setTextColor(255,255,255); doc.setFontSize(20);
+      doc.text("Demande de devis", margin, 29);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+      doc.setTextColor(180,198,213);
+      doc.text((data.site || 'Site non renseigné') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 50 });
+      const ref = data.fq ? 'FQ ' + data.fq : 'FQ \u2014';
+      doc.setFont('helvetica','bold'); doc.setFontSize(10);
+      const rw = doc.getTextWidth(ref) + 13;
+      doc.setDrawColor(118,146,170); doc.setLineWidth(0.5);
+      doc.roundedRect(pageW - margin - rw, 19.5, rw, 11.5, 3.5, 3.5, 'S');
+      doc.setTextColor(255,255,255);
+      doc.text(ref, pageW - margin - rw/2, 27.2, { align:'center' });
+      y = 62;
+      setC(INK);
+    }
+
+    function checkBreak(need){
+      if(y + need > pageH - 24){ doc.addPage(); y = 26; }
+    }
+
+    function section(title){
+      checkBreak(30);
+      y += 3;
+      doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      setC(STEEL);
+      doc.text(title.toUpperCase(), margin, y, { charSpace:0.9 });
+      y += 3.6;
+      drawC(LINE); doc.setLineWidth(0.4);
+      doc.line(margin, y, pageW - margin, y);
+      y += 7;
+      setC(INK);
+    }
+
+    function row(label, value){
+      const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
+      doc.setFont('helvetica','normal'); doc.setFontSize(11);
+      const lines = doc.splitTextToSize(val, contentW - LABEL_X - 8);
+      const h = Math.max(13.5, lines.length * 5.8 + 7.6);
+      checkBreak(h + 4);
+      fillC(SURF);
+      doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8);
+      setC(SOFT);
+      doc.text(label.toUpperCase(), margin + 7, y + 8.6, { charSpace:0.35, maxWidth: LABEL_X - 12 });
+      doc.setFont('helvetica','normal'); doc.setFontSize(11);
+      setC(INK);
+      doc.text(lines, margin + LABEL_X, y + 8.8);
+      y += h + 3.4;
+    }
+
+    function block(label, value){
+      const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
+      doc.setFont('helvetica','normal'); doc.setFontSize(11);
+      const lines = doc.splitTextToSize(val, contentW - 14);
+      const h = 15 + lines.length * 5.8;
+      checkBreak(h + 4);
+      fillC(SURF);
+      doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
+      doc.text(label.toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
+      doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
+      doc.text(lines, margin + 7, y + 16.5);
+      y += h + 3.4;
+    }
+
+    function callout(label, value, tone){
+      const bg = tone === 'red' ? REDBG : GREENBG;
+      const fg = tone === 'red' ? RED : GREEN;
+      const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
+      doc.setFont('helvetica','bold'); doc.setFontSize(13.5);
+      const lines = doc.splitTextToSize(val, contentW - 16);
+      const h = 17 + lines.length * 6.4;
+      checkBreak(h + 5);
+      fillC(bg);
+      doc.roundedRect(margin, y, contentW, h, 3, 3, 'F');
+      fillC(fg);
+      doc.rect(margin, y, 1.8, h, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(fg);
+      doc.text(label.toUpperCase(), margin + 8, y + 8.6, { charSpace:0.4 });
+      doc.setFontSize(13.5);
+      doc.text(lines, margin + 8, y + 17);
+      y += h + 4;
+    }
+
+    function tiles(items){
+      const gap = 4.5;
+      const w = (contentW - gap * (items.length - 1)) / items.length;
+      checkBreak(24);
+      items.forEach((it, i)=>{
+        const x = margin + i * (w + gap);
+        fillC(SURF);
+        doc.roundedRect(x, y, w, 19, 2.5, 2.5, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
+        doc.text(it.k.toUpperCase(), x + 5.5, y + 7, { charSpace:0.35 });
+        doc.setFontSize(12.5); setC(INK);
+        doc.text(String(it.v || '\u2014'), x + 5.5, y + 15);
+      });
+      y += 23;
+    }
+
+    function pills(list){
+      if(!list.length){ row('Statut', ''); return; }
+      checkBreak(15);
+      let x = margin;
+      list.forEach(it=>{
+        doc.setFont('helvetica','bold'); doc.setFontSize(9);
+        const w = doc.getTextWidth(it.t.toUpperCase()) + 11;
+        if(x + w > pageW - margin){ x = margin; y += 12; }
+        fillC(it.tone === 'red' ? REDBG : GREENBG);
+        doc.roundedRect(x, y, w, 9.5, 4.75, 4.75, 'F');
+        setC(it.tone === 'red' ? RED : GREEN);
+        doc.text(it.t.toUpperCase(), x + w/2, y + 6.4, { align:'center', charSpace:0.3 });
+        x += w + 5;
+      });
+      y += 14;
+    }
+
+    function photosPages(list){
+      if(!list || !list.length) return;
+      doc.addPage(); y = 26;
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); setC(STEEL);
+      doc.text('PHOTOS  \u00B7  ' + list.length, margin, y, { charSpace:0.9 });
+      y += 3.6;
+      drawC(LINE); doc.setLineWidth(0.4);
+      doc.line(margin, y, pageW - margin, y);
+      y += 8;
+      const gap = 6, cellW = (contentW - gap) / 2, cellH = cellW * 0.8;
+      let col = 0;
+      list.forEach((p, i)=>{
+        const ph = photoOf(p);
+        if(col === 0) checkBreak(cellH + 13);
+        const x = margin + col * (cellW + gap);
+        fillC(SURF);
+        doc.roundedRect(x, y, cellW, cellH, 2.5, 2.5, 'F');
+        const ratio = (ph.w || 4) / (ph.h || 3);
+        let iw = cellW - 5, ih = iw / ratio;
+        if(ih > cellH - 5){ ih = cellH - 5; iw = ih * ratio; }
+        try{ doc.addImage(ph.dataUrl, 'JPEG', x + (cellW - iw)/2, y + (cellH - ih)/2, iw, ih); }catch(err){}
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
+        doc.text('PHOTO ' + (i+1), x, y + cellH + 5.2, { charSpace:0.4 });
+        col++;
+        if(col === 2){ col = 0; y += cellH + 12; }
+      });
+      if(col === 1) y += cellH + 12;
+    }
+
+    function footers(){
+      const total = doc.internal.getNumberOfPages();
+      for(let p = 1; p <= total; p++){
+        doc.setPage(p);
+        drawC(LINE); doc.setLineWidth(0.4);
+        doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); setC(SOFT);
+        doc.text('Réalisation Christophe BATAILLE  \u00B7  ' + dateStr, margin, pageH - 10);
+        doc.text('Page ' + p + ' / ' + total, pageW - margin, pageH - 10, { align:'right' });
+      }
+    }
+
+    header();
+
+    section('Intervention');
+    row('Technicien', data.tech);
+    row('Site / Ville', data.site);
+    row('Mail client', data.mail);
+
+    section('Équipement');
+    tiles([
+      { k:'N° équipement', v:data.equip },
+      { k:'N° FQ', v:data.fq },
+    ]);
+    row('Localisation', data.loc);
+    row('Marque / Modèle', [data.marque, data.modele].filter(Boolean).join(' ') || '');
+
+    section('Moyens \u00E0 prévoir');
+    tiles([
+      { k:'Temps / technicien', v:(data.temps ? data.temps + ' h' : '') },
+      { k:'Nb techniciens', v:data.nbtech },
+      { k:'Nacelle', v:data.toggles.nacelle },
+      { k:'PIRL', v:data.toggles.pirl },
+    ]);
+
+    section("Statut de l'intervention");
+    pills(statusLabel(data).map(t=>({ t:t, tone:(t === 'Préventif' ? 'green' : 'red') })));
+
+    section('Pièces à devis');
+    block('Descriptif', data.pieces);
+
+    photosPages(data.photos);
+    footers();
+
+    return doc;
+  }
+
+  // --- Stockage local (fonctionne hors-ligne, propre à cette tablette/navigateur) ---
+  function lsGet(key){
+    try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; }
+  }
+  function lsSet(key, val){
+    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+  }
+
+  // --- Listes préenregistrées (gérées depuis la page d'accueil > Administration) ---
+  const TECH_KEY = 'techniciens-preenregistres';
+  const DEST_KEY = 'destinataires-preenregistres';
+
+  function loadPreList(key){ return lsGet(key) || []; }
+
+  function refreshDatalist(datalistId, key){
+    const dl = $(datalistId);
+    const list = loadPreList(key);
+    dl.innerHTML = list.map(v => '<option value="'+v.replace(/"/g,'&quot;')+'"></option>').join('');
+  }
+
+  function refreshAllDatalists(){
+    refreshDatalist('dl-tech', TECH_KEY);
+    refreshDatalist('dl-dest', DEST_KEY);
+  }
+  refreshAllDatalists();
+  window.addEventListener('focus', refreshAllDatalists);
+  window.addEventListener('pageshow', refreshAllDatalists);
+  window.addEventListener('storage', refreshAllDatalists);
+
+  function dedupe(a){ const o = []; (a || []).forEach(v=>{ v = String(v).trim(); if(v && o.indexOf(v) < 0) o.push(v); }); return o; }
+  async function loadSharedLists(){
+    try{
+      const r = await fetch('listes.json?v=' + Date.now(), { cache:'no-store' });
+      if(!r.ok) return;
+      const d = await r.json();
+      lsSet(TECH_KEY, dedupe((d.techniciens || []).concat(loadPreList(TECH_KEY))));
+      lsSet(DEST_KEY, dedupe((d.destinataires || []).concat(loadPreList(DEST_KEY))));
+      refreshAllDatalists();
+    }catch(e){}
+  }
+  loadSharedLists();
+  window.addEventListener('focus', loadSharedLists);
+
+
+  document.querySelectorAll('.fd-toggle').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      const field = t.dataset.field;
+      document.querySelectorAll('.fd-toggle[data-field="'+field+'"]').forEach(x=>x.classList.remove('on'));
+      t.classList.add('on');
+      toggles[field] = t.dataset.val;
+    });
+  });
+
+  document.querySelectorAll('.fd-chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const type = c.dataset.type;
+      chips[type] = !chips[type];
+      c.classList.toggle('on', chips[type]);
+    });
+  });
+
+  function readForm(){
+    const data = { toggles: {...toggles}, chips: {...chips}, photos: [...photos] };
+    fields.forEach(f => data[f] = $('f-'+f).value.trim());
+    return data;
+  }
+
+  function resetForm(){
+    fields.forEach(f => $('f-'+f).value = '');
+    $('f-nbtech').value = '0';
+    photos = [];
+    renderPhotoGrid();
+    toggles = { nacelle:null, pirl:null };
+    chips = { arret:false, urgent:false, preventif:false };
+    document.querySelectorAll('.fd-toggle').forEach(t=>t.classList.remove('on'));
+    document.querySelectorAll('.fd-chip').forEach(c=>c.classList.remove('on'));
+    $('fd-ticket-no').textContent = 'FQ —';
+  }
+
+  $('f-fq').addEventListener('input', ()=>{
+    const v = $('f-fq').value.trim();
+    $('fd-ticket-no').textContent = v ? 'FQ ' + v : 'FQ —';
+  });
+
+  function statusLabel(data){
+    const l = [];
+    if(data.chips.arret) l.push("Porte à l'arrêt");
+    if(data.chips.urgent) l.push('Urgent');
+    if(data.chips.preventif) l.push('Préventif');
+    return l;
+  }
+
+  function formatText(data, opts){
+    opts = opts || {};
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const statuts = statusLabel(data).join('  \u00B7  ') || '\u2014';
+    const nbtechDisplay = (data.nbtech === '' || data.nbtech === undefined || data.nbtech === null) ? '\u2014' : data.nbtech;
+    const L = [];
+    const rule = '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500';
+    function bloc(titre, lignes){
+      L.push('');
+      L.push(titre.toUpperCase());
+      L.push(rule);
+      lignes.filter(Boolean).forEach(l => L.push(l));
+    }
+    function kv(k, v){ return k + ' : ' + (v || '\u2014'); }
+
+    L.push('DEMANDE DE DEVIS');
+    L.push(rule);
+    L.push(data.site || 'Site non renseigné');
+    L.push((data.fq ? 'FQ ' + data.fq + '  \u00B7  ' : '') + dateStr);
+    L.push('Statut : ' + statuts);
+
+    bloc('Intervention', [
+      kv('Technicien', data.tech),
+      kv('Mail client', data.mail),
+    ]);
+
+    bloc('Équipement', [
+      kv('N° équipement', data.equip),
+      data.fq ? kv('N° FQ', data.fq) : null,
+      data.loc ? kv('Localisation', data.loc) : null,
+      kv('Marque / Modèle', [data.marque, data.modele].filter(Boolean).join(' ')),
+    ]);
+
+    bloc('Moyens à prévoir', [
+      kv('Temps par technicien', (data.temps ? data.temps + ' h' : '')),
+      kv('Nombre de techniciens', nbtechDisplay),
+      kv('Nacelle', data.toggles.nacelle),
+      kv('PIRL', data.toggles.pirl),
+    ]);
+
+    bloc('Pièces à devis', [ (data.pieces || '\u2014') ]);
+
+    if(opts.notePhotos || opts.note){
+      const lignes = [];
+      if(opts.notePhotos){
+        lignes.push(data.photos && data.photos.length
+          ? data.photos.length + ' photo(s) à joindre manuellement'
+          : 'Aucune photo');
+      }
+      if(opts.note) lignes.push(opts.note);
+      bloc('Pièces jointes', lignes);
+    }
+
+    L.push('');
+    L.push('\u2014 Relevé technicien RECORD');
+    return L.join('\n');
+  }
+
+  let msgTimeout = null;
+  function showMsg(text, ok, noScroll){
+    const el = $('fd-msg');
+    el.textContent = (ok===false ? '⚠️ ' : '✓ ') + text;
+    el.className = 'fd-msg show ' + (ok===false ? 'error' : 'success');
+    if(!noScroll) el.scrollIntoView({ behavior:'smooth', block:'center' });
+    clearTimeout(msgTimeout);
+    msgTimeout = setTimeout(()=>{ el.classList.remove('show'); }, ok===false ? 7000 : 3500);
+  }
+
+  function clearFlags(){
+    document.querySelectorAll('.fd-invalid,.fd-flag').forEach(e=>{
+      e.classList.remove('fd-invalid');
+      e.classList.remove('fd-flag');
+    });
+  }
+
+  function highlight(sel){
+    clearFlags();
+    if(!sel) return;
+    const el = document.querySelector(sel);
+    if(!el) return;
+    const isInput = /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
+    const box = isInput ? el : (el.closest('.fd-toggle-row, .fd-chip-row, .fd-visual-grid, .fd-panel-box, .fd-photo-actions') || el);
+    box.classList.add(isInput ? 'fd-invalid' : 'fd-flag');
+    const r = box.getBoundingClientRect();
+    window.scrollTo({ top: Math.max(0, window.pageYOffset + r.top - 110), behavior:'smooth' });
+    if(isInput && typeof el.focus === 'function'){ try{ el.focus({ preventScroll:true }); }catch(e){ } }
+  }
+
+  document.addEventListener('input', clearFlags, true);
+  document.addEventListener('change', clearFlags, true);
+  document.addEventListener('click', (e)=>{
+    if(e.target && e.target.closest && e.target.closest('.fd-flag')) clearFlags();
+  }, true);
+
+  function validate(data){
+    if(!data.tech) return { msg:'Le technicien est obligatoire.', target:'#f-tech' };
+    if(!data.site) return { msg:'Le nom du site est obligatoire.', target:'#f-site' };
+    if(!data.equip) return { msg:"Le n° d'équipement est obligatoire.", target:'#f-equip' };
+    if(!data.mail) return { msg:'Le mail client est obligatoire.', target:'#f-mail' };
+    if(!data.temps) return { msg:'Le temps par technicien est obligatoire.', target:'#f-temps' };
+    if(!data.nbtech) return { msg:'Le nombre de techniciens est obligatoire.', target:'#f-nbtech' };
+    if(parseFloat(String(data.nbtech).replace(',','.')) <= 0) return { msg:'Le nombre de techniciens doit être supérieur à 0 — merci de le saisir.', target:'#f-nbtech' };
+    if(!toggles.nacelle) return { msg:'Merci de préciser si une nacelle est nécessaire.', target:'.fd-toggle[data-field="nacelle"]' };
+    if(!toggles.pirl) return { msg:'Merci de préciser si un PIRL est nécessaire.', target:'.fd-toggle[data-field="pirl"]' };
+    if(!data.chips.arret && !data.chips.urgent && !data.chips.preventif) return { msg:"Le statut de l'intervention est obligatoire.", target:'.fd-chip-row' };
+    if(!data.pieces) return { msg:'Le descriptif des pièces est obligatoire.', target:'#f-pieces' };
+    if(!data.photos || !data.photos.length) return { msg:'Au moins une photo est obligatoire.', target:'.fd-photo-btn' };
+    return null;
+  }
+
+  $('btn-new').addEventListener('click', ()=>{
+    resetForm();
+    showMsg('Nouvelle fiche prête.');
+  });
+
+  $('btn-copy').addEventListener('click', async ()=>{
+    const text = formatText(readForm(), { notePhotos:true });
+    try{
+      await navigator.clipboard.writeText(text);
+      showMsg('Texte copié dans le presse-papiers.');
+    }catch(e){
+      showMsg("Copie impossible sur cet appareil.", false);
+    }
+  });
+
+  $('btn-mail').addEventListener('click', ()=>{
+    const data = readForm();
+    const err = validate(data);
+    if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
+    const subject = 'Demande de devis - ' + (data.site||'Site') + (data.fq ? ' - FQ '+data.fq : '');
+
+    let pdfFile = null;
+    try{
+      const pdfDoc = generateFichePDF(data);
+      const blob = pdfDoc.output('blob');
+      pdfFile = new File([blob], 'devis-' + (data.fq || data.site || 'fiche').replace(/[^a-z0-9-]+/gi,'_') + '.pdf', { type:'application/pdf' });
+    }catch(e){
+      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ") — utilise \"Copier le texte\" en secours.", false);
+      return;
+    }
+
+    if(navigator.share){
+      const filesAttached = !!(navigator.canShare && navigator.canShare({ files:[pdfFile] }));
+      const note = filesAttached
+        ? '📎 Détails complets et photos dans le PDF joint.'
+        : '📎 PDF à télécharger (bouton dédié) et à joindre manuellement.';
+      const text = formatText(data, { note: note });
+      const shareData = { title: subject, text: text };
+      if(filesAttached){
+        shareData.files = [pdfFile];
+      }
+      navigator.share(shareData).then(()=>{
+        showMsg('Partage envoyé.');
+      }).catch(e=>{
+        if(e && e.name === 'AbortError') return; // annulé par l'utilisateur
+        const detail = (e && e.message) ? e.message : (e && e.name) ? e.name : 'erreur inconnue';
+        showMsg('Le partage a échoué (' + detail + ') — utilise "Télécharger le PDF" puis joins-le manuellement.', false);
+      });
+    } else {
+      const text = formatText(data, { note: '📎 PDF à télécharger (bouton dédié) et à joindre manuellement.' });
+      try{
+        const url = 'mailto:' + encodeURIComponent(data.dest||'') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
+        const a = document.createElement('a');
+        a.href = url; a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        showMsg("Mail ouvert — le PDF n'est pas joint automatiquement ici : clique \"Télécharger le PDF\" puis joins-le à la main.", false);
+      }catch(e){
+        showMsg("Partage indisponible sur cet appareil — utilise \"Télécharger le PDF\".", false);
+      }
+    }
+  });
+
+  $('btn-pdf').addEventListener('click', ()=>{
+    const data = readForm();
+    const err = validate(data);
+    if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
+    try{
+      const pdfDoc = generateFichePDF(data);
+      pdfDoc.save('devis-' + (data.fq || data.site || 'fiche').replace(/[^a-z0-9-]+/gi,'_') + '.pdf');
+      showMsg('PDF téléchargé — tu peux le joindre manuellement à ton mail.');
+    }catch(e){
+      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ").", false);
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
