@@ -1,5 +1,18 @@
 {
-  "techniciens": [],
-  "destinataires": [],
+  "techniciens": [
+    "Elyes SOFIKITIS",
+    "Cedric DECOOPMAN",
+    "Jérémie FERRIER",
+    "Julien COLOMER",
+    "Aboubacar CHEHA",
+    "Frédéric BOURCET",
+    "Stephane CALVINI",
+    "Nicolas CASSAR",
+    "Kevin SARTIAUX"
+  ],
+  "destinataires": [
+    "christophe.bataille@record.fr",
+    "arnaud.nautet@record.fr"
+  ],
   "maj": "2026-08-30"
 }
