@@ -635,7 +635,10 @@ if('serviceWorker' in navigator){
   const STAT_KEY = 'record-stats-usage';
   const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', FC:'Contrat maintenance' };
   const STATS_URL_KEY = 'record-stats-url';
-  function statsUrl(){ try{ return localStorage.getItem(STATS_URL_KEY) || ''; }catch(e){ return ''; } }
+  function statsUrl(){
+    try{ return localStorage.getItem(STATS_URL_KEY) || window.RECORD_STATS_URL || ''; }
+    catch(e){ return window.RECORD_STATS_URL || ''; }
+  }
   const APPS_SCRIPT = [
     "const SHEET_ID = 'ID_DE_LA_FEUILLE';",
     "const CODE = 'Chris04';   // code d'accès administrateur",
@@ -965,8 +968,14 @@ if('serviceWorker' in navigator){
     }
     try{ localStorage.setItem(STATS_URL_KEY, u); }catch(e){}
     setDirty(true);
-    pushSilently();
-    statStatus(u ? '\u2713 Adresse enregistrée et diffusée aux tablettes à leur prochaine ouverture.' : 'Collecte automatique désactivée.', u ? 'ok' : null);
+    // L'adresse de collecte ne peut être connue des tablettes qu'en circulant dans listes.json
+    // (le script en ligne ne peut pas s'annoncer lui-même) : on force ce canal, jeton GitHub requis.
+    const c = pubConfig();
+    if(c.repo && c.token){
+      publishLists(true);
+    } else {
+      statStatus("\u26A0 Il faut le dépôt + jeton GitHub (plus bas, « Publier en ligne ») pour diffuser cette adresse aux tablettes \u2014 sinon elle ne sert que sur cet appareil.", 'err');
+    }
     if(u) statsPull();
   });
 

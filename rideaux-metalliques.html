@@ -859,7 +859,7 @@ if('serviceWorker' in navigator){
   }
   async function loadSharedFromCloud(){
     let url = '';
-    try{ url = localStorage.getItem('record-stats-url') || ''; }catch(e){}
+    try{ url = localStorage.getItem('record-stats-url') || window.RECORD_STATS_URL || ''; }catch(e){ url = window.RECORD_STATS_URL || ''; }
     if(!url) return;
     try{
       const d = await cloudGet(url, { what:'lists' });
