@@ -830,7 +830,23 @@ if('serviceWorker' in navigator){
       if(!r.ok) return;
       const d = await r.json();
       lsSet(TECH_KEY, dedupe(d.techniciens));
+      if(typeof d.statsUrl === 'string') try{ localStorage.setItem('record-stats-url', d.statsUrl); }catch(e){}
       refreshAllDatalists();
+      statFlush();
+      loadSharedFromCloud();
+    }catch(e){}
+  }
+  /* Liste tenue à jour par les responsables depuis le mode administrateur (espace partagé) :
+     elle fait référence dès qu'elle répond. */
+  async function loadSharedFromCloud(){
+    let url = '';
+    try{ url = localStorage.getItem('record-stats-url') || ''; }catch(e){}
+    if(!url) return;
+    try{
+      const r = await fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'what=lists&v=' + Date.now(), { cache:'no-store' });
+      const d = await r.json();
+      const t = dedupe(d.techniciens);
+      if(t.length){ lsSet(TECH_KEY, t); refreshAllDatalists(); }
     }catch(e){}
   }
   loadSharedLists();
@@ -1465,7 +1481,44 @@ if('serviceWorker' in navigator){
   function histSave(list){
     try{ localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, 10))); }catch(e){}
   }
+  /* --- Journal d'utilisation (statistiques, mode administrateur) --- */
+  const STAT_KEY = 'record-stats-usage';
+  const STAT_Q = 'record-stats-queue';
+  function statLog(tech, fiche, how){
+    const row = { d: new Date().toISOString(), t: String(tech || '').trim() || 'Non renseigné', f: fiche, h: how || '' };
+    try{
+      const a = JSON.parse(localStorage.getItem(STAT_KEY) || '[]');
+      a.push(row);
+      localStorage.setItem(STAT_KEY, JSON.stringify(a.slice(-2000)));
+    }catch(e){}
+    try{
+      const q = JSON.parse(localStorage.getItem(STAT_Q) || '[]');
+      q.push(row);
+      localStorage.setItem(STAT_Q, JSON.stringify(q.slice(-500)));
+    }catch(e){}
+    statFlush();
+  }
+  /* Remonte les compteurs vers l'adresse de collecte, sans aucune action du technicien.
+     Hors réseau, les lignes restent en attente et repartent à la prochaine ouverture. */
+  async function statFlush(){
+    let url = '';
+    try{ url = localStorage.getItem('record-stats-url') || window.RECORD_STATS_URL || ''; }catch(e){ url = window.RECORD_STATS_URL || ''; }
+    if(!url) return;
+    let q = [];
+    try{ q = JSON.parse(localStorage.getItem(STAT_Q) || '[]'); }catch(e){}
+    if(!q.length) return;
+    try{
+      await fetch(url, {
+        method:'POST', mode:'no-cors', keepalive:true,
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({ rows: q })
+      });
+      localStorage.setItem(STAT_Q, '[]');
+    }catch(e){}
+  }
+  window.addEventListener('online', statFlush);
   function histAdd(data, how){
+    statLog(data.tech, 'RM', how);
     const clean = {...data};
     delete clean.photos;
     const list = histLoad();

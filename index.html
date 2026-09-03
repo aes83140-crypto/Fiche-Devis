@@ -447,6 +447,15 @@ if('serviceWorker' in navigator){
       </div>
       <div class="fd-card-arrow">›</div>
     </a>
+
+    <a class="fd-card" href="contrat-maintenance.html">
+      <div class="fd-card-icon"><svg viewBox="0 0 24 24" style="width:27px;height:27px;display:block" fill="none" stroke="#1E3448" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 2.9h8.1l4.5 4.5v13.7H6.2z"></path><path d="M14.1 3v4.5h4.6"></path><path d="M9 12.4h6.4M9 15.6h4.2"></path></svg></div>
+      <div class="fd-card-main">
+        <div class="fd-card-title">Fiche contrat de maintenance</div>
+        <div class="fd-card-desc">Signaler au commercial un équipement à ajouter au contrat ou un nouveau client à démarcher.</div>
+      </div>
+      <div class="fd-card-arrow">›</div>
+    </a>
   </div>
 </div>
 
@@ -461,10 +470,40 @@ if('serviceWorker' in navigator){
       <h3>Administration</h3>
       <button type="button" class="fd-modal-close" id="admin-close">✕</button>
     </div>
-    <div class="fd-hint">Les techniciens enregistrés ici sont proposés automatiquement dans la Fiche devis et le Relevé Vantaux SAV.</div>
+    <div class="fd-hint">Les techniciens enregistrés ici sont proposés automatiquement dans toutes les fiches : devis, Relevé Vantaux SAV, rideaux métalliques et contrat de maintenance.</div>
+
+    <div class="fd-modal-section">
+      <h4>Statistiques d'utilisation</h4>
+      <div class="fd-hint" style="margin:-4px 0 12px;">Chaque fiche envoyée ou téléchargée est comptée automatiquement, sur toutes les tablettes, sans aucune action des techniciens.</div>
+      <div id="stats-body"></div>
+      <div class="fd-admin-row" style="margin-top:12px;">
+        <button class="fd-add-btn" id="stats-refresh" style="flex:1;">Actualiser</button>
+        <button class="fd-add-btn" id="stats-export" style="flex:1;">Exporter en CSV</button>
+      </div>
+      <div class="fd-admin-row">
+        <button class="fd-add-btn" id="stats-reset" style="flex:1;background:var(--red-bg);color:var(--red);border-color:#E9BEB9;">Remettre les compteurs à zéro</button>
+      </div>
+      <details id="stats-setup" style="margin-top:12px;">
+        <summary style="cursor:pointer;font-size:13.5px;font-weight:650;color:var(--ink-soft);">Espace partagé : statistiques + listes (à configurer une seule fois)</summary>
+        <div class="fd-hint" style="margin:10px 0 12px;">Cet espace sert à deux choses : compter automatiquement les fiches envoyées depuis toutes les tablettes, et permettre à <strong>chaque responsable de modifier la liste des techniciens avec le seul code d'accès</strong>. Il se crée gratuitement en quatre étapes :<br>
+          <strong>1.</strong> Sur <em>script.google.com</em> → Nouveau projet, collez le code ci-dessous.<br>
+          <strong>2.</strong> Créez une feuille Google Sheets, copiez son identifiant (dans son adresse, entre <em>/d/</em> et <em>/edit</em>) à la place de <em>ID_DE_LA_FEUILLE</em>.<br>
+          <strong>3.</strong> <em>Déployer</em> → <em>Nouveau déploiement</em> → type <em>Application web</em>, « Exécuter en tant que : moi », « Accès : tout le monde ».<br>
+          <strong>4.</strong> Copiez <strong>l'adresse entière</strong> fournie par Google (elle commence par <em>https://script.google.com/macros/s/</em> et finit par <em>/exec</em>) dans le champ ci-dessous, puis Enregistrer.</div>
+        <textarea readonly id="stats-code" style="width:100%;height:112px;font-family:var(--mono);font-size:11px;padding:10px;border:1.5px solid var(--line-2);border-radius:11px;resize:vertical;"></textarea>
+        <div class="fd-admin-row" style="margin-top:10px;"><input type="text" id="stats-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" autocomplete="off"></div>
+        <div class="fd-admin-row">
+          <button class="fd-add-btn" id="stats-url-save" style="flex:1;">Enregistrer l'adresse</button>
+          <button class="fd-add-btn" id="stats-import" style="flex:1;">Importer un relevé</button>
+        </div>
+      </details>
+      <input type="file" id="stats-file" accept=".json,application/json" multiple style="display:none">
+      <div class="fd-hint" id="stats-status" style="margin-top:8px;"></div>
+    </div>
 
     <div class="fd-modal-section">
       <h4>Listes communes à tous les appareils</h4>
+      <div class="fd-hint" style="margin:-4px 0 12px;"><strong>Les autres responsables n'ont besoin que du code d'accès</strong> : dès que l'espace partagé est configuré (plus bas), leurs ajouts et suppressions de techniciens sont diffusés à toutes les tablettes, sans jeton GitHub.</div>
       <div class="fd-hint" style="margin:-4px 0 12px;">Les listes sont lues dans le fichier <strong>listes.json</strong> du dépôt. Une fois la publication configurée ci-dessous, le bouton <strong>Publier en ligne</strong> met le fichier à jour tout seul : plus aucun dépôt manuel.</div>
       <div class="fd-admin-row">
         <button class="fd-add-btn" id="lists-publish" style="flex:1;">Publier en ligne</button>
@@ -526,9 +565,24 @@ if('serviceWorker' in navigator){
       // le fichier du dépôt fait référence : les suppressions se propagent.
       // on ne l'écrase pas si des modifications locales n'ont pas encore été publiées.
       if(isDirty() && !force) return { techniciens: loadPreList(TECH_KEY), local:true };
-      const t = dedupe(d.techniciens);
+      let t = dedupe(d.techniciens);
+      if(typeof d.statsUrl === 'string' && d.statsUrl && !statsUrl()){
+        try{ localStorage.setItem(STATS_URL_KEY, d.statsUrl); }catch(e){}
+      }
+      const cloud = await cloudLists();
+      if(cloud && cloud.length) t = cloud;
       lsSet(TECH_KEY, t);
       return { techniciens:t };
+    }catch(e){ return null; }
+  }
+
+  async function cloudLists(){
+    const url = statsUrl();
+    if(!url) return null;
+    try{
+      const r = await fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'what=lists&v=' + Date.now(), { cache:'no-store' });
+      const d = await r.json();
+      return dedupe(d.techniciens);
     }catch(e){ return null; }
   }
 
@@ -566,6 +620,9 @@ if('serviceWorker' in navigator){
 
   function renderAdminPanel(){
     renderAdminList('admin-tech-list', TECH_KEY, 'text');
+    renderStats();
+    if(statsUrl()) statsPull();
+    else if($('stats-setup')) $('stats-setup').open = true;
     if(isDirty()) shareStatus('\u26A0 Modifications non publiées sur cet appareil \u2014 touche « Publier en ligne » pour les diffuser.', 'err');
     const c = pubConfig();
     if($('pub-repo')){
@@ -573,6 +630,135 @@ if('serviceWorker' in navigator){
       $('pub-branch').value = c.branch || 'main';
       $('pub-token').value = c.token || '';
     }
+  }
+
+  /* ---------- Statistiques d'utilisation ---------- */
+  const STAT_KEY = 'record-stats-usage';
+  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', FC:'Contrat maintenance' };
+  const STATS_URL_KEY = 'record-stats-url';
+  function statsUrl(){ try{ return localStorage.getItem(STATS_URL_KEY) || ''; }catch(e){ return ''; } }
+  const APPS_SCRIPT = [
+    "const SHEET_ID = 'ID_DE_LA_FEUILLE';",
+    "const CODE = 'Chris04';   // code d'accès administrateur",
+    "const P = PropertiesService.getScriptProperties();",
+    "function json(o){ return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }",
+    "function doPost(e){",
+    "  const d = JSON.parse(e.postData.contents);",
+    "  if(d.kind === 'lists'){",
+    "    if(d.code !== CODE) return json({ error:'code' });",
+    "    P.setProperty('techniciens', JSON.stringify(d.techniciens || []));",
+    "    return json({ ok:true });",
+    "  }",
+    "  const sh = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];",
+    "  (d.rows || []).forEach(r => sh.appendRow([r.d, r.t, r.f, r.h]));",
+    "  return json({ ok:true });",
+    "}",
+    "function doGet(e){",
+    "  if(e && e.parameter && e.parameter.what === 'lists'){",
+    "    return json({ techniciens: JSON.parse(P.getProperty('techniciens') || '[]') });",
+    "  }",
+    "  const v = SpreadsheetApp.openById(SHEET_ID).getSheets()[0].getDataRange().getValues();",
+    "  const rows = v.filter(r => r[0]).map(r => ({ d:String(r[0]), t:r[1], f:r[2], h:r[3] }));",
+    "  return json({ rows: rows });",
+    "}"
+  ].join('\n');
+
+  function statLoad(){
+    try{ const a = JSON.parse(localStorage.getItem(STAT_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+    catch(e){ return []; }
+  }
+  function statSave(a){ try{ localStorage.setItem(STAT_KEY, JSON.stringify(a.slice(-4000))); }catch(e){} }
+  function statStatus(msg, tone){
+    const el = $('stats-status');
+    if(!el) return;
+    el.textContent = msg || '';
+    el.style.color = tone === 'err' ? 'var(--red)' : tone === 'ok' ? 'var(--green)' : 'var(--ink-mute)';
+  }
+  function monthKey(iso){ return String(iso || '').slice(0, 7); }
+
+  function renderStats(){
+    const box = $('stats-body');
+    if(!box) return;
+    const rows = statLoad();
+    if(!rows.length){
+      box.innerHTML = '<div class="fd-admin-empty">Aucune fiche enregistrée pour l\'instant.</div>';
+      return;
+    }
+    const byTech = {}, byFiche = {}, byMonth = {};
+    rows.forEach(r=>{
+      byTech[r.t] = byTech[r.t] || { total:0, FD:0, RV:0, RM:0, FC:0, last:'' };
+      const b = byTech[r.t];
+      b.total++; if(b[r.f] !== undefined) b[r.f]++;
+      if(!b.last || r.d > b.last) b.last = r.d;
+      byFiche[r.f] = (byFiche[r.f] || 0) + 1;
+      byMonth[monthKey(r.d)] = (byMonth[monthKey(r.d)] || 0) + 1;
+    });
+    const techs = Object.keys(byTech).sort((a,b)=> byTech[b].total - byTech[a].total || a.localeCompare(b));
+    const months = Object.keys(byMonth).sort().slice(-6);
+    const fdate = iso =>{
+      const d = new Date(iso);
+      return isNaN(d) ? '—' : d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'2-digit' });
+    };
+    const cell = 'padding:8px 10px;border-bottom:1px solid var(--line);font-size:13.5px;';
+    const num = cell + 'text-align:center;font-family:var(--mono);';
+    let html = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">';
+    [['Fiches au total', rows.length], ['Techniciens actifs', techs.length]]
+      .concat(Object.keys(FICHE_LABEL).filter(k=>byFiche[k]).map(k=>[FICHE_LABEL[k], byFiche[k]]))
+      .forEach(([k,v])=>{
+        html += '<div style="flex:1;min-width:120px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 13px;">'
+          + '<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-mute);">' + k + '</div>'
+          + '<div style="font-family:var(--disp);font-weight:700;font-size:22px;color:var(--ink);margin-top:3px;">' + v + '</div></div>';
+      });
+    html += '</div>';
+    html += '<div style="overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px;">'
+      + '<table style="width:100%;border-collapse:collapse;">'
+      + '<thead><tr style="background:var(--surface);">'
+      + ['Technicien','Devis','Vantaux','Rideaux','Contrat','Total','Dernière']
+        .map((t,ix)=>'<th style="' + cell + 'text-align:' + (ix ? 'center' : 'left') + ';font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);font-weight:700;">' + t + '</th>').join('')
+      + '</tr></thead><tbody>';
+    techs.forEach(t=>{
+      const b = byTech[t];
+      html += '<tr><td style="' + cell + 'font-weight:600;">' + t + '</td>'
+        + '<td style="' + num + '">' + (b.FD || '·') + '</td>'
+        + '<td style="' + num + '">' + (b.RV || '·') + '</td>'
+        + '<td style="' + num + '">' + (b.RM || '·') + '</td>'
+        + '<td style="' + num + '">' + (b.FC || '·') + '</td>'
+        + '<td style="' + num + 'font-weight:700;">' + b.total + '</td>'
+        + '<td style="' + num + 'color:var(--ink-mute);">' + fdate(b.last) + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    if(months.length > 1){
+      const max = Math.max.apply(null, months.map(m=>byMonth[m]));
+      html += '<div style="margin-top:14px;"><div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:8px;">Par mois</div>'
+        + '<div style="display:flex;align-items:flex-end;gap:8px;height:76px;">';
+      months.forEach(m=>{
+        const v = byMonth[m];
+        html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;">'
+          + '<div style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);">' + v + '</div>'
+          + '<div style="width:100%;height:' + Math.max(4, Math.round(46 * v / max)) + 'px;background:var(--steel);border-radius:5px 5px 0 0;"></div>'
+          + '<div style="font-family:var(--mono);font-size:9.5px;color:var(--ink-mute);">' + m.slice(5) + '/' + m.slice(2,4) + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+    box.innerHTML = html;
+  }
+
+  function statKey(r){ return r.d + '|' + r.t + '|' + r.f; }
+  function statMerge(incoming){
+    const cur = statLoad();
+    const seen = {};
+    cur.forEach(r=> seen[statKey(r)] = 1);
+    let added = 0;
+    (incoming || []).forEach(r=>{
+      if(!r || !r.d || !r.f) return;
+      const k = statKey(r);
+      if(seen[k]) return;
+      seen[k] = 1; cur.push(r); added++;
+    });
+    cur.sort((a,b)=> a.d < b.d ? -1 : 1);
+    statSave(cur);
+    renderStats();
+    return added;
   }
 
   function shareStatus(msg, tone){
@@ -589,6 +775,7 @@ if('serviceWorker' in navigator){
   function listsPayload(){
     return JSON.stringify({
       techniciens: loadPreList(TECH_KEY),
+      statsUrl: statsUrl(),
       maj: new Date().toISOString().slice(0, 10)
     }, null, 2);
   }
@@ -596,9 +783,29 @@ if('serviceWorker' in navigator){
 
   function pushSilently(){
     setDirty(true);
+    if(statsUrl()){ publishToCloud(); return; }
     const c = pubConfig();
     if(c.repo && c.token) publishLists(true);
-    else shareStatus('Enregistré sur cet appareil. Configure la publication ci-dessous pour diffuser automatiquement.', 'ok');
+    else shareStatus('Enregistré sur cet appareil. Configure la diffusion ci-dessous pour la partager aux tablettes.', 'ok');
+  }
+
+  /* Diffusion sans jeton : n'importe quel responsable connaissant le code
+     d'accès met la liste à jour pour tout le monde. */
+  async function publishToCloud(){
+    const url = statsUrl();
+    if(!url) return;
+    shareStatus('Diffusion en cours...');
+    try{
+      await fetch(url, {
+        method:'POST', mode:'no-cors', keepalive:true,
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({ kind:'lists', code: ADMIN_CODE, techniciens: loadPreList(TECH_KEY) })
+      });
+      setDirty(false);
+      shareStatus('\u2713 Liste diffusée \u2014 toutes les tablettes l\'auront à leur prochaine ouverture.', 'ok');
+    }catch(e){
+      shareStatus('\u26A0 Diffusion impossible (réseau ?) \u2014 la liste reste enregistrée ici, réessaie plus tard.', 'err');
+    }
   }
 
   async function publishLists(silent){
@@ -658,6 +865,7 @@ if('serviceWorker' in navigator){
     shareStatus('Lecture du fichier du dépôt...');
     const d = await loadSharedLists(true);
     renderAdminPanel();
+    renderStats();
     shareStatus(d ? '\u2713 Liste rechargée depuis le dépôt (' + (d.techniciens || []).length + ' technicien(s)).' : '\u26A0 listes.json introuvable \u2014 vérifie qu\'il est déposé à côté des pages.', d ? 'ok' : 'err');
   });
 
@@ -720,6 +928,73 @@ if('serviceWorker' in navigator){
     });
     window.addEventListener('appinstalled', ()=> bar.classList.remove('show'));
   })();
+  if($('stats-code')) $('stats-code').value = APPS_SCRIPT;
+  if($('stats-url')) $('stats-url').value = statsUrl();
+
+  $('stats-url-save') && $('stats-url-save').addEventListener('click', ()=>{
+    const u = $('stats-url').value.trim();
+    if(u && !/^https:\/\/.+\/exec$/i.test(u)){
+      statStatus("\u26A0 Adresse incomplète : colle l'adresse entière fournie par Google, qui commence par https://script.google.com/macros/s/... et finit par /exec.", 'err');
+      return;
+    }
+    try{ localStorage.setItem(STATS_URL_KEY, u); }catch(e){}
+    setDirty(true);
+    pushSilently();
+    statStatus(u ? '\u2713 Adresse enregistrée et diffusée aux tablettes à leur prochaine ouverture.' : 'Collecte automatique désactivée.', u ? 'ok' : null);
+    if(u) statsPull();
+  });
+
+  async function statsPull(){
+    const u = statsUrl();
+    if(!u){ renderStats(); return; }
+    statStatus('Lecture des compteurs en ligne...');
+    try{
+      const r = await fetch(u + (u.indexOf('?') < 0 ? '?' : '&') + 'v=' + Date.now(), { cache:'no-store' });
+      const d = await r.json();
+      const added = statMerge(d.rows);
+      statStatus('\u2713 Compteurs à jour' + (added ? ' (' + added + ' nouvelle(s) fiche(s))' : '') + '.', 'ok');
+    }catch(e){
+      statStatus("\u26A0 Compteurs en ligne illisibles \u2014 vérifie l'adresse de collecte (déploiement « accès : tout le monde »).", 'err');
+    }
+  }
+  $('stats-refresh') && $('stats-refresh').addEventListener('click', statsPull);
+
+  $('stats-export') && $('stats-export').addEventListener('click', ()=>{
+    const rows = statLoad();
+    if(!rows.length){ statStatus('Rien à exporter.', 'err'); return; }
+    const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const csv = '\uFEFF' + ['Date;Technicien;Fiche;Mode'].concat(rows.map(r=>[
+      new Date(r.d).toLocaleString('fr-FR'), r.t, FICHE_LABEL[r.f] || r.f, r.h
+    ].map(esc).join(';'))).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+    a.download = 'statistiques-utilisation.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
+    statStatus('\u2713 ' + rows.length + ' ligne(s) exportée(s).', 'ok');
+  });
+
+  $('stats-import') && $('stats-import').addEventListener('click', ()=> $('stats-file').click());
+  $('stats-file') && $('stats-file').addEventListener('change', async e=>{
+    const files = Array.from(e.target.files || []);
+    let added = 0, bad = 0;
+    for(const f of files){
+      try{
+        const d = JSON.parse(await f.text());
+        added += statMerge(Array.isArray(d) ? d : d.rows);
+      }catch(err){ bad++; }
+    }
+    e.target.value = '';
+    statStatus(bad ? '\u26A0 ' + bad + ' fichier(s) illisible(s). ' + added + ' ligne(s) ajoutée(s).' : '\u2713 ' + added + ' nouvelle(s) ligne(s) importée(s).', bad ? 'err' : 'ok');
+  });
+
+  $('stats-reset') && $('stats-reset').addEventListener('click', ()=>{
+    if(!confirm('Effacer tout le journal d\'utilisation de cet appareil ?')) return;
+    statSave([]);
+    renderStats();
+    statStatus('Compteurs remis à zéro.', 'ok');
+  });
+
   $('admin-close').addEventListener('click', ()=>{ $('admin-modal').classList.add('hidden'); });
   $('admin-modal').addEventListener('click', (e)=>{
     if(e.target.id === 'admin-modal') $('admin-modal').classList.add('hidden');

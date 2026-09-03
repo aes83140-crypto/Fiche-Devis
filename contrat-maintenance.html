@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Demande de devis — RECORD</title>
+<title>Fiche contrat de maintenance — RECORD</title>
 <div class="fd-anno hidden" id="anno-modal">
     <div class="fd-anno-bar">
       <button type="button" id="anno-arrow" class="on">↗ Flèche</button>
@@ -499,121 +499,158 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+<style>
+  .fd-chip.on{background:var(--steel-soft);border-color:var(--steel-2);color:var(--steel);}
+  .fd-chip[data-type="urgent"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-toggle[data-val="urgent"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-toggle[data-val="mauvais"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-mode-hide{display:none !important;}
+</style>
 </head>
 <body>
 
 <div class="fd-wrap">
   <div class="fd-ticket">
-    <div class="fd-eyebrow"><span>RECORD · MAINTENANCE TRAVAUX</span><span id="fd-ticket-no">FD —</span></div>
-    <div class="fd-title">Demande de devis</div>
-    <div class="fd-sub">Relevé technicien à compléter sur site</div>
+    <div class="fd-eyebrow"><span>RECORD &middot; CONTRAT DE MAINTENANCE</span><span id="fd-ticket-no">FC &mdash;</span></div>
+    <div class="fd-title">Fiche contrat de maintenance</div>
+    <div class="fd-sub">Signalement technicien au commercial contrat</div>
   </div>
 
   <div class="fd-body">
 
     <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Intervention</span></div>
+      <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Objet de la demande</span></div>
       <div class="fd-grid">
-        <div class="fd-field">
-          <label>Technicien <span class="req">*</span></label>
-          <input type="text" id="f-tech">
+        <div class="fd-field full"><label>Nature du signalement <span class="req">*</span></label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="demande" data-val="ajout">Ajout d'&eacute;quipement<br>(client sous contrat)</div>
+            <div class="fd-toggle" data-field="demande" data-val="prospect">Nouveau client<br>(sans contrat)</div>
+          </div>
         </div>
-        <div class="fd-field full"><label>Nom du site / Ville <span class="req">*</span></label><input type="text" id="f-site" placeholder="Ex. Entrepôt Logidis, Aubagne"></div>
-        <div class="fd-field full">
-          <label>Mail client <span class="req">*</span></label>
-          <input type="email" id="f-mail" placeholder="contact@client.fr">
-          <div class="fd-photo-hint">Info à titre indicatif, reprise dans le texte — ce n'est pas l'adresse de destination de l'envoi.</div>
+        <div class="fd-field full"><label>Technicien <span class="req">*</span></label><input type="text" id="f-tech"></div>
+        <div class="fd-field full"><label>Priorit&eacute; <span class="req">*</span></label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="prio" data-val="normal">Normal</div>
+            <div class="fd-toggle" data-field="prio" data-val="rapide">&Agrave; traiter vite</div>
+            <div class="fd-toggle" data-field="prio" data-val="urgent">Urgent</div>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Équipement</span></div>
+      <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Client / site</span></div>
       <div class="fd-grid">
-        <div class="fd-field"><label>N° équipement <span class="req">*</span></label><input type="text" class="fd-mono" id="f-equip" placeholder="EQ-000000"></div>
-        <div class="fd-field"><label>N° FQ</label><input type="text" class="fd-mono" id="f-fq" placeholder="FQ-000000"></div>
-        <div class="fd-field full"><label>Localisation</label><input type="text" id="f-loc" placeholder="Bâtiment / quai / porte n°"></div>
+        <div class="fd-field full"><label>Nom du site / Ville <span class="req">*</span></label><input type="text" id="f-site" placeholder="Ex. Intermarch&eacute; Aubagne"></div>
+        <div class="fd-field full"><label>Adresse</label><input type="text" id="f-adresse" placeholder="Rue, code postal, ville"></div>
+        <div class="fd-field"><label>Enseigne / groupe</label><input type="text" id="f-enseigne" placeholder="Ex. Les Mousquetaires"></div>
+        <div class="fd-field"><label>Nombre d'&eacute;quipements sur site</label><input type="number" min="0" step="1" id="f-nbsite" placeholder="0"></div>
+        <div class="fd-field full" id="wrap-concurrent"><label>Concurrent actuellement en place</label><input type="text" id="f-concurrent" placeholder="Ex. aucun / nom de la soci&eacute;t&eacute;"></div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Contact sur place</span></div>
+      <div class="fd-grid">
+        <div class="fd-field"><label>Nom du contact <span class="req">*</span></label><input type="text" id="f-contact" placeholder="Nom et pr&eacute;nom"></div>
+        <div class="fd-field"><label>Fonction</label><input type="text" id="f-fonction" placeholder="Ex. Responsable technique"></div>
+        <div class="fd-field"><label>T&eacute;l&eacute;phone <span class="req">*</span></label><input type="tel" id="f-tel" class="fd-mono" placeholder="06 00 00 00 00"></div>
+        <div class="fd-field"><label>Mail du contact <span class="req">*</span></label><input type="email" id="f-mail" placeholder="contact@client.fr"></div>
+      </div>
+      <div class="fd-photo-hint">Ces coordonn&eacute;es servent au commercial pour rappeler le client &mdash; ce n'est pas l'adresse de destination de l'envoi.</div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">&Eacute;quipement(s) concern&eacute;(s)</span></div>
+      <div class="fd-grid">
+        <div class="fd-field"><label>Nombre d'&eacute;quipements concern&eacute;s <span class="req">*</span></label><input type="number" min="0" step="1" id="f-nbequip" placeholder="0"></div>
+        <div class="fd-field" id="wrap-equip"><label>N&deg; d'&eacute;quipement</label><input type="text" class="fd-mono" id="f-equip" placeholder="EQ-000000"></div>
+        <div class="fd-field"><label>Type de porte <span class="req">*</span></label>
+          <select id="f-porte">
+            <option value="">&mdash; &Agrave; choisir &mdash;</option>
+            <option>Coulissante automatique</option>
+            <option>Battante automatique</option>
+            <option>Tambour / tourniquet</option>
+            <option>Rideau m&eacute;tallique</option>
+            <option>Porte sectionnelle</option>
+            <option>Porte souple rapide</option>
+            <option>Portail / barri&egrave;re</option>
+            <option>Porte pi&eacute;tonne manuelle</option>
+            <option>Plusieurs types</option>
+            <option>Autre</option>
+          </select>
+        </div>
         <div class="fd-field"><label>Marque</label><input type="text" id="f-marque" placeholder="Ex. Record"></div>
-        <div class="fd-field"><label>Modèle</label><input type="text" id="f-modele" placeholder="Ex. Speedor 2"></div>
-      </div>
-    </div>
-
-    <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Moyens & statut</span></div>
-      <div class="fd-grid">
-        <div class="fd-field"><label>Temps par technicien (heures) <span class="req">*</span></label><input type="number" step="0.5" min="0" id="f-temps" placeholder="0"></div>
-        <div class="fd-field"><label>Nombre de techniciens <span class="req">*</span></label><input type="number" step="1" min="0" id="f-nbtech" placeholder="0"></div>
-        <div class="fd-field"><label>Nacelle nécessaire <span class="req">*</span></label>
+        <div class="fd-field"><label>Ann&eacute;e d'installation</label><input type="number" min="1950" max="2100" step="1" class="fd-mono" id="f-annee" placeholder="Ex. 2014"></div>
+        <div class="fd-field"><label>Localisation sur site</label><input type="text" id="f-loc" placeholder="Entr&eacute;e principale, quai 3..."></div>
+        <div class="fd-field full"><label>&Eacute;tat g&eacute;n&eacute;ral <span class="req">*</span></label>
           <div class="fd-toggle-row">
-            <div class="fd-toggle" data-field="nacelle" data-val="oui">Oui</div>
-            <div class="fd-toggle" data-field="nacelle" data-val="non">Non</div>
+            <div class="fd-toggle" data-field="etat" data-val="bon">Bon</div>
+            <div class="fd-toggle" data-field="etat" data-val="moyen">Moyen</div>
+            <div class="fd-toggle" data-field="etat" data-val="mauvais">Mauvais</div>
           </div>
         </div>
-        <div class="fd-field"><label>PIRL nécessaire <span class="req">*</span></label>
-          <div class="fd-toggle-row">
-            <div class="fd-toggle" data-field="pirl" data-val="oui">Oui</div>
-            <div class="fd-toggle" data-field="pirl" data-val="non">Non</div>
-          </div>
-        </div>
-        <div class="fd-field full"><label>Statut de l'intervention <span class="req">*</span></label>
+        <div class="fd-field full"><label>Moyens n&eacute;cessaires pour l'entretien</label>
           <div class="fd-chip-row">
-            <div class="fd-chip" data-type="arret">Porte à l'arrêt</div>
-            <div class="fd-chip" data-type="urgent">Urgent</div>
-            <div class="fd-chip" data-type="preventif">Préventif</div>
+            <div class="fd-chip" data-type="nacelle">Nacelle</div>
+            <div class="fd-chip" data-type="pirl">PIRL</div>
+            <div class="fd-chip" data-type="echafaudage">&Eacute;chafaudage</div>
+            <div class="fd-chip" data-type="hauteur">Acc&egrave;s difficile</div>
           </div>
         </div>
+        <div class="fd-field full"><label>Pr&eacute;cisions d'accessibilit&eacute;</label><input type="text" id="f-acces" placeholder="Ex. intervention hors heures d'ouverture, cl&eacute; &agrave; l'accueil..."></div>
       </div>
     </div>
 
     <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Pièces & photos</span></div>
+      <div class="fd-section-head"><span class="fd-num">5</span><span class="fd-section-title">Remarques &amp; photos</span></div>
       <div class="fd-field full">
-        <label>Descriptif des pièces (référence si possible) <span class="req">*</span></label>
-        <textarea id="f-pieces" placeholder="Ex. Moteur tri 0.75kW réf. XXXX, courroie crantée réf. XXXX..."></textarea>
+        <label>Remarques pour le commercial</label>
+        <textarea id="f-remarque" placeholder="Ex. le client attend un chiffrage avant fin du mois, 2 autres portes &agrave; venir..."></textarea>
       </div>
-      <div class="fd-field full">
-        <label>Photos <span class="req">*</span> (au moins 1 obligatoire)</label>
+      <div class="fd-field full" style="margin-top:18px;">
+        <label>Photos (facultatives)</label>
         <div class="fd-photo-actions">
-          <label class="fd-photo-btn cam" for="f-photo-cam">📷 Prendre une photo</label>
+          <label class="fd-photo-btn cam" for="f-photo-cam">&#128247; Prendre une photo</label>
           <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none;">
-          <label class="fd-photo-btn" for="f-photo-input">🖼 Choisir dans la galerie</label>
+          <label class="fd-photo-btn" for="f-photo-input">&#127912; Choisir dans la galerie</label>
           <input type="file" id="f-photo-input" accept="image/*" multiple style="display:none;">
         </div>
-        <div class="fd-photo-hint">Les photos seront jointes directement au partage (mail, WhatsApp...).</div>
+        <div class="fd-photo-hint">Vue d'ensemble de la porte et de son environnement : c'est ce qui permet au commercial de chiffrer le contrat.</div>
         <div class="fd-photo-grid" id="fd-photo-grid"></div>
       </div>
     </div>
 
-
     <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">↺</span><span class="fd-section-title">Fiches envoyées depuis cet appareil</span></div>
+      <div class="fd-section-head"><span class="fd-num">&#8635;</span><span class="fd-section-title">Fiches envoy&eacute;es depuis cet appareil</span></div>
       <div class="fd-hist-list" id="hist-list"></div>
-      <div class="fd-hint">« Reprendre » recharge la fiche pour un nouvel envoi (les photos ne sont pas conservées).</div>
+      <div class="fd-hint">&laquo; Reprendre &raquo; recharge la fiche pour un nouvel envoi (les photos ne sont pas conserv&eacute;es).</div>
     </div>
 
     <div class="fd-actions">
       <button class="fd-btn" id="btn-mail">Envoyer par mail avec photos</button>
-      <button class="fd-btn secondary" id="btn-pdf">Télécharger le PDF</button>
+      <button class="fd-btn secondary" id="btn-pdf">T&eacute;l&eacute;charger le PDF</button>
       <button class="fd-btn secondary" id="btn-copy">Copier le texte</button>
-      <a class="fd-btn secondary" id="btn-new" href="index.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">← Retour au menu</a>
+      <a class="fd-btn secondary" id="btn-new" href="index.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">&larr; Retour au menu</a>
     </div>
-    <div class="fd-photo-hint" style="text-align:center;margin-top:8px;">Le PDF reprend la mise en forme complète de la fiche, photos incluses.</div>
+    <div class="fd-photo-hint" style="text-align:center;margin-top:8px;">Le PDF reprend la fiche compl&egrave;te, photos incluses.</div>
     <div class="fd-msg" id="fd-msg"></div>
   </div>
 </div>
 
 <div class="fd-footer-credit">
-  <div class="fd-credit-label">Réalisation</div>
+  <div class="fd-credit-label">R&eacute;alisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
 </div>
 
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  const fields = ['tech','site','mail','equip','fq','loc','marque','modele','temps','nbtech','pieces'];
-  let toggles = { nacelle:null, pirl:null };
-  let chips = { arret:false, urgent:false, preventif:false };
-  let photos = []; // dataURLs (jpeg compressés)
+  const fields = ['tech','site','adresse','enseigne','nbsite','concurrent','contact','fonction','tel','mail',
+                  'nbequip','equip','porte','marque','annee','loc','acces','remarque'];
+  let toggles = { demande:null, prio:null, etat:null };
+  let chips = { nacelle:false, pirl:false, echafaudage:false, hauteur:false };
+  let photos = [];
 
   function resizeImage(file){
     return new Promise((resolve)=>{
@@ -692,253 +729,6 @@ if('serviceWorker' in navigator){
     return [prefix, clean(chantier) || 'chantier', clean(equip) || 'equipement'].join('-') + '.pdf';
   }
 
-  function generateFichePDF(data, variant){
-    if(!window.jspdf || !window.jspdf.jsPDF){
-      throw new Error('Bibliothèque PDF non disponible (hors-ligne ?)');
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit:'mm', format:'a4' });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 18;
-    const contentW = pageW - margin*2;
-    const LABEL_X = 66;
-    let y = 0;
-
-    const STEEL=[30,52,72], INK=[18,23,28], SOFT=[100,110,120], LINE=[226,230,235],
-          SURF=[246,248,250], AMBER=[200,129,26], RED=[179,64,58], REDBG=[251,234,232],
-          GREEN=[63,122,70], GREENBG=[233,241,234];
-
-    const dateStr = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
-
-    function setC(c){ doc.setTextColor(c[0],c[1],c[2]); }
-    function fillC(c){ doc.setFillColor(c[0],c[1],c[2]); }
-    function drawC(c){ doc.setDrawColor(c[0],c[1],c[2]); }
-
-    function header(){
-      fillC(STEEL);
-      doc.rect(0,0,pageW,46,'F');
-      fillC(AMBER);
-      doc.rect(0,46,pageW,1.4,'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8);
-      doc.setTextColor(150,175,196);
-      doc.text("RECORD  ·  MAINTENANCE TRAVAUX", margin, 15, { charSpace:0.7 });
-      doc.setTextColor(255,255,255); doc.setFontSize(20);
-      doc.text(variant === 'fournisseur' ? "Demande de chiffrage pièces" : "Demande de devis", margin, 29);
-      doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
-      doc.setTextColor(180,198,213);
-      doc.text((data.site || 'Site non renseigné') + (variant === 'fournisseur' && data.equip ? '   \u00B7   N\u00B0 équipement ' + data.equip : '') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 4 });
-      // le site est déjà sur la ligne de sous-titre : la pastille reste courte
-      const ref = variant === 'fournisseur'
-        ? ('Éq. ' + (data.equip || '\u2014'))
-        : (data.fq ? 'FQ ' + data.fq : 'FQ \u2014');
-      doc.setFont('helvetica','bold'); doc.setFontSize(10);
-      const maxRw = 62;
-      let rw = Math.min(doc.getTextWidth(ref) + 13, maxRw);
-      doc.setDrawColor(118,146,170); doc.setLineWidth(0.5);
-      doc.roundedRect(pageW - margin - rw, 19.5, rw, 11.5, 3.5, 3.5, 'S');
-      doc.setTextColor(255,255,255);
-      doc.text(doc.splitTextToSize(ref, rw - 8)[0], pageW - margin - rw/2, 27.2, { align:'center' });
-      y = 62;
-      setC(INK);
-    }
-
-    function checkBreak(need){
-      if(y + need > pageH - 24){ doc.addPage(); y = 26; }
-    }
-
-    function section(title){
-      checkBreak(30);
-      y += 3;
-      doc.setFont('helvetica','bold'); doc.setFontSize(9);
-      setC(STEEL);
-      doc.text(title.toUpperCase(), margin, y, { charSpace:0.9 });
-      y += 3.6;
-      drawC(LINE); doc.setLineWidth(0.4);
-      doc.line(margin, y, pageW - margin, y);
-      y += 7;
-      setC(INK);
-    }
-
-    function row(label, value){
-      const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
-      doc.setFont('helvetica','normal'); doc.setFontSize(11);
-      const lines = doc.splitTextToSize(val, contentW - LABEL_X - 8);
-      const h = Math.max(13.5, lines.length * 5.8 + 7.6);
-      checkBreak(h + 4);
-      fillC(SURF);
-      doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.8);
-      setC(SOFT);
-      doc.text(label.toUpperCase(), margin + 7, y + 8.6, { charSpace:0.35, maxWidth: LABEL_X - 12 });
-      doc.setFont('helvetica','normal'); doc.setFontSize(11);
-      setC(INK);
-      doc.text(lines, margin + LABEL_X, y + 8.8);
-      y += h + 3.4;
-    }
-
-    function block(label, value){
-      const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
-      doc.setFont('helvetica','normal'); doc.setFontSize(11);
-      const lines = doc.splitTextToSize(val, contentW - 14);
-      const h = 15 + lines.length * 5.8;
-      checkBreak(h + 4);
-      fillC(SURF);
-      doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
-      doc.text(label.toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
-      doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
-      doc.text(lines, margin + 7, y + 16.5);
-      y += h + 3.4;
-    }
-
-    function callout(label, value, tone){
-      const bg = tone === 'red' ? REDBG : GREENBG;
-      const fg = tone === 'red' ? RED : GREEN;
-      const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
-      doc.setFont('helvetica','bold'); doc.setFontSize(13.5);
-      const lines = doc.splitTextToSize(val, contentW - 16);
-      const h = 17 + lines.length * 6.4;
-      checkBreak(h + 5);
-      fillC(bg);
-      doc.roundedRect(margin, y, contentW, h, 3, 3, 'F');
-      fillC(fg);
-      doc.rect(margin, y, 1.8, h, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(fg);
-      doc.text(label.toUpperCase(), margin + 8, y + 8.6, { charSpace:0.4 });
-      doc.setFontSize(13.5);
-      doc.text(lines, margin + 8, y + 17);
-      y += h + 4;
-    }
-
-    function tiles(items){
-      const gap = 4.5;
-      const w = (contentW - gap * (items.length - 1)) / items.length;
-      checkBreak(24);
-      items.forEach((it, i)=>{
-        const x = margin + i * (w + gap);
-        fillC(SURF);
-        doc.roundedRect(x, y, w, 19, 2.5, 2.5, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
-        doc.text(it.k.toUpperCase(), x + 5.5, y + 7, { charSpace:0.35 });
-        doc.setFontSize(12.5); setC(INK);
-        doc.text(String(it.v || '\u2014'), x + 5.5, y + 15);
-      });
-      y += 23;
-    }
-
-    function pills(list){
-      if(!list.length){ row('Statut', ''); return; }
-      checkBreak(15);
-      let x = margin;
-      list.forEach(it=>{
-        doc.setFont('helvetica','bold'); doc.setFontSize(9);
-        const w = doc.getTextWidth(it.t.toUpperCase()) + 11;
-        if(x + w > pageW - margin){ x = margin; y += 12; }
-        fillC(it.tone === 'red' ? REDBG : GREENBG);
-        doc.roundedRect(x, y, w, 9.5, 4.75, 4.75, 'F');
-        setC(it.tone === 'red' ? RED : GREEN);
-        doc.text(it.t.toUpperCase(), x + w/2, y + 6.4, { align:'center', charSpace:0.3 });
-        x += w + 5;
-      });
-      y += 14;
-    }
-
-    function photosPages(list){
-      if(!list || !list.length) return;
-      doc.addPage(); y = 26;
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); setC(STEEL);
-      doc.text('PHOTOS  \u00B7  ' + list.length, margin, y, { charSpace:0.9 });
-      y += 3.6;
-      drawC(LINE); doc.setLineWidth(0.4);
-      doc.line(margin, y, pageW - margin, y);
-      y += 8;
-      const gap = 6, cellW = (contentW - gap) / 2, cellH = cellW * 0.8;
-      let col = 0;
-      list.forEach((p, i)=>{
-        const ph = photoOf(p);
-        if(col === 0) checkBreak(cellH + 13);
-        const x = margin + col * (cellW + gap);
-        fillC(SURF);
-        doc.roundedRect(x, y, cellW, cellH, 2.5, 2.5, 'F');
-        const ratio = (ph.w || 4) / (ph.h || 3);
-        let iw = cellW - 5, ih = iw / ratio;
-        if(ih > cellH - 5){ ih = cellH - 5; iw = ih * ratio; }
-        try{ doc.addImage(ph.dataUrl, 'JPEG', x + (cellW - iw)/2, y + (cellH - ih)/2, iw, ih); }catch(err){}
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
-        doc.text('PHOTO ' + (i+1), x, y + cellH + 5.2, { charSpace:0.4 });
-        col++;
-        if(col === 2){ col = 0; y += cellH + 12; }
-      });
-      if(col === 1) y += cellH + 12;
-    }
-
-    function footers(){
-      const total = doc.internal.getNumberOfPages();
-      for(let p = 1; p <= total; p++){
-        doc.setPage(p);
-        drawC(LINE); doc.setLineWidth(0.4);
-        doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
-        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); setC(SOFT);
-        doc.text('Réalisation Christophe BATAILLE  \u00B7  ' + dateStr, margin, pageH - 10);
-        doc.text('Page ' + p + ' / ' + total, pageW - margin, pageH - 10, { align:'right' });
-      }
-    }
-
-    header();
-
-    if(variant === 'fournisseur'){
-      callout('Merci de rappeler ces deux références sur votre chiffrage',
-        (data.site || 'Site \u2014') + '   \u00B7   N\u00B0 équipement : ' + (data.equip || '\u2014'));
-
-      section('Équipement à chiffrer');
-      tiles([
-        { k:'N° équipement', v:data.equip },
-        { k:'Marque', v:data.marque },
-        { k:'Modèle', v:data.modele },
-      ]);
-      row('Site', data.site);
-
-      section('Pièces à chiffrer');
-      block('Descriptif', data.pieces);
-      row('Demande', 'Chiffrage des pièces uniquement \u2014 la main d\u2019œuvre est traitée en interne.');
-    } else {
-      section('Intervention');
-      row('Technicien', data.tech);
-      row('Site / Ville', data.site);
-      row('Mail client', data.mail);
-
-      section('Équipement');
-      tiles([
-        { k:'N° équipement', v:data.equip },
-        { k:'N° FQ', v:data.fq },
-      ]);
-      row('Localisation', data.loc);
-      row('Marque / Modèle', [data.marque, data.modele].filter(Boolean).join(' ') || '');
-
-      section('Moyens \u00E0 prévoir');
-      tiles([
-        { k:'Temps / technicien', v:(data.temps ? data.temps + ' h' : '') },
-        { k:'Nb techniciens', v:data.nbtech },
-        { k:'Nacelle', v:data.toggles.nacelle },
-        { k:'PIRL', v:data.toggles.pirl },
-      ]);
-
-      section("Statut de l'intervention");
-      pills(statusLabel(data).map(t=>({ t:t, tone:(t === 'Préventif' ? 'green' : 'red') })));
-
-      section('Pièces à devis');
-      block('Descriptif', data.pieces);
-    }
-
-    photosPages(data.photos);
-    footers();
-
-    return doc;
-  }
-
-  // --- Stockage local (fonctionne hors-ligne, propre à cette tablette/navigateur) ---
   function lsGet(key){
     try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; }
   }
@@ -1070,7 +860,7 @@ if('serviceWorker' in navigator){
   function mailOk(v){ return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(String(v || '').trim()); }
 
   /* ---------- Historique des fiches envoyées ---------- */
-  const HIST_KEY = 'record-hist-devis';
+  const HIST_KEY = 'record-hist-contrat';
   function histLoad(){
     try{ const a = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); return Array.isArray(a) ? a : []; }
     catch(e){ return []; }
@@ -1115,7 +905,7 @@ if('serviceWorker' in navigator){
   }
   window.addEventListener('online', statFlush);
   function histAdd(data, how){
-    statLog(data.tech, 'FD', how);
+    statLog(data.tech, 'FC', how);
     const clean = {...data};
     delete clean.photos;
     const list = histLoad();
@@ -1305,22 +1095,58 @@ if('serviceWorker' in navigator){
     };
   })();
 
+  const DEMANDE_LABEL = {
+    ajout:"Ajout d'un équipement chez un client déjà sous contrat",
+    prospect:"Nouveau client / prospect sans contrat de maintenance"
+  };
+  const PRIO_LABEL = { normal:'Normal', rapide:'À traiter rapidement', urgent:'Urgent' };
+  const ETAT_LABEL = { bon:'Bon', moyen:'Moyen', mauvais:'Mauvais' };
+
+  function moyensList(){
+    const l = [];
+    if(chips.nacelle) l.push('Nacelle');
+    if(chips.pirl) l.push('PIRL');
+    if(chips.echafaudage) l.push('Échafaudage');
+    if(chips.hauteur) l.push('Accès difficile');
+    return l;
+  }
+
+  /* Le n° d'équipement n'existe que chez un client déjà sous contrat ;
+     le concurrent en place ne concerne que les prospects. */
+  function applyMode(){
+    const prospect = toggles.demande === 'prospect';
+    $('wrap-concurrent').classList.toggle('fd-mode-hide', toggles.demande === 'ajout');
+    $('f-equip').placeholder = prospect ? 'Si déjà identifié' : 'EQ-000000';
+    updateTicketRef();
+  }
+  document.querySelectorAll('.fd-toggle[data-field="demande"]').forEach(t=>{
+    t.addEventListener('click', applyMode);
+  });
+
+  function updateTicketRef(){
+    const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const site = clean($('f-site').value), eq = clean($('f-equip').value);
+    $('fd-ticket-no').textContent = (site || eq)
+      ? 'FC-' + (site || 'client') + '-' + (eq || 'equipement')
+      : 'FC \u2014';
+  }
+  ['f-site','f-equip'].forEach(id => $(id).addEventListener('input', updateTicketRef));
+
   function histTitle(data){
-    return [data.site || 'Site non renseigné', data.equip ? 'Éq. ' + data.equip : '', data.fq ? 'FQ ' + data.fq : '']
+    return [data.site || 'Site non renseigné',
+            data.toggles && data.toggles.demande === 'prospect' ? 'Prospect' : 'Ajout équipement',
+            data.equip ? 'Éq. ' + data.equip : '']
       .filter(Boolean).join('  ·  ');
   }
 
   function applyForm(data){
     fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = data[f] || ''; });
-    toggles = { nacelle:(data.toggles||{}).nacelle || null, pirl:(data.toggles||{}).pirl || null };
-    chips = { arret:!!(data.chips||{}).arret, urgent:!!(data.chips||{}).urgent, preventif:!!(data.chips||{}).preventif };
-    document.querySelectorAll('.fd-toggle').forEach(t=>{
-      t.classList.toggle('on', toggles[t.dataset.field] === t.dataset.val);
-    });
-    document.querySelectorAll('.fd-chip').forEach(c=>{
-      c.classList.toggle('on', !!chips[c.dataset.type]);
-    });
-    updateTicketRef();
+    toggles = { demande:(data.toggles||{}).demande || null, prio:(data.toggles||{}).prio || null, etat:(data.toggles||{}).etat || null };
+    chips = { nacelle:!!(data.chips||{}).nacelle, pirl:!!(data.chips||{}).pirl,
+              echafaudage:!!(data.chips||{}).echafaudage, hauteur:!!(data.chips||{}).hauteur };
+    document.querySelectorAll('.fd-toggle').forEach(t=> t.classList.toggle('on', toggles[t.dataset.field] === t.dataset.val));
+    document.querySelectorAll('.fd-chip').forEach(c=> c.classList.toggle('on', !!chips[c.dataset.type]));
+    applyMode();
   }
 
   function readForm(){
@@ -1333,87 +1159,259 @@ if('serviceWorker' in navigator){
     fields.forEach(f => $('f-'+f).value = '');
     photos = [];
     renderPhotoGrid();
-    toggles = { nacelle:null, pirl:null };
-    chips = { arret:false, urgent:false, preventif:false };
+    toggles = { demande:null, prio:null, etat:null };
+    chips = { nacelle:false, pirl:false, echafaudage:false, hauteur:false };
     document.querySelectorAll('.fd-toggle').forEach(t=>t.classList.remove('on'));
     document.querySelectorAll('.fd-chip').forEach(c=>c.classList.remove('on'));
-    updateTicketRef();
+    applyMode();
   }
 
-  function updateTicketRef(){
-    // même composition que le nom du PDF : FD-(site)-(n° équipement)
-    const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
-    const site = clean($('f-site').value), eq = clean($('f-equip').value);
-    $('fd-ticket-no').textContent = (site || eq)
-      ? 'FD-' + (site || 'chantier') + '-' + (eq || 'equipement')
-      : 'FD —';
-  }
-  ['f-site','f-equip'].forEach(id => $(id).addEventListener('input', updateTicketRef));
-  updateTicketRef();
+  /* ---------- PDF ---------- */
+  function generateFichePDF(data){
+    if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('Bibliothèque PDF non disponible (hors-ligne ?)');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 18, contentW = pageW - margin*2, LABEL_X = 66;
+    let y = 0;
+    const STEEL=[30,52,72], INK=[18,23,28], SOFT=[100,110,120], LINE=[226,230,235],
+          SURF=[246,248,250], AMBER=[200,129,26], RED=[179,64,58], REDBG=[251,234,232],
+          GREEN=[63,122,70], GREENBG=[233,241,234];
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const setC = c => doc.setTextColor(c[0],c[1],c[2]);
+    const fillC = c => doc.setFillColor(c[0],c[1],c[2]);
+    const drawC = c => doc.setDrawColor(c[0],c[1],c[2]);
+    const has = v => v !== undefined && v !== null && String(v).trim() !== '';
 
-  function statusLabel(data){
-    const l = [];
-    if(data.chips.arret) l.push("Porte à l'arrêt");
-    if(data.chips.urgent) l.push('Urgent');
-    if(data.chips.preventif) l.push('Préventif');
-    return l;
+    function header(){
+      fillC(STEEL); doc.rect(0,0,pageW,46,'F');
+      fillC(AMBER); doc.rect(0,46,pageW,1.4,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(150,175,196);
+      doc.text('RECORD  ·  CONTRAT DE MAINTENANCE', margin, 15, { charSpace:0.7 });
+      doc.setTextColor(255,255,255); doc.setFontSize(20);
+      doc.text('Fiche contrat de maintenance', margin, 29);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(180,198,213);
+      doc.text((data.site || 'Site non renseigné') + '   ·   ' + dateStr, margin, 38, { maxWidth: contentW - 70 });
+      const ref = data.toggles.demande === 'prospect' ? 'PROSPECT' : 'AJOUT ÉQ.';
+      doc.setFont('helvetica','bold'); doc.setFontSize(10);
+      const rw = Math.min(doc.getTextWidth(ref) + 13, 62);
+      doc.setDrawColor(118,146,170); doc.setLineWidth(0.5);
+      doc.roundedRect(pageW - margin - rw, 19.5, rw, 11.5, 3.5, 3.5, 'S');
+      doc.setTextColor(255,255,255);
+      doc.text(ref, pageW - margin - rw/2, 27.2, { align:'center' });
+      y = 62; setC(INK);
+    }
+    function checkBreak(need){ if(y + need > pageH - 24){ doc.addPage(); y = 26; } }
+    function section(title){
+      checkBreak(30); y += 3;
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); setC(STEEL);
+      doc.text(title.toUpperCase(), margin, y, { charSpace:0.9 });
+      y += 3.6; drawC(LINE); doc.setLineWidth(0.4);
+      doc.line(margin, y, pageW - margin, y);
+      y += 7; setC(INK);
+    }
+    function row(label, value){
+      if(!has(value)) return;
+      const val = String(value);
+      doc.setFont('helvetica','normal'); doc.setFontSize(11);
+      const lines = doc.splitTextToSize(val, contentW - LABEL_X - 8);
+      const h = Math.max(13.5, lines.length * 5.8 + 7.6);
+      checkBreak(h + 4);
+      fillC(SURF); doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
+      doc.text(label.toUpperCase(), margin + 7, y + 8.6, { charSpace:0.35, maxWidth: LABEL_X - 12 });
+      doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
+      doc.text(lines, margin + LABEL_X, y + 8.8);
+      y += h + 3.4;
+    }
+    function block(label, value){
+      if(!has(value)) return;
+      doc.setFont('helvetica','normal'); doc.setFontSize(11);
+      const lines = doc.splitTextToSize(String(value), contentW - 14);
+      const h = 15 + lines.length * 5.8;
+      checkBreak(h + 4);
+      fillC(SURF); doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
+      doc.text(label.toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
+      doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
+      doc.text(lines, margin + 7, y + 16.5);
+      y += h + 3.4;
+    }
+    function callout(label, value, tone){
+      const bg = tone === 'red' ? REDBG : GREENBG, fg = tone === 'red' ? RED : GREEN;
+      doc.setFont('helvetica','bold'); doc.setFontSize(13.5);
+      const lines = doc.splitTextToSize(String(value || '—'), contentW - 16);
+      const h = 17 + lines.length * 6.4;
+      checkBreak(h + 5);
+      fillC(bg); doc.roundedRect(margin, y, contentW, h, 3, 3, 'F');
+      fillC(fg); doc.rect(margin, y, 1.8, h, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(fg);
+      doc.text(label.toUpperCase(), margin + 8, y + 8.6, { charSpace:0.4 });
+      doc.setFontSize(13.5);
+      doc.text(lines, margin + 8, y + 17);
+      y += h + 4;
+    }
+    function tiles(items){
+      items = items.filter(it => has(it.v));
+      if(!items.length) return;
+      const gap = 4.5, w = (contentW - gap * (items.length - 1)) / items.length;
+      checkBreak(24);
+      items.forEach((it, i)=>{
+        const x = margin + i * (w + gap);
+        fillC(SURF); doc.roundedRect(x, y, w, 19, 2.5, 2.5, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
+        doc.text(it.k.toUpperCase(), x + 5.5, y + 7, { charSpace:0.35, maxWidth: w - 9 });
+        doc.setFontSize(12.5); setC(INK);
+        doc.text(doc.splitTextToSize(String(it.v), w - 10)[0], x + 5.5, y + 15);
+      });
+      y += 23;
+    }
+    function photosPages(list){
+      if(!list || !list.length) return;
+      doc.addPage(); y = 26;
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); setC(STEEL);
+      doc.text('PHOTOS  ·  ' + list.length, margin, y, { charSpace:0.9 });
+      y += 3.6; drawC(LINE); doc.setLineWidth(0.4);
+      doc.line(margin, y, pageW - margin, y); y += 8;
+      const gap = 6, cellW = (contentW - gap) / 2, cellH = cellW * 0.8;
+      let col = 0;
+      list.forEach((p, i)=>{
+        const ph = photoOf(p);
+        if(col === 0) checkBreak(cellH + 13);
+        const x = margin + col * (cellW + gap);
+        fillC(SURF); doc.roundedRect(x, y, cellW, cellH, 2.5, 2.5, 'F');
+        const ratio = (ph.w || 4) / (ph.h || 3);
+        let iw = cellW - 5, ih = iw / ratio;
+        if(ih > cellH - 5){ ih = cellH - 5; iw = ih * ratio; }
+        try{ doc.addImage(ph.dataUrl, 'JPEG', x + (cellW - iw)/2, y + (cellH - ih)/2, iw, ih); }catch(err){}
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
+        doc.text('PHOTO ' + (i+1), x, y + cellH + 5.2, { charSpace:0.4 });
+        col++;
+        if(col === 2){ col = 0; y += cellH + 12; }
+      });
+      if(col === 1) y += cellH + 12;
+    }
+    function footers(){
+      const total = doc.internal.getNumberOfPages();
+      for(let p = 1; p <= total; p++){
+        doc.setPage(p);
+        drawC(LINE); doc.setLineWidth(0.4);
+        doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); setC(SOFT);
+        doc.text('Réalisation Christophe BATAILLE  ·  ' + dateStr, margin, pageH - 10);
+        doc.text('Page ' + p + ' / ' + total, pageW - margin, pageH - 10, { align:'right' });
+      }
+    }
+
+    header();
+    callout('Nature du signalement', DEMANDE_LABEL[data.toggles.demande] || '—',
+      data.toggles.demande === 'prospect' ? 'green' : null);
+    if(data.toggles.prio === 'urgent' || data.toggles.prio === 'rapide'){
+      callout('Priorité', PRIO_LABEL[data.toggles.prio], data.toggles.prio === 'urgent' ? 'red' : null);
+    }
+
+    section('Client / site');
+    row('Site / Ville', data.site);
+    row('Adresse', data.adresse);
+    tiles([
+      { k:'Enseigne / groupe', v:data.enseigne },
+      { k:'Éq. sur site', v:data.nbsite },
+      { k:'Concurrent', v:data.toggles.demande === 'prospect' ? data.concurrent : '' }
+    ]);
+
+    section('Contact sur place');
+    row('Nom', [data.contact, data.fonction ? '(' + data.fonction + ')' : ''].filter(Boolean).join(' '));
+    row('Téléphone', data.tel);
+    row('Mail', data.mail);
+
+    section('Équipement(s) concerné(s)');
+    tiles([
+      { k:'Nb concernés', v:data.nbequip },
+      { k:'N° équipement', v:data.equip },
+      { k:'État général', v:ETAT_LABEL[data.toggles.etat] }
+    ]);
+    row('Type de porte', data.porte);
+    row('Marque / Année', [data.marque, data.annee].filter(Boolean).join('  ·  '));
+    row('Localisation', data.loc);
+    row('Moyens nécessaires', moyensList().join('  ·  '));
+    row('Accessibilité', data.acces);
+
+    if(has(data.remarque)){
+      section('Remarques du technicien');
+      block('Remarques', data.remarque);
+    }
+
+    section('Relevé par');
+    row('Technicien', data.tech);
+    row('Priorité', PRIO_LABEL[data.toggles.prio]);
+
+    photosPages(data.photos);
+    footers();
+    return doc;
   }
 
+  /* ---------- Texte du mail ---------- */
   function formatText(data, opts){
     opts = opts || {};
     const dateStr = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
-    const statuts = statusLabel(data).join('  \u00B7  ') || '\u2014';
-    const nbtechDisplay = (data.nbtech === '' || data.nbtech === undefined || data.nbtech === null) ? '\u2014' : data.nbtech;
-    const L = [];
-    const rule = '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500';
+    const L = [], rule = '────────────────────';
+    const has = v => v !== undefined && v !== null && String(v).trim() !== '';
     function bloc(titre, lignes){
-      L.push('');
-      L.push(titre.toUpperCase());
-      L.push(rule);
-      lignes.filter(Boolean).forEach(l => L.push(l));
+      lignes = lignes.filter(Boolean);
+      if(!lignes.length) return;
+      L.push(''); L.push(titre.toUpperCase()); L.push(rule);
+      lignes.forEach(l => L.push(l));
     }
-    function kv(k, v){ return k + ' : ' + (v || '\u2014'); }
+    const kv = (k, v) => has(v) ? (k + ' : ' + v) : null;
 
-    L.push('DEMANDE DE DEVIS');
+    L.push('FICHE CONTRAT DE MAINTENANCE');
     L.push(rule);
-    L.push(data.site || 'Site non renseigné');
-    L.push((data.fq ? 'FQ ' + data.fq + '  \u00B7  ' : '') + dateStr);
-    L.push('Statut : ' + statuts);
+    L.push(DEMANDE_LABEL[data.toggles.demande] || 'Nature non précisée');
+    L.push((data.site || 'Site non renseigné') + '  ·  ' + dateStr);
+    L.push('Priorité : ' + (PRIO_LABEL[data.toggles.prio] || '—'));
 
-    bloc('Intervention', [
-      kv('Technicien', data.tech),
-      kv('Mail client', data.mail),
+    bloc('Client / site', [
+      kv('Site / Ville', data.site),
+      kv('Adresse', data.adresse),
+      kv('Enseigne / groupe', data.enseigne),
+      kv("Nombre d'équipements sur site", data.nbsite),
+      data.toggles.demande === 'prospect' ? kv('Concurrent en place', data.concurrent) : null
     ]);
 
-    bloc('Équipement', [
+    bloc('Contact sur place', [
+      kv('Nom', data.contact),
+      kv('Fonction', data.fonction),
+      kv('Téléphone', data.tel),
+      kv('Mail', data.mail)
+    ]);
+
+    bloc('Équipement(s) concerné(s)', [
+      kv('Nombre concernés', data.nbequip),
       kv('N° équipement', data.equip),
-      data.fq ? kv('N° FQ', data.fq) : null,
-      data.loc ? kv('Localisation', data.loc) : null,
-      kv('Marque / Modèle', [data.marque, data.modele].filter(Boolean).join(' ')),
+      kv('Type de porte', data.porte),
+      kv('Marque', data.marque),
+      kv("Année d'installation", data.annee),
+      kv('État général', ETAT_LABEL[data.toggles.etat]),
+      kv('Localisation', data.loc),
+      kv('Moyens nécessaires', moyensList().join(', ')),
+      kv('Accessibilité', data.acces)
     ]);
 
-    bloc('Moyens à prévoir', [
-      kv('Temps par technicien', (data.temps ? data.temps + ' h' : '')),
-      kv('Nombre de techniciens', nbtechDisplay),
-      kv('Nacelle', data.toggles.nacelle),
-      kv('PIRL', data.toggles.pirl),
-    ]);
-
-    bloc('Pièces à devis', [ (data.pieces || '\u2014') ]);
+    bloc('Remarques', [ has(data.remarque) ? data.remarque : null ]);
+    bloc('Relevé par', [ kv('Technicien', data.tech) ]);
 
     if(opts.notePhotos || opts.note){
       const lignes = [];
       if(opts.notePhotos){
         lignes.push(data.photos && data.photos.length
-          ? data.photos.length + ' photo(s) à joindre manuellement'
-          : 'Aucune photo');
+          ? data.photos.length + ' photo(s) à joindre manuellement' : 'Aucune photo');
       }
       if(opts.note) lignes.push(opts.note);
       bloc('Pièces jointes', lignes);
     }
-
     L.push('');
-    L.push('\u2014 Relevé technicien RECORD');
+    L.push('— Relevé technicien RECORD');
     return L.join('\n');
   }
 
@@ -1422,55 +1420,55 @@ if('serviceWorker' in navigator){
     const el = $('fd-msg');
     el.textContent = (ok===false ? '⚠️ ' : '✓ ') + text;
     el.className = 'fd-msg show ' + (ok===false ? 'error' : 'success');
-    if(!noScroll) el.scrollIntoView({ behavior:'smooth', block:'center' });
+    if(!noScroll){
+      const r = el.getBoundingClientRect();
+      window.scrollTo({ top: Math.max(0, window.pageYOffset + r.top - 160), behavior:'smooth' });
+    }
     clearTimeout(msgTimeout);
     msgTimeout = setTimeout(()=>{ el.classList.remove('show'); }, ok===false ? 7000 : 3500);
   }
 
   function clearFlags(){
     document.querySelectorAll('.fd-invalid,.fd-flag').forEach(e=>{
-      e.classList.remove('fd-invalid');
-      e.classList.remove('fd-flag');
+      e.classList.remove('fd-invalid'); e.classList.remove('fd-flag');
     });
   }
-
   function highlight(sel){
     clearFlags();
     if(!sel) return;
     const el = document.querySelector(sel);
     if(!el) return;
     const isInput = /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
-    const box = isInput ? el : (el.closest('.fd-toggle-row, .fd-chip-row, .fd-visual-grid, .fd-panel-box, .fd-photo-actions') || el);
+    const box = isInput ? el : (el.closest('.fd-toggle-row, .fd-chip-row, .fd-photo-actions') || el);
     box.classList.add(isInput ? 'fd-invalid' : 'fd-flag');
     const r = box.getBoundingClientRect();
     window.scrollTo({ top: Math.max(0, window.pageYOffset + r.top - 110), behavior:'smooth' });
-    if(isInput && typeof el.focus === 'function'){ try{ el.focus({ preventScroll:true }); }catch(e){ } }
+    if(isInput && typeof el.focus === 'function'){ try{ el.focus({ preventScroll:true }); }catch(e){} }
   }
-
   document.addEventListener('input', clearFlags, true);
   document.addEventListener('change', clearFlags, true);
-  document.addEventListener('click', (e)=>{
+  document.addEventListener('click', e=>{
     if(e.target && e.target.closest && e.target.closest('.fd-flag')) clearFlags();
   }, true);
 
   function validate(data){
+    if(!toggles.demande) return { msg:'Merci de préciser la nature du signalement.', target:'.fd-toggle[data-field="demande"]' };
     if(!data.tech) return { msg:'Le technicien est obligatoire.', target:'#f-tech' };
+    if(!toggles.prio) return { msg:'La priorité est obligatoire.', target:'.fd-toggle[data-field="prio"]' };
     if(!data.site) return { msg:'Le nom du site est obligatoire.', target:'#f-site' };
-    if(!data.equip) return { msg:"Le n° d'équipement est obligatoire.", target:'#f-equip' };
-    if(!data.mail) return { msg:'Le mail client est obligatoire.', target:'#f-mail' };
-    if(!mailOk(data.mail)) return { msg:"L'adresse mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mail' };
-    if(!data.temps) return { msg:'Le temps par technicien est obligatoire.', target:'#f-temps' };
-    if(!data.nbtech) return { msg:'Le nombre de techniciens est obligatoire.', target:'#f-nbtech' };
-    if(parseFloat(String(data.nbtech).replace(',','.')) <= 0) return { msg:'Le nombre de techniciens doit être supérieur à 0 — merci de le saisir.', target:'#f-nbtech' };
-    if(!toggles.nacelle) return { msg:'Merci de préciser si une nacelle est nécessaire.', target:'.fd-toggle[data-field="nacelle"]' };
-    if(!toggles.pirl) return { msg:'Merci de préciser si un PIRL est nécessaire.', target:'.fd-toggle[data-field="pirl"]' };
-    if(!data.chips.arret && !data.chips.urgent && !data.chips.preventif) return { msg:"Le statut de l'intervention est obligatoire.", target:'.fd-chip-row' };
-    if(!data.pieces) return { msg:'Le descriptif des pièces est obligatoire.', target:'#f-pieces' };
-    if(!data.photos || !data.photos.length) return { msg:'Au moins une photo est obligatoire.', target:'.fd-photo-btn' };
+    if(!data.contact) return { msg:'Le nom du contact sur place est obligatoire.', target:'#f-contact' };
+    if(!data.tel) return { msg:'Le téléphone du contact est obligatoire.', target:'#f-tel' };
+    if(!data.mail) return { msg:'Le mail du contact est obligatoire.', target:'#f-mail' };
+    if(!mailOk(data.mail)) return { msg:"L'adresse mail du contact n'est pas valide (exemple : nom@societe.fr).", target:'#f-mail' };
+    if(!data.nbequip) return { msg:"Le nombre d'équipements concernés est obligatoire.", target:'#f-nbequip' };
+    if(parseFloat(String(data.nbequip).replace(',','.')) <= 0) return { msg:"Le nombre d'équipements concernés doit être supérieur à 0.", target:'#f-nbequip' };
+    if(!data.porte) return { msg:'Le type de porte est obligatoire.', target:'#f-porte' };
+    if(!toggles.etat) return { msg:"L'état général de l'équipement est obligatoire.", target:'.fd-toggle[data-field="etat"]' };
     return null;
   }
 
-
+  applyMode();
+  updateTicketRef();
   renderHistory();
 
   $('btn-copy').addEventListener('click', async ()=>{
@@ -1478,80 +1476,61 @@ if('serviceWorker' in navigator){
     try{
       await navigator.clipboard.writeText(text);
       showMsg('Texte copié dans le presse-papiers.');
-    }catch(e){
-      showMsg("Copie impossible sur cet appareil.", false);
-    }
+    }catch(e){ showMsg('Copie impossible sur cet appareil.', false); }
   });
 
   $('btn-mail').addEventListener('click', ()=>{
     const data = readForm();
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
-    const subject = 'Demande de devis - ' + (data.site||'Site') + (data.fq ? ' - FQ '+data.fq : '');
-
-    let pdfFile = null, pdfDoc = null, fourFile = null, fourDoc = null;
-    const pdfName = pdfFileName('FD', data.site, data.equip);
-    const fourName = pdfFileName('FD-FOURNISSEUR', data.site, data.equip);
+    const objet = (data.toggles.demande === 'prospect' ? 'Nouveau client à contacter' : 'Ajout équipement au contrat')
+      + ' - ' + (data.site || 'Site') + (data.toggles.prio === 'urgent' ? ' - URGENT' : '');
+    let pdfFile = null, pdfDoc = null;
+    const pdfName = pdfFileName('FC', data.site, data.equip || data.porte);
     try{
       pdfDoc = generateFichePDF(data);
       pdfFile = new File([pdfDoc.output('blob')], pdfName, { type:'application/pdf' });
-      fourDoc = generateFichePDF(data, 'fournisseur');
-      fourFile = new File([fourDoc.output('blob')], fourName, { type:'application/pdf' });
     }catch(e){
-      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ") — utilise \"Copier le texte\" en secours.", false);
+      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ') — utilise "Copier le texte" en secours.', false);
       return;
     }
-
-    const files = [pdfFile, fourFile];
-    const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
-    if(canAttach){
-      const filesAttached = true;
-      const note = '📎 2 PDF joints : fiche complète (interne) et demande de chiffrage à transmettre au fournisseur.';
-      const text = formatText(data, { note: note });
-      const shareData = { title: subject, text: text };
-      if(filesAttached){
-        shareData.files = files;
-      }
-      navigator.share(shareData).then(()=>{
-        histAdd(data, 'mail');
-        showMsg('Partage envoyé.');
-      }).catch(e=>{
-        if(e && e.name === 'AbortError') return; // annulé par l'utilisateur
-        const detail = (e && e.message) ? e.message : (e && e.name) ? e.name : 'erreur inconnue';
-        showMsg('Le partage a échoué (' + detail + ') — utilise "Télécharger le PDF" puis joins-le manuellement.', false);
-      });
+    const files = [pdfFile];
+    if(navigator.share && navigator.canShare && navigator.canShare({ files: files })){
+      navigator.share({ title:objet, text:formatText(data, { note:'📎 Fiche PDF jointe, photos incluses.' }), files:files })
+        .then(()=>{ histAdd(data, 'mail'); showMsg('Partage envoyé.'); })
+        .catch(e=>{
+          if(e && e.name === 'AbortError') return;
+          showMsg('Le partage a échoué (' + ((e && e.message) || 'erreur') + ') — utilise "Télécharger le PDF" puis joins-le manuellement.', false);
+        });
     } else {
-      const text = formatText(data, { note: '📎 PDF à télécharger (bouton dédié) et à joindre manuellement.' });
+      const text = formatText(data, { note:'📎 PDF téléchargé séparément, à joindre au message.' });
       try{
-        const url = 'mailto:' + '' + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
         const a = document.createElement('a');
-        a.href = url; a.rel = 'noopener';
+        a.href = 'mailto:?subject=' + encodeURIComponent(objet) + '&body=' + encodeURIComponent(text);
+        a.rel = 'noopener';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(()=>{ try{ pdfDoc.save(pdfName); }catch(e2){} }, 1200);
-        setTimeout(()=>{ try{ fourDoc.save(fourName); }catch(e2){} }, 2400);
         histAdd(data, 'mail');
-        showMsg('Mail ouvert — choisis le destinataire ; les 2 PDF (complet + fournisseur) viennent d\'être téléchargés, joins-les au message.');
+        showMsg('Mail ouvert — choisis le destinataire ; le PDF vient d\'être téléchargé, joins-le au message.');
       }catch(e){
-        showMsg("Partage indisponible sur cet appareil — utilise \"Télécharger le PDF\".", false);
+        showMsg('Partage indisponible sur cet appareil — utilise "Télécharger le PDF".', false);
       }
     }
   });
 
-  function downloadPdf(variant){
+  $('btn-pdf').addEventListener('click', ()=>{
     const data = readForm();
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
     try{
-      const pdfDoc = generateFichePDF(data, variant);
-      const name = pdfFileName(variant === 'fournisseur' ? 'FD-FOURNISSEUR' : 'FD', data.site, data.equip);
-      pdfDoc.save(name);
+      const pdfDoc = generateFichePDF(data);
+      pdfDoc.save(pdfFileName('FC', data.site, data.equip || data.porte));
       histAdd(data, 'PDF');
       showMsg('PDF téléchargé — tu peux le joindre manuellement à ton mail.');
     }catch(e){
-      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ").", false);
+      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ').', false);
     }
-  }
-  $('btn-pdf').addEventListener('click', ()=> downloadPdf(null));
+  });
 
 })();
 </script>
