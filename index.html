@@ -580,8 +580,7 @@ if('serviceWorker' in navigator){
     const url = statsUrl();
     if(!url) return null;
     try{
-      const r = await fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'what=lists&v=' + Date.now(), { cache:'no-store' });
-      const d = await r.json();
+      const d = await cloudGet(url, { what:'lists' });
       return dedupe(d.techniciens);
     }catch(e){ return null; }
   }
@@ -654,14 +653,41 @@ if('serviceWorker' in navigator){
     "  return json({ ok:true });",
     "}",
     "function doGet(e){",
-    "  if(e && e.parameter && e.parameter.what === 'lists'){",
-    "    return json({ techniciens: JSON.parse(P.getProperty('techniciens') || '[]') });",
+    "  const p = (e && e.parameter) || {};",
+    "  let out;",
+    "  if(p.what === 'lists'){",
+    "    out = { techniciens: JSON.parse(P.getProperty('techniciens') || '[]') };",
+    "  } else {",
+    "    const v = SpreadsheetApp.openById(SHEET_ID).getSheets()[0].getDataRange().getValues();",
+    "    out = { rows: v.filter(r => r[0]).map(r => ({ d:String(r[0]), t:r[1], f:r[2], h:r[3] })) };",
     "  }",
-    "  const v = SpreadsheetApp.openById(SHEET_ID).getSheets()[0].getDataRange().getValues();",
-    "  const rows = v.filter(r => r[0]).map(r => ({ d:String(r[0]), t:r[1], f:r[2], h:r[3] }));",
-    "  return json({ rows: rows });",
+    "  if(p.callback){",
+    "    return ContentService.createTextOutput(p.callback + '(' + JSON.stringify(out) + ')')",
+    "      .setMimeType(ContentService.MimeType.JAVASCRIPT);",
+    "  }",
+    "  return json(out);",
     "}"
   ].join('\n');
+
+  /* Lecture des données de l'espace partagé sans requête inter-origine :
+     Google renvoie parfois une page de connexion aux fetch ; le chargement
+     par balise <script> (JSONP) est traité comme une navigation et passe. */
+  function cloudGet(url, params, timeoutMs){
+    return new Promise((resolve, reject)=>{
+      if(!url) return reject(new Error('adresse absente'));
+      const cb = 'recordCb' + Math.random().toString(36).slice(2);
+      const s = document.createElement('script');
+      const q = Object.keys(params || {}).map(k => k + '=' + encodeURIComponent(params[k]));
+      q.push('callback=' + cb, 'v=' + Date.now());
+      let done = false;
+      const clean = ()=>{ try{ delete window[cb]; }catch(e){ window[cb] = undefined; } if(s.parentNode) s.parentNode.removeChild(s); };
+      const timer = setTimeout(()=>{ if(!done){ done = true; clean(); reject(new Error('pas de réponse (10 s)')); } }, timeoutMs || 10000);
+      window[cb] = d =>{ if(done) return; done = true; clearTimeout(timer); clean(); resolve(d || {}); };
+      s.onerror = ()=>{ if(done) return; done = true; clearTimeout(timer); clean(); reject(new Error('adresse injoignable')); };
+      s.src = url + (url.indexOf('?') < 0 ? '?' : '&') + q.join('&');
+      document.head.appendChild(s);
+    });
+  }
 
   function statLoad(){
     try{ const a = JSON.parse(localStorage.getItem(STAT_KEY) || '[]'); return Array.isArray(a) ? a : []; }
@@ -948,19 +974,12 @@ if('serviceWorker' in navigator){
     const u = statsUrl();
     if(!u){ renderStats(); return; }
     statStatus('Lecture des compteurs en ligne...');
-    let step = 'connexion';
     try{
-      const r = await fetch(u + (u.indexOf('?') < 0 ? '?' : '&') + 'v=' + Date.now(), { cache:'no-store', redirect:'follow' });
-      step = 'réponse ' + r.status;
-      const txt = await r.text();
-      step = 'lecture';
-      let d;
-      try{ d = JSON.parse(txt); }
-      catch(pe){ throw new Error('réponse inattendue : ' + txt.slice(0, 90)); }
+      const d = await cloudGet(u, {});
       const added = statMerge(d.rows);
       statStatus('\u2713 Compteurs à jour' + (added ? ' (' + added + ' nouvelle(s) fiche(s))' : '') + '.', 'ok');
     }catch(e){
-      statStatus('\u26A0 Lecture impossible (' + step + ') : ' + ((e && e.message) || 'erreur') + '. Ouvre l\'adresse dans un onglet : si elle affiche bien {"rows":[]}, redéploie en « Nouvelle version » avec accès « Tout le monde ».', 'err');
+      statStatus('\u26A0 Lecture impossible : ' + ((e && e.message) || 'erreur') + '. Vérifie que le script Google est bien à jour (recopie le code ci-dessous, puis Déployer \u2192 Gérer les déploiements \u2192 Nouvelle version).', 'err');
     }
   }
   $('stats-refresh') && $('stats-refresh').addEventListener('click', statsPull);

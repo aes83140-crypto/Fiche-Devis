@@ -823,13 +823,31 @@ if('serviceWorker' in navigator){
   }
   /* Liste tenue à jour par les responsables depuis le mode administrateur (espace partagé) :
      elle fait référence dès qu'elle répond. */
+  /* Lecture des données de l'espace partagé sans requête inter-origine :
+     Google renvoie parfois une page de connexion aux fetch ; le chargement
+     par balise <script> (JSONP) est traité comme une navigation et passe. */
+  function cloudGet(url, params, timeoutMs){
+    return new Promise((resolve, reject)=>{
+      if(!url) return reject(new Error('adresse absente'));
+      const cb = 'recordCb' + Math.random().toString(36).slice(2);
+      const s = document.createElement('script');
+      const q = Object.keys(params || {}).map(k => k + '=' + encodeURIComponent(params[k]));
+      q.push('callback=' + cb, 'v=' + Date.now());
+      let done = false;
+      const clean = ()=>{ try{ delete window[cb]; }catch(e){ window[cb] = undefined; } if(s.parentNode) s.parentNode.removeChild(s); };
+      const timer = setTimeout(()=>{ if(!done){ done = true; clean(); reject(new Error('pas de réponse (10 s)')); } }, timeoutMs || 10000);
+      window[cb] = d =>{ if(done) return; done = true; clearTimeout(timer); clean(); resolve(d || {}); };
+      s.onerror = ()=>{ if(done) return; done = true; clearTimeout(timer); clean(); reject(new Error('adresse injoignable')); };
+      s.src = url + (url.indexOf('?') < 0 ? '?' : '&') + q.join('&');
+      document.head.appendChild(s);
+    });
+  }
   async function loadSharedFromCloud(){
     let url = '';
     try{ url = localStorage.getItem('record-stats-url') || ''; }catch(e){}
     if(!url) return;
     try{
-      const r = await fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'what=lists&v=' + Date.now(), { cache:'no-store' });
-      const d = await r.json();
+      const d = await cloudGet(url, { what:'lists' });
       const t = dedupe(d.techniciens);
       if(t.length){ lsSet(TECH_KEY, t); refreshAllDatalists(); }
     }catch(e){}
