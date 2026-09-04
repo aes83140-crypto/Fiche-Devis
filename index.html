@@ -651,6 +651,13 @@ if('serviceWorker' in navigator){
     "    P.setProperty('techniciens', JSON.stringify(d.techniciens || []));",
     "    return json({ ok:true });",
     "  }",
+    "  if(d.kind === 'reset'){",
+    "    if(d.code !== CODE) return json({ error:'code' });",
+    "    const sh = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];",
+    "    const n = sh.getLastRow();",
+    "    if(n > 0) sh.deleteRows(1, n);",
+    "    return json({ ok:true });",
+    "  }",
     "  const sh = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];",
     "  (d.rows || []).forEach(r => sh.appendRow([r.d, r.t, r.f, r.h]));",
     "  return json({ ok:true });",
@@ -1022,11 +1029,29 @@ if('serviceWorker' in navigator){
     statStatus(bad ? '\u26A0 ' + bad + ' fichier(s) illisible(s). ' + added + ' ligne(s) ajoutée(s).' : '\u2713 ' + added + ' nouvelle(s) ligne(s) importée(s).', bad ? 'err' : 'ok');
   });
 
-  $('stats-reset') && $('stats-reset').addEventListener('click', ()=>{
-    if(!confirm('Effacer tout le journal d\'utilisation de cet appareil ?')) return;
+  $('stats-reset') && $('stats-reset').addEventListener('click', async ()=>{
+    const code = prompt('Code administrateur pour réinitialiser la feuille partagée :');
+    if(code === null) return;
+    if(code !== ADMIN_CODE){ statStatus('\u26A0 Code administrateur incorrect \u2014 rien n\'a été effacé.', 'err'); return; }
+    if(!confirm('Effacer définitivement tout le journal (cet appareil + la feuille Google partagée) ?')) return;
     statSave([]);
     renderStats();
-    statStatus('Compteurs remis à zéro.', 'ok');
+    const url = statsUrl();
+    if(url){
+      statStatus('Réinitialisation en cours...');
+      try{
+        await fetch(url, {
+          method:'POST', mode:'no-cors', keepalive:true,
+          headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+          body: JSON.stringify({ kind:'reset', code: ADMIN_CODE })
+        });
+        statStatus('\u2713 Compteurs remis à zéro (appareil + feuille partagée).', 'ok');
+      }catch(e){
+        statStatus('\u26A0 Effacé sur cet appareil, mais la remise à zéro de la feuille partagée a échoué (réseau ?).', 'err');
+      }
+    } else {
+      statStatus('Compteurs remis à zéro sur cet appareil.', 'ok');
+    }
   });
 
   $('admin-close').addEventListener('click', ()=>{ $('admin-modal').classList.add('hidden'); });
