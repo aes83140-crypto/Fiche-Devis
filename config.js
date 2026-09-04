@@ -3,7 +3,8 @@
    en construction (accès réservé). */
 window.RECORD_ADMIN_CODE = 'Chris04';
 
-/* Adresse de l'espace partagé (statistiques + listes des techniciens),
-   collée une fois pour toutes ici : plus besoin de jeton GitHub pour la diffuser,
-   toutes les pages et tablettes la connaissent dès qu'elles chargent ce fichier. */
-window.RECORD_STATS_URL = 'https://script.google.com/macros/s/AKfycbylrX5f-BXY68CXQDa5tcKH16hnhUh9BDaekIv0kdFUftS1k1w3jx1iD4HXhnavLot1/exec';
+/* Espace partagé Supabase (statistiques + liste des techniciens) — collé une fois
+   pour toutes ici : toutes les pages et tablettes le connaissent dès qu'elles
+   chargent ce fichier, sans jeton GitHub. */
+window.RECORD_SUPABASE_URL = 'https://aviixriaxyoumhxndzdw.supabase.co';
+window.RECORD_SUPABASE_KEY = 'sb_publishable_3q4W4qZgUiNjhQrP2DPWQw_BKjNxp06';

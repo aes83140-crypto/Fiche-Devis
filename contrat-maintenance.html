@@ -903,22 +903,21 @@ if('serviceWorker' in navigator){
     }catch(e){}
     statFlush();
   }
-  /* Remonte les compteurs vers l'adresse de collecte, sans aucune action du technicien.
+  /* Remonte les compteurs vers l'espace partagé Supabase, sans aucune action du technicien.
      Hors réseau, les lignes restent en attente et repartent à la prochaine ouverture. */
   async function statFlush(){
-    let url = '';
-    try{ url = localStorage.getItem('record-stats-url') || window.RECORD_STATS_URL || ''; }catch(e){ url = window.RECORD_STATS_URL || ''; }
-    if(!url) return;
+    const SB_URL = window.RECORD_SUPABASE_URL, SB_KEY = window.RECORD_SUPABASE_KEY;
+    if(!SB_URL || !SB_KEY) return;
     let q = [];
     try{ q = JSON.parse(localStorage.getItem(STAT_Q) || '[]'); }catch(e){}
     if(!q.length) return;
     try{
-      await fetch(url, {
-        method:'POST', mode:'no-cors', keepalive:true,
-        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ rows: q })
+      const r = await fetch(SB_URL + '/rest/v1/stats', {
+        method:'POST', keepalive:true,
+        headers:{ apikey: SB_KEY, Authorization:'Bearer ' + SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify(q)
       });
-      localStorage.setItem(STAT_Q, '[]');
+      if(r.ok) localStorage.setItem(STAT_Q, '[]');
     }catch(e){}
   }
   window.addEventListener('online', statFlush);

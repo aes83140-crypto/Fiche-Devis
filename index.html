@@ -483,20 +483,10 @@ if('serviceWorker' in navigator){
       <div class="fd-admin-row">
         <button class="fd-add-btn" id="stats-reset" style="flex:1;background:var(--red-bg);color:var(--red);border-color:#E9BEB9;">Remettre les compteurs à zéro</button>
       </div>
-      <details id="stats-setup" style="margin-top:12px;">
-        <summary style="cursor:pointer;font-size:13.5px;font-weight:650;color:var(--ink-soft);">Espace partagé : statistiques + listes (à configurer une seule fois)</summary>
-        <div class="fd-hint" style="margin:10px 0 12px;">Cet espace sert à deux choses : compter automatiquement les fiches envoyées depuis toutes les tablettes, et permettre à <strong>chaque responsable de modifier la liste des techniciens avec le seul code d'accès</strong>. Il se crée gratuitement en quatre étapes :<br>
-          <strong>1.</strong> Sur <em>script.google.com</em> → Nouveau projet, collez le code ci-dessous.<br>
-          <strong>2.</strong> Créez une feuille Google Sheets, copiez son identifiant (dans son adresse, entre <em>/d/</em> et <em>/edit</em>) à la place de <em>ID_DE_LA_FEUILLE</em>.<br>
-          <strong>3.</strong> <em>Déployer</em> → <em>Nouveau déploiement</em> → type <em>Application web</em>, « Exécuter en tant que : moi », « Accès : tout le monde ».<br>
-          <strong>4.</strong> Copiez <strong>l'adresse entière</strong> fournie par Google (elle commence par <em>https://script.google.com/macros/s/</em> et finit par <em>/exec</em>) dans le champ ci-dessous, puis Enregistrer.</div>
-        <textarea readonly id="stats-code" style="width:100%;height:112px;font-family:var(--mono);font-size:11px;padding:10px;border:1.5px solid var(--line-2);border-radius:11px;resize:vertical;"></textarea>
-        <div class="fd-admin-row" style="margin-top:10px;"><input type="text" id="stats-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" autocomplete="off"></div>
-        <div class="fd-admin-row">
-          <button class="fd-add-btn" id="stats-url-save" style="flex:1;">Enregistrer l'adresse</button>
-          <button class="fd-add-btn" id="stats-import" style="flex:1;">Importer un relevé</button>
-        </div>
-      </details>
+      <div class="fd-hint" style="margin-top:12px;">Espace partagé Supabase déjà configuré dans <code>config.js</code> — diffusion automatique à toutes les tablettes, sans jeton.</div>
+      <div class="fd-admin-row" style="margin-top:8px;">
+        <button class="fd-add-btn" id="stats-import" style="flex:1;">Importer un relevé (secours hors-ligne)</button>
+      </div>
       <input type="file" id="stats-file" accept=".json,application/json" multiple style="display:none">
       <div class="fd-hint" id="stats-status" style="margin-top:8px;"></div>
     </div>
@@ -566,9 +556,6 @@ if('serviceWorker' in navigator){
       // on ne l'écrase pas si des modifications locales n'ont pas encore été publiées.
       if(isDirty() && !force) return { techniciens: loadPreList(TECH_KEY), local:true };
       let t = dedupe(d.techniciens);
-      if(typeof d.statsUrl === 'string' && d.statsUrl && !statsUrl()){
-        try{ localStorage.setItem(STATS_URL_KEY, d.statsUrl); }catch(e){}
-      }
       const cloud = await cloudLists();
       if(cloud && cloud.length) t = cloud;
       lsSet(TECH_KEY, t);
@@ -577,11 +564,11 @@ if('serviceWorker' in navigator){
   }
 
   async function cloudLists(){
-    const url = statsUrl();
-    if(!url) return null;
+    if(!sbReady()) return null;
     try{
-      const d = await cloudGet(url, { what:'lists' });
-      return dedupe(d.techniciens);
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1&select=techniciens', { headers: sbHeaders(), cache:'no-store' });
+      const d = await r.json();
+      return dedupe(d[0] && d[0].techniciens || []);
     }catch(e){ return null; }
   }
 
@@ -620,8 +607,7 @@ if('serviceWorker' in navigator){
   function renderAdminPanel(){
     renderAdminList('admin-tech-list', TECH_KEY, 'text');
     renderStats();
-    if(statsUrl()) statsPull();
-    else if($('stats-setup')) $('stats-setup').open = true;
+    if(sbReady()) statsPull();
     if(isDirty()) shareStatus('\u26A0 Modifications non publiées sur cet appareil \u2014 touche « Publier en ligne » pour les diffuser.', 'err');
     const c = pubConfig();
     if($('pub-repo')){
@@ -634,69 +620,9 @@ if('serviceWorker' in navigator){
   /* ---------- Statistiques d'utilisation ---------- */
   const STAT_KEY = 'record-stats-usage';
   const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', FC:'Contrat maintenance' };
-  const STATS_URL_KEY = 'record-stats-url';
-  function statsUrl(){
-    try{ return localStorage.getItem(STATS_URL_KEY) || window.RECORD_STATS_URL || ''; }
-    catch(e){ return window.RECORD_STATS_URL || ''; }
-  }
-  const APPS_SCRIPT = [
-    "const SHEET_ID = 'ID_DE_LA_FEUILLE';",
-    "const CODE = 'Chris04';   // code d'accès administrateur",
-    "const P = PropertiesService.getScriptProperties();",
-    "function json(o){ return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }",
-    "function doPost(e){",
-    "  const d = JSON.parse(e.postData.contents);",
-    "  if(d.kind === 'lists'){",
-    "    if(d.code !== CODE) return json({ error:'code' });",
-    "    P.setProperty('techniciens', JSON.stringify(d.techniciens || []));",
-    "    return json({ ok:true });",
-    "  }",
-    "  if(d.kind === 'reset'){",
-    "    if(d.code !== CODE) return json({ error:'code' });",
-    "    const sh = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];",
-    "    const n = sh.getLastRow();",
-    "    if(n > 0) sh.deleteRows(1, n);",
-    "    return json({ ok:true });",
-    "  }",
-    "  const sh = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];",
-    "  (d.rows || []).forEach(r => sh.appendRow([r.d, r.t, r.f, r.h]));",
-    "  return json({ ok:true });",
-    "}",
-    "function doGet(e){",
-    "  const p = (e && e.parameter) || {};",
-    "  let out;",
-    "  if(p.what === 'lists'){",
-    "    out = { techniciens: JSON.parse(P.getProperty('techniciens') || '[]') };",
-    "  } else {",
-    "    const v = SpreadsheetApp.openById(SHEET_ID).getSheets()[0].getDataRange().getValues();",
-    "    out = { rows: v.filter(r => r[0]).map(r => ({ d:String(r[0]), t:r[1], f:r[2], h:r[3] })) };",
-    "  }",
-    "  if(p.callback){",
-    "    return ContentService.createTextOutput(p.callback + '(' + JSON.stringify(out) + ')')",
-    "      .setMimeType(ContentService.MimeType.JAVASCRIPT);",
-    "  }",
-    "  return json(out);",
-    "}"
-  ].join('\n');
-
-  /* Lecture des données de l'espace partagé sans requête inter-origine :
-     Google renvoie parfois une page de connexion aux fetch ; le chargement
-     par balise <script> (JSONP) est traité comme une navigation et passe. */
-  function cloudGet(url, params, timeoutMs){
-    return new Promise((resolve, reject)=>{
-      if(!url) return reject(new Error('adresse absente'));
-      const cb = 'recordCb' + Math.random().toString(36).slice(2);
-      const s = document.createElement('script');
-      const q = Object.keys(params || {}).map(k => k + '=' + encodeURIComponent(params[k]));
-      q.push('callback=' + cb, 'v=' + Date.now());
-      let done = false;
-      const clean = ()=>{ try{ delete window[cb]; }catch(e){ window[cb] = undefined; } if(s.parentNode) s.parentNode.removeChild(s); };
-      const timer = setTimeout(()=>{ if(!done){ done = true; clean(); reject(new Error('pas de réponse (10 s)')); } }, timeoutMs || 10000);
-      window[cb] = d =>{ if(done) return; done = true; clearTimeout(timer); clean(); resolve(d || {}); };
-      s.onerror = ()=>{ if(done) return; done = true; clearTimeout(timer); clean(); reject(new Error('adresse injoignable')); };
-      s.src = url + (url.indexOf('?') < 0 ? '?' : '&') + q.join('&');
-      document.head.appendChild(s);
-    });
+  function sbReady(){ return !!(window.RECORD_SUPABASE_URL && window.RECORD_SUPABASE_KEY); }
+  function sbHeaders(extra){
+    return Object.assign({ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY, 'Content-Type':'application/json' }, extra || {});
   }
 
   function statLoad(){
@@ -811,7 +737,6 @@ if('serviceWorker' in navigator){
   function listsPayload(){
     return JSON.stringify({
       techniciens: loadPreList(TECH_KEY),
-      statsUrl: statsUrl(),
       maj: new Date().toISOString().slice(0, 10)
     }, null, 2);
   }
@@ -819,24 +744,23 @@ if('serviceWorker' in navigator){
 
   function pushSilently(){
     setDirty(true);
-    if(statsUrl()){ publishToCloud(); return; }
+    if(sbReady()){ publishToCloud(); return; }
     const c = pubConfig();
     if(c.repo && c.token) publishLists(true);
-    else shareStatus('Enregistré sur cet appareil. Configure la diffusion ci-dessous pour la partager aux tablettes.', 'ok');
+    else shareStatus('Enregistré sur cet appareil.', 'ok');
   }
 
-  /* Diffusion sans jeton : n'importe quel responsable connaissant le code
-     d'accès met la liste à jour pour tout le monde. */
+  /* Diffusion sans jeton : la liste est écrite directement dans l'espace partagé Supabase,
+     toutes les tablettes la recevront à leur prochaine ouverture. */
   async function publishToCloud(){
-    const url = statsUrl();
-    if(!url) return;
+    if(!sbReady()) return;
     shareStatus('Diffusion en cours...');
     try{
-      await fetch(url, {
-        method:'POST', mode:'no-cors', keepalive:true,
-        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ kind:'lists', code: ADMIN_CODE, techniciens: loadPreList(TECH_KEY) })
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1', {
+        method:'PATCH', headers: sbHeaders({ Prefer:'return=minimal' }),
+        body: JSON.stringify({ techniciens: loadPreList(TECH_KEY) })
       });
+      if(!r.ok) throw new Error('http ' + r.status);
       setDirty(false);
       shareStatus('\u2713 Liste diffusée \u2014 toutes les tablettes l\'auront à leur prochaine ouverture.', 'ok');
     }catch(e){
@@ -964,38 +888,17 @@ if('serviceWorker' in navigator){
     });
     window.addEventListener('appinstalled', ()=> bar.classList.remove('show'));
   })();
-  if($('stats-code')) $('stats-code').value = APPS_SCRIPT;
-  if($('stats-url')) $('stats-url').value = statsUrl();
-
-  $('stats-url-save') && $('stats-url-save').addEventListener('click', ()=>{
-    const u = $('stats-url').value.trim();
-    if(u && !/^https:\/\/.+\/exec$/i.test(u)){
-      statStatus("\u26A0 Adresse incomplète : colle l'adresse entière fournie par Google, qui commence par https://script.google.com/macros/s/... et finit par /exec.", 'err');
-      return;
-    }
-    try{ localStorage.setItem(STATS_URL_KEY, u); }catch(e){}
-    setDirty(true);
-    // L'adresse de collecte ne peut être connue des tablettes qu'en circulant dans listes.json
-    // (le script en ligne ne peut pas s'annoncer lui-même) : on force ce canal, jeton GitHub requis.
-    const c = pubConfig();
-    if(c.repo && c.token){
-      publishLists(true);
-    } else {
-      statStatus("\u26A0 Il faut le dépôt + jeton GitHub (plus bas, « Publier en ligne ») pour diffuser cette adresse aux tablettes \u2014 sinon elle ne sert que sur cet appareil.", 'err');
-    }
-    if(u) statsPull();
-  });
-
   async function statsPull(){
-    const u = statsUrl();
-    if(!u){ renderStats(); return; }
+    if(!sbReady()){ renderStats(); return; }
     statStatus('Lecture des compteurs en ligne...');
     try{
-      const d = await cloudGet(u, {});
-      const added = statMerge(d.rows);
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/stats?select=d,t,f,h&order=d.asc', { headers: sbHeaders(), cache:'no-store' });
+      if(!r.ok) throw new Error('http ' + r.status);
+      const rows = await r.json();
+      const added = statMerge(rows);
       statStatus('\u2713 Compteurs à jour' + (added ? ' (' + added + ' nouvelle(s) fiche(s))' : '') + '.', 'ok');
     }catch(e){
-      statStatus('\u26A0 Lecture impossible : ' + ((e && e.message) || 'erreur') + '. Vérifie que le script Google est bien à jour (recopie le code ci-dessous, puis Déployer \u2192 Gérer les déploiements \u2192 Nouvelle version).', 'err');
+      statStatus('\u26A0 Lecture impossible (réseau ?) : ' + ((e && e.message) || 'erreur'), 'err');
     }
   }
   $('stats-refresh') && $('stats-refresh').addEventListener('click', statsPull);
@@ -1033,21 +936,17 @@ if('serviceWorker' in navigator){
     const code = prompt('Code administrateur pour réinitialiser la feuille partagée :');
     if(code === null) return;
     if(code !== ADMIN_CODE){ statStatus('\u26A0 Code administrateur incorrect \u2014 rien n\'a été effacé.', 'err'); return; }
-    if(!confirm('Effacer définitivement tout le journal (cet appareil + la feuille Google partagée) ?')) return;
+    if(!confirm('Effacer définitivement tout le journal (cet appareil + l\'espace partagé) ?')) return;
     statSave([]);
     renderStats();
-    const url = statsUrl();
-    if(url){
+    if(sbReady()){
       statStatus('Réinitialisation en cours...');
       try{
-        await fetch(url, {
-          method:'POST', mode:'no-cors', keepalive:true,
-          headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-          body: JSON.stringify({ kind:'reset', code: ADMIN_CODE })
-        });
-        statStatus('\u2713 Compteurs remis à zéro (appareil + feuille partagée).', 'ok');
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/stats?id=gt.0', { method:'DELETE', headers: sbHeaders() });
+        if(!r.ok) throw new Error('http ' + r.status);
+        statStatus('\u2713 Compteurs remis à zéro (appareil + espace partagé).', 'ok');
       }catch(e){
-        statStatus('\u26A0 Effacé sur cet appareil, mais la remise à zéro de la feuille partagée a échoué (réseau ?).', 'err');
+        statStatus('\u26A0 Effacé sur cet appareil, mais la remise à zéro de l\'espace partagé a échoué (réseau ?).', 'err');
       }
     } else {
       statStatus('Compteurs remis à zéro sur cet appareil.', 'ok');
