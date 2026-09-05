@@ -1128,7 +1128,8 @@ if('serviceWorker' in navigator){
         body: JSON.stringify(q)
       });
       if(r.ok) localStorage.setItem(STAT_Q, '[]');
-    }catch(e){}
+      else alert('Stat KO : HTTP ' + r.status + ' — ' + (await r.text()).slice(0,200));
+    }catch(e){ alert('Stat KO : ' + (e && e.message || e)); }
   }
   window.addEventListener('online', statFlush);
   function histAdd(data, how){
