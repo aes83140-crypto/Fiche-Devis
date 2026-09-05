@@ -605,7 +605,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09-05.1</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09-05.2</div>
 </div>
 
 <script>
@@ -1118,10 +1118,10 @@ if('serviceWorker' in navigator){
      Hors réseau, les lignes restent en attente et repartent à la prochaine ouverture. */
   async function statFlush(){
     const SB_URL = window.RECORD_SUPABASE_URL, SB_KEY = window.RECORD_SUPABASE_KEY;
-    if(!SB_URL || !SB_KEY) return;
+    if(!SB_URL || !SB_KEY){ alert('Stat KO : identifiants Supabase absents (config.js pas à jour ?)'); return; }
     let q = [];
     try{ q = JSON.parse(localStorage.getItem(STAT_Q) || '[]'); }catch(e){}
-    if(!q.length) return;
+    if(!q.length){ alert("Stat KO : file d'attente vide, rien à envoyer."); return; }
     try{
       const r = await fetch(SB_URL + '/rest/v1/stats', {
         method:'POST', keepalive:true,
