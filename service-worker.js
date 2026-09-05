@@ -1,7 +1,7 @@
 /* Cache applicatif : la page s'ouvre même sans réseau.
    Les pages et les données passent par le réseau en priorité (toujours à jour),
    le cache ne sert qu'en secours hors connexion. */
-const CACHE = 'record-outils-v9';
+const CACHE = 'record-outils-v10';
 const ASSETS = ['./', './index.html', './fiche-devis.html', './vantaux-sav.html', './rideaux-metalliques.html', './contrat-maintenance.html',
   './listes.json', './config.js', './lame-p116.jpg', './manifest.webmanifest', './icone-192.png', './icone-512.png'];
 
@@ -31,6 +31,7 @@ self.addEventListener('fetch', e => {
   // unique (horodatage) — jamais à mettre en cache, et surtout jamais réinterprétés ici :
   // laisser le navigateur les traiter nativement (cookies, redirections Google...).
   if (/(^|\.)script\.google(usercontent)?\.com$/.test(url.hostname)) return;
+  if (/(^|\.)supabase\.co$/.test(url.hostname)) return;
 
   // Pages, données et scripts du site : réseau d'abord, cache en secours
   const freshFirst = sameOrigin && (
