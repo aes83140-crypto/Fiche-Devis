@@ -462,7 +462,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.3</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.8</div>
 </div>
 
 <div class="fd-modal hidden" id="admin-modal">
@@ -494,27 +494,11 @@ if('serviceWorker' in navigator){
 
     <div class="fd-modal-section">
       <h4>Listes communes à tous les appareils</h4>
-      <div class="fd-hint" style="margin:-4px 0 12px;"><strong>Les autres responsables n'ont besoin que du code d'accès</strong> : dès que l'espace partagé est configuré (plus bas), leurs ajouts et suppressions de techniciens sont diffusés à toutes les tablettes, sans jeton GitHub.</div>
-      <div class="fd-hint" style="margin:-4px 0 12px;">Les listes sont lues dans le fichier <strong>listes.json</strong> du dépôt. Une fois la publication configurée ci-dessous, le bouton <strong>Publier en ligne</strong> met le fichier à jour tout seul : plus aucun dépôt manuel.</div>
+      <div class="fd-hint" style="margin:-4px 0 12px;"><strong>Les autres responsables n'ont besoin que du code d'accès</strong> : chaque ajout ou suppression de technicien est diffusé automatiquement à toutes les tablettes, sans jeton.</div>
       <div class="fd-admin-row">
-        <button class="fd-add-btn" id="lists-publish" style="flex:1;">Publier en ligne</button>
         <button class="fd-add-btn" id="lists-reload" style="flex:1;background:#fff;color:var(--steel);">Recharger</button>
       </div>
       <div class="fd-hint" id="share-status" style="margin-top:4px;"></div>
-      <details id="pub-setup" style="margin-top:12px;">
-        <summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:var(--steel);">Configurer la publication (une seule fois, sur votre PC)</summary>
-        <div class="fd-hint" style="margin:10px 0;line-height:1.65;">Ces réglages restent sur cet appareil, les techniciens n'ont rien à saisir.<br><br>
-        <strong>1.</strong> Dépôt : ouvrez votre projet sur github.com, l'adresse ressemble à <em>github.com/<strong>moncompte/mon-projet</strong></em> \u2014 recopiez cette partie en gras.<br>
-        <strong>2.</strong> Branche : laissez <strong>main</strong> (c'est le cas de presque tous les dépôts ; si le vôtre affiche « master », écrivez master).<br>
-        <strong>3.</strong> Jeton : c'est le mot de passe qui autorise cette page à mettre le fichier à jour. Sur github.com, cliquez votre photo en haut à droite → <em>Settings</em> → tout en bas <em>Developer settings</em> → <em>Personal access tokens</em> → <em>Fine-grained tokens</em> → <em>Generate new token</em>. Donnez-lui un nom, choisissez votre dépôt dans <em>Repository access</em>, puis dans <em>Permissions → Repository permissions</em> réglez la ligne <em>Contents</em> sur <strong>Read and write</strong>. Validez : GitHub affiche une longue suite de caractères \u2014 copiez-la ici. Elle ne s'affiche qu'une fois.</div>
-        <div class="fd-admin-row"><input type="text" id="pub-repo" placeholder="votre-compte/votre-depot" autocomplete="off"></div>
-        <div class="fd-admin-row"><input type="text" id="pub-branch" value="main" placeholder="main" autocomplete="off"></div>
-        <div class="fd-admin-row"><input type="password" id="pub-token" placeholder="Jeton GitHub (github_pat_...)" autocomplete="off"></div>
-        <div class="fd-admin-row">
-          <button class="fd-add-btn" id="pub-save" style="flex:1;">Enregistrer les réglages</button>
-          <button class="fd-add-btn" id="lists-download" style="flex:1;background:#fff;color:var(--steel);">Télécharger le fichier</button>
-        </div>
-      </details>
     </div>
     <div class="fd-modal-section">
       <h4>Techniciens enregistrés</h4>
@@ -522,6 +506,19 @@ if('serviceWorker' in navigator){
       <div class="fd-admin-row">
         <input type="text" id="admin-tech-new" placeholder="Nouveau technicien">
         <button type="button" class="fd-add-btn" id="admin-tech-add">Ajouter</button>
+      </div>
+    </div>
+    <div class="fd-modal-section">
+      <h4 id="admin-groups-toggle" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;">
+        <span id="admin-groups-arrow">▸</span> Agences
+      </h4>
+      <div id="admin-groups-body" style="display:none;">
+        <div class="fd-hint" style="margin:8px 0 12px;">Classez les techniciens par agence pour les retrouver plus vite. N'affecte pas le menu proposé sur les fiches.</div>
+        <div id="admin-groups-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+        <div class="fd-admin-row">
+          <input type="text" id="admin-group-new" placeholder="Nouvelle agence (ex. Lyon, Nord...)">
+          <button type="button" class="fd-add-btn" id="admin-group-add">Ajouter</button>
+        </div>
       </div>
     </div>
 
@@ -534,6 +531,12 @@ if('serviceWorker' in navigator){
   // Le code d'accès est défini dans config.js (seul endroit à modifier)
   const ADMIN_CODE = window.RECORD_ADMIN_CODE || 'Chris04';
   const TECH_KEY = 'techniciens-preenregistres';
+  const GROUPS_KEY = 'techniciens-groupes';
+  function loadGroups(){
+    const g = lsGet(GROUPS_KEY);
+    return (g && typeof g === 'object') ? { groups: g.groups || [], assign: g.assign || {} } : { groups: [], assign: {} };
+  }
+  function saveGroups(g){ lsSet(GROUPS_KEY, g); }
 
   function lsGet(key){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
   function lsSet(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
@@ -558,7 +561,8 @@ if('serviceWorker' in navigator){
       if(isDirty() && !force) return { techniciens: loadPreList(TECH_KEY), local:true };
       let t = dedupe(d.techniciens);
       const cloud = await cloudLists();
-      if(cloud && cloud.length) t = cloud;
+      if(cloud && cloud.techniciens && cloud.techniciens.length) t = cloud.techniciens;
+      if(cloud && cloud.groups) saveGroups(cloud.groups);
       lsSet(TECH_KEY, t);
       return { techniciens:t };
     }catch(e){ return null; }
@@ -567,10 +571,110 @@ if('serviceWorker' in navigator){
   async function cloudLists(){
     if(!sbReady()) return null;
     try{
-      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1&select=techniciens', { headers: sbHeaders(), cache:'no-store' });
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1&select=techniciens,groupes', { headers: sbHeaders(), cache:'no-store' });
       const d = await r.json();
-      return dedupe(d[0] && d[0].techniciens || []);
+      const row = d[0] || {};
+      const g = row.groupes && typeof row.groupes === 'object' ? { groups: row.groupes.groups || [], assign: row.groupes.assign || {} } : null;
+      return { techniciens: dedupe(row.techniciens || []), groups: g };
     }catch(e){ return null; }
+  }
+
+  function renderGroupsChips(){
+    const box = $('admin-groups-list');
+    const g = loadGroups();
+    if(!g.groups.length){ box.innerHTML = '<div class="fd-admin-empty">Aucun groupe pour le moment.</div>'; return; }
+    box.innerHTML = '';
+    g.groups.forEach(name=>{
+      const chip = document.createElement('span');
+      chip.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line-2);border-radius:20px;padding:6px 8px 6px 13px;font-size:13.5px;';
+      chip.innerHTML = '<span>'+name.replace(/</g,'&lt;')+'</span><button type="button" style="border:none;background:transparent;border-radius:50%;width:18px;height:18px;line-height:1;cursor:pointer;color:var(--line-2);font-size:12px;">✕</button>';
+      chip.querySelector('button').addEventListener('click', ()=>{
+        if(!confirm('Supprimer l\'agence « ' + name + ' » ? Les techniciens qui y sont classés repassent sans agence.')) return;
+        const gg = loadGroups();
+        gg.groups = gg.groups.filter(x=>x!==name);
+        Object.keys(gg.assign).forEach(t=>{ if(gg.assign[t]===name) delete gg.assign[t]; });
+        saveGroups(gg);
+        renderAdminPanel();
+        pushSilently();
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  function renderTechList(){
+    const container = $('admin-tech-list');
+    const list = loadPreList(TECH_KEY);
+    const g = loadGroups();
+    container.innerHTML = '';
+    if(!list.length){
+      container.innerHTML = '<div class="fd-admin-empty">Aucun enregistré pour le moment.</div>';
+      return;
+    }
+    const sorted = list.map((val,i)=>({ val, i })).sort((a,b)=>{
+      const ga = g.assign[a.val] || '', gb = g.assign[b.val] || '';
+      if(ga !== gb) return ga.localeCompare(gb, 'fr');
+      return a.val.localeCompare(b.val, 'fr');
+    });
+    let lastGroup = undefined, body = container;
+    const OPEN_KEY = 'record-admin-agences-ouvertes';
+    const openState = lsGet(OPEN_KEY) || {};
+    sorted.forEach(({val, i})=>{
+      const grp = g.assign[val] || '';
+      if(grp !== lastGroup){
+        lastGroup = grp;
+        const label = grp || 'Sans agence';
+        const isOpen = openState[label] !== false;
+        const h = document.createElement('div');
+        h.style.cssText = 'display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;margin:12px 0 5px;';
+        h.innerHTML = '<span style="font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);">' +
+          (isOpen ? '▾' : '▸') + ' ' + label.replace(/</g,'&lt;') + '</span>';
+        body = document.createElement('div');
+        body.style.display = isOpen ? '' : 'none';
+        h.addEventListener('click', ()=>{
+          openState[label] = body.style.display === 'none';
+          lsSet(OPEN_KEY, openState);
+          renderAdminPanel();
+        });
+        container.appendChild(h);
+        container.appendChild(body);
+      }
+      const row = document.createElement('div');
+      row.className = 'fd-admin-row';
+      row.innerHTML =
+        '<input type="text" value="'+val.replace(/"/g,'&quot;')+'">' +
+        '<select style="max-width:150px;"></select>' +
+        '<button type="button" class="fd-admin-del">✕</button>';
+      const input = row.querySelector('input');
+      const select = row.querySelector('select');
+      const delBtn = row.querySelector('.fd-admin-del');
+      select.innerHTML = '<option value="">Sans agence</option>' + g.groups.map(n=>'<option value="'+n.replace(/"/g,'&quot;')+'"'+(n===grp?' selected':'')+'>'+n.replace(/</g,'&lt;')+'</option>').join('');
+      input.addEventListener('change', ()=>{
+        const l = loadPreList(TECH_KEY);
+        const v = input.value.trim();
+        if(v){
+          if(v !== val){ const gg = loadGroups(); if(gg.assign[val]){ gg.assign[v] = gg.assign[val]; delete gg.assign[val]; saveGroups(gg); } }
+          l[i] = v; savePreList(TECH_KEY, l);
+        }
+        renderAdminPanel();
+        pushSilently();
+      });
+      select.addEventListener('change', ()=>{
+        const gg = loadGroups();
+        if(select.value) gg.assign[val] = select.value; else delete gg.assign[val];
+        saveGroups(gg);
+        renderAdminPanel();
+        pushSilently();
+      });
+      delBtn.addEventListener('click', ()=>{
+        const l = loadPreList(TECH_KEY);
+        l.splice(i, 1);
+        savePreList(TECH_KEY, l);
+        const gg = loadGroups(); delete gg.assign[val]; saveGroups(gg);
+        renderAdminPanel();
+        pushSilently();
+      });
+      body.appendChild(row);
+    });
   }
 
   function renderAdminList(containerId, key, inputType){
@@ -606,16 +710,11 @@ if('serviceWorker' in navigator){
   }
 
   function renderAdminPanel(){
-    renderAdminList('admin-tech-list', TECH_KEY, 'text');
+    renderGroupsChips();
+    renderTechList();
     renderStats();
     if(sbReady()) statsPull();
-    if(isDirty()) shareStatus('\u26A0 Modifications non publiées sur cet appareil \u2014 touche « Publier en ligne » pour les diffuser.', 'err');
-    const c = pubConfig();
-    if($('pub-repo')){
-      $('pub-repo').value = c.repo || '';
-      $('pub-branch').value = c.branch || 'main';
-      $('pub-token').value = c.token || '';
-    }
+    if(isDirty()) shareStatus('\u26A0 Diffusion en cours ou en attente de réseau...', null);
   }
 
   /* ---------- Statistiques d'utilisation ---------- */
@@ -731,30 +830,23 @@ if('serviceWorker' in navigator){
     el.style.color = tone === 'err' ? 'var(--red)' : (tone === 'ok' ? 'var(--green)' : 'var(--ink-mute)');
   }
 
-  const PUB_KEY = 'record-pub-config';
-  function pubConfig(){
-    try{ return JSON.parse(localStorage.getItem(PUB_KEY) || '{}') || {}; }catch(e){ return {}; }
-  }
-  function listsPayload(){
-    return JSON.stringify({
-      techniciens: loadPreList(TECH_KEY),
-      maj: new Date().toISOString().slice(0, 10)
-    }, null, 2);
-  }
   function b64(str){ return btoa(unescape(encodeURIComponent(str))); }
 
   function pushSilently(){
     setDirty(true);
     if(sbReady()){ publishToCloud(); return; }
-    const c = pubConfig();
-    if(c.repo && c.token) publishLists(true);
-    else shareStatus('Enregistré sur cet appareil.', 'ok');
+    shareStatus('Enregistré sur cet appareil.', 'ok');
   }
 
   /* Diffusion sans jeton : la liste est écrite directement dans l'espace partagé Supabase,
      toutes les tablettes la recevront à leur prochaine ouverture. */
   async function publishToCloud(){
     if(!sbReady()) return;
+    const list = loadPreList(TECH_KEY);
+    if(!list.length){
+      shareStatus('\u26A0 Diffusion bloquée : la liste locale est vide \u2014 touche « Recharger » avant de modifier, pour ne pas écraser les techniciens déjà enregistrés.', 'err');
+      return;
+    }
     shareStatus('Diffusion en cours...');
     try{
       const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1', {
@@ -762,6 +854,14 @@ if('serviceWorker' in navigator){
         body: JSON.stringify({ techniciens: loadPreList(TECH_KEY) })
       });
       if(!r.ok) throw new Error('http ' + r.status);
+      // Les groupes vont dans une colonne à part ; best-effort (n'existe pas encore si l'ALTER TABLE
+      // n'a pas été fait) — ne doit jamais faire échouer la diffusion des techniciens.
+      try{
+        await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1', {
+          method:'PATCH', headers: sbHeaders({ Prefer:'return=minimal' }),
+          body: JSON.stringify({ groupes: loadGroups() })
+        });
+      }catch(e2){}
       setDirty(false);
       shareStatus('\u2713 Liste diffusée \u2014 toutes les tablettes l\'auront à leur prochaine ouverture.', 'ok');
     }catch(e){
@@ -769,65 +869,31 @@ if('serviceWorker' in navigator){
     }
   }
 
-  async function publishLists(silent){
-    const c = pubConfig();
-    if(!c.repo || !c.token){
-      shareStatus('\u26A0 Renseigne le dépôt et le jeton dans « Configurer la publication ».', 'err');
-      $('pub-setup').open = true;
-      return;
-    }
-    const branch = c.branch || 'main';
-    const url = 'https://api.github.com/repos/' + c.repo + '/contents/listes.json';
-    const head = { 'Authorization':'Bearer ' + c.token, 'Accept':'application/vnd.github+json' };
-    shareStatus('Publication en cours...');
-    try{
-      let sha = null;
-      const g = await fetch(url + '?ref=' + encodeURIComponent(branch), { headers:head, cache:'no-store' });
-      if(g.ok){ sha = (await g.json()).sha; }
-      else if(g.status === 401 || g.status === 403){ throw new Error('jeton refusé'); }
-      else if(g.status === 404 && !sha){ /* fichier absent : création */ }
-      const body = { message:'Mise à jour de la liste des techniciens', content:b64(listsPayload()), branch:branch };
-      if(sha) body.sha = sha;
-      const p = await fetch(url, { method:'PUT', headers:head, body:JSON.stringify(body) });
-      if(!p.ok){
-        const t = await p.text();
-        throw new Error(p.status === 404 ? 'dépôt ou branche introuvable' : (p.status === 401 || p.status === 403 ? 'jeton sans droit d\'écriture' : 'erreur ' + p.status));
-      }
-      setDirty(false);
-      shareStatus('\u2713 Publié en ligne \u2014 les tablettes auront la liste au prochain chargement (1 à 2 min).', 'ok');
-    }catch(e){
-      shareStatus('\u26A0 Publication impossible : ' + e.message + '. Les listes restent enregistrées ici.', 'err');
-    }
-  }
-
-  $('pub-save').addEventListener('click', ()=>{
-    const cfg = {
-      repo: $('pub-repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, ''),
-      branch: $('pub-branch').value.trim() || 'main',
-      token: $('pub-token').value.trim()
-    };
-    try{ localStorage.setItem(PUB_KEY, JSON.stringify(cfg)); }catch(e){}
-    shareStatus(cfg.repo && cfg.token ? '\u2713 Réglages enregistrés \u2014 « Publier en ligne » est actif.' : 'Réglages incomplets : dépôt et jeton sont nécessaires.', cfg.repo && cfg.token ? 'ok' : 'err');
-  });
-
-  $('lists-publish').addEventListener('click', ()=> publishLists(false));
-
-  $('lists-download').addEventListener('click', ()=>{
-    const blob = new Blob([listsPayload()], { type:'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'listes.json';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
-    shareStatus('\u2713 Fichier téléchargé \u2014 remplace listes.json sur GitHub pour diffuser la mise à jour.', 'ok');
-  });
-
   $('lists-reload').addEventListener('click', async ()=>{
     shareStatus('Lecture du fichier du dépôt...');
     const d = await loadSharedLists(true);
     renderAdminPanel();
     renderStats();
     shareStatus(d ? '\u2713 Liste rechargée depuis le dépôt (' + (d.techniciens || []).length + ' technicien(s)).' : '\u26A0 listes.json introuvable \u2014 vérifie qu\'il est déposé à côté des pages.', d ? 'ok' : 'err');
+  });
+
+  $('admin-groups-toggle').addEventListener('click', ()=>{
+    const body = $('admin-groups-body');
+    const open = body.style.display === 'none';
+    body.style.display = open ? '' : 'none';
+    $('admin-groups-arrow').textContent = open ? '▾' : '▸';
+  });
+
+  $('admin-group-add').addEventListener('click', ()=>{
+    const input = $('admin-group-new');
+    const v = input.value.trim();
+    if(!v) return;
+    const g = loadGroups();
+    if(!g.groups.includes(v)) g.groups.push(v);
+    saveGroups(g);
+    input.value = '';
+    renderAdminPanel();
+    pushSilently();
   });
 
   $('admin-tech-add').addEventListener('click', ()=>{
