@@ -605,7 +605,8 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.3</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.4</div>
+  <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
 <script>
@@ -1118,18 +1119,20 @@ if('serviceWorker' in navigator){
      Hors réseau, les lignes restent en attente et repartent à la prochaine ouverture. */
   async function statFlush(){
     const SB_URL = window.RECORD_SUPABASE_URL, SB_KEY = window.RECORD_SUPABASE_KEY;
-    if(!SB_URL || !SB_KEY) return;
+    const tag = $('fd-sync-tag');
+    if(!SB_URL || !SB_KEY){ if(tag) tag.textContent = '⚠ statistiques : config.js non à jour'; return; }
     let q = [];
     try{ q = JSON.parse(localStorage.getItem(STAT_Q) || '[]'); }catch(e){}
-    if(!q.length) return;
+    if(!q.length){ if(tag) tag.textContent = ''; return; }
     try{
       const r = await fetch(SB_URL + '/rest/v1/stats', {
         method:'POST', keepalive:true,
         headers:{ apikey: SB_KEY, Authorization:'Bearer ' + SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
         body: JSON.stringify(q)
       });
-      if(r.ok) localStorage.setItem(STAT_Q, '[]');
-    }catch(e){}
+      if(r.ok){ localStorage.setItem(STAT_Q, '[]'); if(tag) tag.textContent = ''; }
+      else if(tag) tag.textContent = '⚠ statistiques en attente (réessai à la prochaine ouverture)';
+    }catch(e){ if(tag) tag.textContent = '⚠ statistiques en attente (hors ligne ?)'; }
   }
   window.addEventListener('online', statFlush);
   function histAdd(data, how){
