@@ -462,7 +462,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.8</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.9</div>
 </div>
 
 <div class="fd-modal hidden" id="admin-modal">
@@ -911,7 +911,11 @@ if('serviceWorker' in navigator){
   $('btn-admin').addEventListener('click', ()=>{
     const code = prompt('Code administrateur :');
     if(code === null) return;
-    if(code !== ADMIN_CODE){ alert('Code administrateur incorrect.'); return; }
+    if(code !== ADMIN_CODE){
+      const hint = window.RECORD_ADMIN_HINT || '';
+      if(hint && confirm('Code administrateur incorrect.\n\nVoir l\'indice ?')) alert('Indice : ' + hint);
+      return;
+    }
     renderAdminPanel();
     $('admin-modal').classList.remove('hidden');
   });
