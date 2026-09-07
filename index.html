@@ -462,7 +462,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.9</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.10</div>
 </div>
 
 <div class="fd-modal hidden" id="admin-modal">
@@ -630,8 +630,9 @@ if('serviceWorker' in navigator){
           (isOpen ? '▾' : '▸') + ' ' + label.replace(/</g,'&lt;') + '</span>';
         body = document.createElement('div');
         body.style.display = isOpen ? '' : 'none';
+        const thisBody = body;
         h.addEventListener('click', ()=>{
-          openState[label] = body.style.display === 'none';
+          openState[label] = thisBody.style.display === 'none';
           lsSet(OPEN_KEY, openState);
           renderAdminPanel();
         });
