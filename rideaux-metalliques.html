@@ -762,7 +762,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.10</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.11</div>
 </div>
 
 <script>
@@ -2272,12 +2272,12 @@ if('serviceWorker' in navigator){
 
       section('Cotes relevées (mm)');
       tiles([
-        { k:'H. sous drapeau', v:data['hauteur-tableau'] },
-        { k:"H. d'enroulement", v:data['hauteur-totale'] },
-        { k:'H. totale rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
-        { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur coulisses'), v:data['largeur-coulisses'] },
-        { k:"Longueur d'axe (joues)", v:data['longueur-axe'] },
-        { k:'\u2300 axe motorisé', v:data['diametre-axe'] },
+        { k:'Hauteur sous drapeau', v:data['hauteur-tableau'] },
+        { k:"Hauteur d'enroulement", v:data['hauteur-totale'] },
+        { k:'Hauteur totale du rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
+        { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur des coulisses'), v:data['largeur-coulisses'] },
+        { k:"Longueur de l'axe (entre joues)", v:data['longueur-axe'] },
+        { k:'Diamètre de l\u2019axe motorisé', v:data['diametre-axe'] },
       ]);
       if(data.nblames) row('Nombre de lames à remplacer', data.nblames);
       if(data.lameFinale) row('Lame finale', 'À remplacer également');
@@ -2320,12 +2320,12 @@ if('serviceWorker' in navigator){
 
     section('Cotes relevées (mm)');
     tiles([
-      { k:'H. sous drapeau', v:data['hauteur-tableau'] },
-      { k:"H. d'enroulement", v:data['hauteur-totale'] },
-      { k:'H. totale rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
-      { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur coulisses'), v:data['largeur-coulisses'] },
-      { k:"Longueur d'axe (joues)", v:data['longueur-axe'] },
-      { k:'\u2300 axe motorisé', v:data['diametre-axe'] },
+      { k:'Hauteur sous drapeau', v:data['hauteur-tableau'] },
+      { k:"Hauteur d'enroulement", v:data['hauteur-totale'] },
+      { k:'Hauteur totale du rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
+      { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur des coulisses'), v:data['largeur-coulisses'] },
+      { k:"Longueur de l'axe (entre joues)", v:data['longueur-axe'] },
+      { k:'Diamètre de l\u2019axe motorisé', v:data['diametre-axe'] },
     ]);
     if(data.nblames) row('Nombre de lames à remplacer', data.nblames);
     if(data.lameFinale) row('Lame finale', 'À remplacer également');
