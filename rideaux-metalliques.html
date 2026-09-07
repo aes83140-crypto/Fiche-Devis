@@ -651,6 +651,23 @@ if('serviceWorker' in navigator){
           </div>
           <div class="fd-hint">Coche si la lame finale (lame basse renforcée) est comprise dans le remplacement.</div>
         </div>
+        <div class="fd-field full" id="field-serrure" style="display:none;">
+          <div class="fd-chip-row">
+            <div class="fd-chip" id="chip-serrure" style="padding:0 18px;">Serrure sur lame finale</div>
+          </div>
+          <div id="serrure-pos-wrap" style="display:none;margin-top:12px;">
+            <label>Position de la serrure <span class="req">*</span></label>
+            <div class="fd-toggle-row">
+              <div class="fd-toggle" data-field="serrurepos" data-val="gauche">À gauche</div>
+              <div class="fd-toggle" data-field="serrurepos" data-val="centre">Centrée</div>
+              <div class="fd-toggle" data-field="serrurepos" data-val="droite">À droite</div>
+            </div>
+          </div>
+          <div id="serrure-dist-wrap" style="display:none;margin-top:12px;">
+            <label>Distance axe serrure &harr; fond de coulisse <span class="req">*</span></label>
+            <input type="number" step="1" class="fd-mono" id="f-serrure-dist" placeholder="0">
+          </div>
+        </div>
         <div class="fd-field full"><label>Marque et numéro de série du fabricant</label><input type="text" id="f-marque-serie" placeholder="Si disponible sur la plaque"></div>
       </div>
       <div class="fd-schema-box" style="margin-top:16px;"><div id="schema-svg"></div></div>
@@ -745,14 +762,14 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.5</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.8</div>
 </div>
 
 <script>
 (function(){
   const $ = id => document.getElementById(id);
 
-  const fields = ['tech','client','mailclient','equip','travauxdesc','temps','nbtech','hauteur-tableau','hauteur-totale','largeur-coulisses','longueur-axe','diametre-axe','nblames','marque-serie','remarques'];
+  const fields = ['tech','client','mailclient','equip','travauxdesc','temps','nbtech','hauteur-tableau','hauteur-totale','largeur-coulisses','longueur-axe','diametre-axe','nblames','marque-serie','serrure-dist','remarques'];
 
   // --- Listes préenregistrées (gérées depuis la page d'accueil > Administration) ---
   function lsGet(key){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
@@ -871,9 +888,31 @@ if('serviceWorker' in navigator){
   loadSharedLists();
   window.addEventListener('focus', loadSharedLists);
 
-  let toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:null, sortie:null };
+  let toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:null, sortie:null, serrurepos:null };
   let photos = [];
   let travauxSelected = null;
+  function finaleConcernee(){ return travauxSelected === 'complet' || travauxSelected === 'tablier' || (isLameSel() && lameFinale); }
+  function serrurePosLabel(v){ return v === 'centre' ? 'Centrée' : v === 'droite' ? 'À droite' : v === 'gauche' ? 'À gauche' : ''; }
+  function updateSerrureUI(){
+    const show = finaleConcernee();
+    const f = $('field-serrure');
+    if(!f) return;
+    f.style.display = show ? '' : 'none';
+    if(!show && serrure){
+      serrure = false;
+      toggles.serrurepos = null;
+      document.querySelectorAll('.fd-toggle[data-field="serrurepos"]').forEach(t=>t.classList.remove('on'));
+    }
+    const c = $('chip-serrure');
+    if(c){
+      c.classList.toggle('on', serrure);
+      c.style.background = serrure ? 'var(--steel)' : '';
+      c.style.borderColor = serrure ? 'var(--steel)' : '';
+      c.style.color = serrure ? '#fff' : '';
+    }
+    $('serrure-pos-wrap').style.display = serrure ? '' : 'none';
+    $('serrure-dist-wrap').style.display = (serrure && (toggles.serrurepos === 'droite' || toggles.serrurepos === 'gauche')) ? '' : 'none';
+  }
   let optionsSelected = [];
   let schemaImg = null;
 
@@ -886,8 +925,7 @@ if('serviceWorker' in navigator){
   ];
 
   const OPTIONS_LIST = [
-    'Boîtier de commande à remplacer',
-    'Serrure latérale à clé'
+    'Boîtier de commande à remplacer'
   ];
 
 
@@ -905,6 +943,7 @@ if('serviceWorker' in navigator){
       }
       updateIseaWarn();
       updateBoitierRule();
+      updateSerrureUI();
       updateSteps();
       renderSchema();
     });
@@ -933,6 +972,7 @@ if('serviceWorker' in navigator){
         renderTravauxGrid();
         renderOptionsGrid();
         updateAxeRule();
+        updateSerrureUI();
         renderSchema();
         updateSteps();
       });
@@ -966,12 +1006,8 @@ if('serviceWorker' in navigator){
       toggles.sortie = null;
       document.querySelectorAll('.fd-toggle[data-field="sortie"]').forEach(el=>el.classList.remove('on'));
     }
-    let list = OPTIONS_LIST.slice();
-    // la serrure latérale se pose sur la lame finale : proposée seulement si celle-ci est concernée
-    const finaleConcernee = travauxSelected === 'complet' || travauxSelected === 'tablier' || (isLameSel() && lameFinale);
-    if(!finaleConcernee) list = list.filter(o => o !== 'Serrure latérale à clé');
     // une seule alimentation possible : dès qu'une est cochée, les autres disparaissent
-    return list;
+    return OPTIONS_LIST.slice();
   }
 
   function updateNoRemarkBtn(){
@@ -1039,6 +1075,7 @@ if('serviceWorker' in navigator){
     lameFinale = !lameFinale;
     renderOptionsGrid();
     updateNoOptionBtn();
+    updateSerrureUI();
     updateSteps();
     const c = $('chip-lamefinale');
     c.classList.toggle('on', lameFinale);
@@ -1046,6 +1083,16 @@ if('serviceWorker' in navigator){
     c.style.borderColor = lameFinale ? 'var(--steel)' : '';
     c.style.color = lameFinale ? '#fff' : '';
     renderSchema();
+  });
+
+  $('chip-serrure').addEventListener('click', ()=>{
+    serrure = !serrure;
+    if(!serrure){
+      toggles.serrurepos = null;
+      document.querySelectorAll('.fd-toggle[data-field="serrurepos"]').forEach(t=>t.classList.remove('on'));
+    }
+    updateSerrureUI();
+    updateSteps();
   });
 
   function updateIseaWarn(){
@@ -1062,6 +1109,7 @@ if('serviceWorker' in navigator){
   }
 
   let lameFinale = false;
+  let serrure = false;
   // --- Dévoilement progressif des rubriques ---
   const stepDone = {};
   document.querySelectorAll('.fd-step-next').forEach(b=>{
@@ -1734,7 +1782,8 @@ if('serviceWorker' in navigator){
   function applyForm(data){
     fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = data[f] || ''; });
     const t = data.toggles || {};
-    toggles = { lames:t.lames || null, enroulement:t.enroulement || null, isea:t.isea || null, nacelle:t.nacelle || null, pirl:t.pirl || null, boitier:t.boitier || null, sortie:t.sortie || null };
+    toggles = { lames:t.lames || null, enroulement:t.enroulement || null, isea:t.isea || null, nacelle:t.nacelle || null, pirl:t.pirl || null, boitier:t.boitier || null, sortie:t.sortie || null, serrurepos:t.serrurepos || null };
+    serrure = !!data.serrure;
     document.querySelectorAll('.fd-toggle').forEach(el=>{
       el.classList.toggle('on', toggles[el.dataset.field] === el.dataset.val);
     });
@@ -1766,7 +1815,8 @@ if('serviceWorker' in navigator){
       photos: [...photos],
       travaux: spec ? spec.label : '',
       options: [...optionsSelected],
-      lameFinale: lameFinale
+      lameFinale: lameFinale,
+      serrure: serrure
     };
     fields.forEach(f => data[f] = $('f-'+f).value.trim());
     // en remplacement de lames seules, ces cotes ne sont pas demandées
@@ -1783,9 +1833,10 @@ if('serviceWorker' in navigator){
     fields.forEach(f => $('f-'+f).value = '');
     photos = [];
     renderPhotoGrid();
-    toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:null, sortie:null };
+    toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:null, sortie:null, serrurepos:null };
     document.querySelectorAll('.fd-toggle').forEach(t=>t.classList.remove('on'));
     travauxSelected = null;
+    serrure = false;
     optionsSelected = [];
     Object.keys(stepDone).forEach(k => delete stepDone[k]);
     lameFinale = false;
@@ -1868,6 +1919,8 @@ if('serviceWorker' in navigator){
     }
     if(!toggles.nacelle) return { msg:'Merci de préciser si une nacelle est nécessaire.', target:'.fd-toggle[data-field="nacelle"]' };
     if(!toggles.pirl) return { msg:'Merci de préciser si un PIRL est nécessaire.', target:'.fd-toggle[data-field="pirl"]' };
+    if(data.serrure && !toggles.serrurepos) return { msg:'Précise la position de la serrure sur la lame finale.', target:'.fd-toggle[data-field="serrurepos"]' };
+    if(data.serrure && (toggles.serrurepos === 'droite' || toggles.serrurepos === 'gauche') && !data['serrure-dist']) return { msg:'La distance entre l\u2019axe de la serrure et le fond de coulisse est obligatoire.', target:'#f-serrure-dist' };
     if(!data.photos || !data.photos.length) return { msg:'Au moins une photo est obligatoire.', target:'.fd-photo-btn' };
     return null;
   }
@@ -1918,6 +1971,7 @@ if('serviceWorker' in navigator){
       kv("Diamètre de l'axe motorisé", mm(data['diametre-axe'])),
       data.nblames ? kv('Nombre de lames à remplacer', data.nblames) : null,
       data.lameFinale ? kv('Lame finale', 'À remplacer également') : null,
+      data.serrure ? kv('Serrure sur lame finale', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + mm(data['serrure-dist']) + ' du fond de coulisse' : '')) : null,
       kv('Marque / N° de série', data['marque-serie']),
     ]);
 
@@ -2234,6 +2288,7 @@ if('serviceWorker' in navigator){
     ]);
     if(data.nblames) row('Nombre de lames à remplacer', data.nblames);
     if(data.lameFinale) row('Lame finale', 'À remplacer également');
+    if(data.serrure) row('Serrure sur lame finale', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + (data['serrure-dist'] ? data['serrure-dist'] + ' mm' : '') + ' du fond de coulisse' : ''));
 
     if(data.toggles.sortie) row('Sortie de câble', data.toggles.sortie === 'droite' ? 'À droite' : 'À gauche');
     if(data.toggles.boitier) callout('Boîtier de commande à remplacer', boitierLabel(data.toggles.boitier));
@@ -2281,6 +2336,7 @@ if('serviceWorker' in navigator){
   renderOptionsGrid();
   updateIseaWarn();
   updateBoitierRule();
+  updateSerrureUI();
   updateNoOptionBtn();
   updateAxeRule();
   document.querySelectorAll('.fd-body input, .fd-body textarea').forEach(el => el.addEventListener('input', updateSteps));
