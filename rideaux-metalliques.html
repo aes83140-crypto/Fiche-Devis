@@ -762,7 +762,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.8</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.10</div>
 </div>
 
 <script>
@@ -2027,7 +2027,7 @@ if('serviceWorker' in navigator){
     return [prefix, clean(chantier) || 'chantier', clean(equip) || 'equipement'].join('-') + '.pdf';
   }
 
-  function generateRideauPDF(data){
+  function generateRideauPDF(data, variant){
     if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('Bibliothèque PDF non disponible (hors-ligne ?)');
 
     const { jsPDF } = window.jspdf;
@@ -2058,7 +2058,7 @@ if('serviceWorker' in navigator){
       doc.setTextColor(150,175,196);
       doc.text("RECORD PORTES AUTOMATIQUES", margin, 15, { charSpace:0.7 });
       doc.setTextColor(255,255,255); doc.setFontSize(20);
-      doc.text("Relevé de cotes — Rideau métallique", margin, 29);
+      doc.text(variant === 'fournisseur' ? "Demande de chiffrage pièces" : "Relevé de cotes — Rideau métallique", margin, 29);
       doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
       doc.setTextColor(180,198,213);
       doc.text((data.client || 'Client non renseigné') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 50 });
@@ -2257,6 +2257,47 @@ if('serviceWorker' in navigator){
 
     header();
 
+    if(variant === 'fournisseur'){
+      callout('Merci de rappeler ces deux références sur votre chiffrage',
+        (data.client || 'Site \u2014') + '   \u00B7   N\u00B0 équipement : ' + (data.equip || '\u2014'));
+
+      section('Type de travaux');
+      callout('Périmètre de l\'intervention', data.travaux, 'red');
+      block('Travaux à prévoir', data.travauxdesc);
+
+      section('Tablier');
+      row('Type de lames', lamesLabel(data.toggles.lames));
+      row('Type de lame', iseaLabel(data.toggles.isea));
+      if(data.toggles.isea === 'non') callout('\u26A0 Lame hors gamme ISEA', 'Photo des lames jointe pour identification du profil', 'red');
+
+      section('Cotes relevées (mm)');
+      tiles([
+        { k:'H. sous drapeau', v:data['hauteur-tableau'] },
+        { k:"H. d'enroulement", v:data['hauteur-totale'] },
+        { k:'H. totale rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
+        { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur coulisses'), v:data['largeur-coulisses'] },
+        { k:"Longueur d'axe (joues)", v:data['longueur-axe'] },
+        { k:'\u2300 axe motorisé', v:data['diametre-axe'] },
+      ]);
+      if(data.nblames) row('Nombre de lames à remplacer', data.nblames);
+      if(data.lameFinale) row('Lame finale', 'À remplacer également');
+      if(data.serrure) row('Serrure sur lame finale', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + (data['serrure-dist'] ? data['serrure-dist'] + ' mm' : '') + ' du fond de coulisse' : ''));
+      row('Marque / N° de série', data['marque-serie']);
+
+      if(data.toggles.boitier) callout('Boîtier de commande à remplacer', boitierLabel(data.toggles.boitier));
+
+      section('Options à prévoir');
+      if(data.options && data.options.length){
+        data.options.forEach(o => row('Option', o));
+      }
+
+      row('Demande', 'Chiffrage des pièces uniquement — la main d’œuvre est traitée en interne.');
+
+      photosPages(data.photos);
+      footers();
+      return doc;
+    }
+
     section('Type de travaux');
     callout('Périmètre de l\'intervention', data.travaux, 'red');
     block('Travaux à prévoir', data.travauxdesc);
@@ -2371,39 +2412,40 @@ if('serviceWorker' in navigator){
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
     const subject = 'Relevé rideau métallique - ' + (data.client||'Client') + (data.equip ? ' - Éq. '+data.equip : '');
 
-    let pdfFile = null, pdfDoc = null;
+    let pdfFile = null, pdfDoc = null, fourFile = null, fourDoc = null;
     const pdfName = pdfFileName('FR', data.client, data.equip);
+    const fourName = pdfFileName('FR-FOURNISSEUR', data.client, data.equip);
     try{
       pdfDoc = generateRideauPDF(data);
-      const blob = pdfDoc.output('blob');
-      pdfFile = new File([blob], pdfName, { type:'application/pdf' });
+      pdfFile = new File([pdfDoc.output('blob')], pdfName, { type:'application/pdf' });
+      fourDoc = generateRideauPDF(data, 'fournisseur');
+      fourFile = new File([fourDoc.output('blob')], fourName, { type:'application/pdf' });
     }catch(e){
       showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ") — utilise \"Copier le texte\" en secours.", false);
       return;
     }
 
-    const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files:[pdfFile] }));
+    const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files:[pdfFile, fourFile] }));
     if(canAttach){
-      const filesAttached = !!(navigator.canShare && navigator.canShare({ files:[pdfFile] }));
-      const note = filesAttached ? '📎 Détails complets et photos dans le PDF joint.' : '📎 PDF à télécharger (bouton dédié) et à joindre manuellement.';
+      const note = '📎 2 PDF joints : relevé complet (interne) et demande de chiffrage à transmettre au fournisseur.';
       const text = formatText(data, { note: note });
-      const shareData = { title: subject, text: text };
-      if(filesAttached) shareData.files = [pdfFile];
+      const shareData = { title: subject, text: text, files:[pdfFile, fourFile] };
       navigator.share(shareData).then(()=>{ histAdd(data, 'mail'); showMsg('Partage envoyé.'); }).catch(e=>{
         if(e && e.name === 'AbortError') return;
         const detail = (e && e.message) ? e.message : (e && e.name) ? e.name : 'erreur inconnue';
         showMsg('Le partage a échoué (' + detail + ') — utilise "Télécharger le PDF" puis joins-le manuellement.', false);
       });
     } else {
-      const text = formatText(data, { note: '📎 PDF à télécharger (bouton dédié) et à joindre manuellement.' });
+      const text = formatText(data, { note: '📎 2 PDF à télécharger (bouton dédié) et à joindre manuellement.' });
       try{
         const url = 'mailto:' + '' + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
         const a = document.createElement('a');
         a.href = url; a.rel = 'noopener';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(()=>{ try{ pdfDoc.save(pdfName); }catch(e2){} }, 1200);
+        setTimeout(()=>{ try{ fourDoc.save(fourName); }catch(e2){} }, 2400);
         histAdd(data, 'mail');
-        showMsg('Mail ouvert — choisis le destinataire dans ta messagerie ; le PDF (' + pdfName + ') vient d\'être téléchargé, joins-le au message.');
+        showMsg('Mail ouvert — choisis le destinataire ; les 2 PDF (complet + fournisseur) viennent d\'être téléchargés, joins-les au message.');
       }catch(e){ showMsg("Partage indisponible sur cet appareil — utilise \"Télécharger le PDF\".", false); }
     }
   });
