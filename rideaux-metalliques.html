@@ -579,16 +579,16 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Identification</span></div>
       <div class="fd-grid">
-        <div class="fd-field"><label>Technicien <span class="req">*</span></label><input type="text" id="f-tech"></div>
-        <div class="fd-field"><label>N° équipement RECORD (Astea) <span class="req">*</span></label><input type="text" class="fd-mono" id="f-equip" placeholder="N° Astea"></div>
-        <div class="fd-field full"><label>Nom et ville du site client <span class="req">*</span></label><input type="text" id="f-client" placeholder="Nom du client, ville..."></div>
-        <div class="fd-field full"><label>Mail client <span class="req">*</span></label><input type="email" id="f-mailclient" inputmode="email" autocapitalize="off" placeholder="nom@societe.fr"></div>
+        <div class="fd-field"><label>Technicien <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-tech"></div>
+        <div class="fd-field"><label>N° équipement RECORD (Astea) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" class="fd-mono" id="f-equip" placeholder="N° Astea"></div>
+        <div class="fd-field full"><label>Nom et ville du site client <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-client" placeholder="Nom du client, ville..."></div>
+        <div class="fd-field full"><label>Mail client <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="email" id="f-mailclient" inputmode="email" autocapitalize="off" placeholder="nom@societe.fr"></div>
       </div>
     </div>
 
     <div class="fd-section" id="sec-2">
       <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Type de travaux</span></div>
-      <label>Périmètre de l'intervention <span class="req">*</span></label>
+      <label>Périmètre de l'intervention <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
       <div class="fd-visual-grid" id="grid-travaux"></div>
       <div class="fd-field full" style="margin-top:18px;">
         <label>Travaux à prévoir</label>
@@ -599,21 +599,21 @@ if('serviceWorker' in navigator){
     <div class="fd-section" id="sec-3">
       <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Tablier</span></div>
       <div class="fd-grid">
-        <div class="fd-field full" id="field-lames"><label>Type de lames sur le tablier <span class="req">*</span></label>
+        <div class="fd-field full" id="field-lames"><label>Type de lames sur le tablier <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="lames" data-val="micro">Micro-perforées</div>
             <div class="fd-toggle" data-field="lames" data-val="pleines">Pleines</div>
             <div class="fd-toggle" id="tg-cobra" data-field="lames" data-val="cobra">Cobra</div>
           </div>
         </div>
-        <div class="fd-field full"><label>Sens d'enroulement du tablier <span class="req">*</span></label>
+        <div class="fd-field full"><label>Sens d'enroulement du tablier <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-hint" style="margin-bottom:8px;">👁 Place-toi <strong>à l'intérieur du bâtiment</strong> et regarde le rideau : de quel côté le tablier s'enroule-t-il ?</div>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="enroulement" data-val="interieur">Vers l'intérieur (vers moi)</div>
             <div class="fd-toggle" data-field="enroulement" data-val="exterieur">Vers l'extérieur (vers la façade)</div>
           </div>
         </div>
-        <div class="fd-field full" id="field-isea"><label>Type de lame <span class="req">*</span></label>
+        <div class="fd-field full" id="field-isea"><label>Type de lame <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="isea" data-val="P116">Lame P116</div>
             <div class="fd-toggle" data-field="isea" data-val="non">Autre</div>
@@ -632,8 +632,8 @@ if('serviceWorker' in navigator){
     <div class="fd-section" id="sec-4">
       <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Cotes relevées (mm)</span></div>
       <div class="fd-grid">
-        <div class="fd-field" id="field-ht"><label>Hauteur sous drapeau <span class="req">*</span></label><input type="number" step="1" class="fd-mono" id="f-hauteur-tableau" placeholder="0"></div>
-        <div class="fd-field" id="field-htot"><label>Hauteur d'enroulement <span class="req">*</span></label><input type="number" step="1" class="fd-mono" id="f-hauteur-totale" placeholder="0"></div>
+        <div class="fd-field" id="field-ht"><label>Hauteur sous drapeau <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-hauteur-tableau" placeholder="0"></div>
+        <div class="fd-field" id="field-htot"><label>Hauteur d'enroulement <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-hauteur-totale" placeholder="0"></div>
         <div class="fd-field full" id="field-htotal" style="display:none;">
           <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);">
             <span style="font-size:13.5px;font-weight:700;color:var(--ink-mute);">Hauteur totale du rideau</span>
@@ -641,10 +641,10 @@ if('serviceWorker' in navigator){
           </div>
           <div class="fd-hint">Somme de la hauteur sous drapeau et de la hauteur d'enroulement.</div>
         </div>
-        <div class="fd-field" id="field-larg"><label id="lbl-larg">Largeur coulisses comprises <span class="req">*</span></label><input type="number" step="1" class="fd-mono" id="f-largeur-coulisses" placeholder="0"></div>
-        <div class="fd-field" id="field-longaxe" style="display:none;"><label>Longueur de l'axe, joues comprises <span class="req">*</span></label><input type="number" step="1" class="fd-mono" id="f-longueur-axe" placeholder="0"><div class="fd-hint">Mesure d'about à about, joues d'extrémité comprises.</div></div>
-        <div class="fd-field" id="field-axe"><label>Diamètre de l'axe motorisé <span class="req" id="req-axe" style="display:none;">*</span></label><input type="number" step="1" class="fd-mono" id="f-diametre-axe" placeholder="0"><div class="fd-hint" id="hint-axe">Obligatoire pour un remplacement de moteur ou d'axe seul.</div></div>
-        <div class="fd-field" id="field-nblames" style="display:none;"><label>Nombre de lames à remplacer <span class="req">*</span></label><input type="number" step="1" min="1" class="fd-mono" id="f-nblames" placeholder="0"><div class="fd-hint">Compter les lames complètes à changer.</div></div>
+        <div class="fd-field" id="field-larg"><label id="lbl-larg">Largeur coulisses comprises <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-largeur-coulisses" placeholder="0"></div>
+        <div class="fd-field" id="field-longaxe" style="display:none;"><label>Longueur de l'axe, joues comprises <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-longueur-axe" placeholder="0"><div class="fd-hint">Mesure d'about à about, joues d'extrémité comprises.</div></div>
+        <div class="fd-field" id="field-axe"><label>Diamètre de l'axe motorisé <span class="req" id="req-axe" style="font-size:0.78em;font-weight:700;display:none;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-diametre-axe" placeholder="0"><div class="fd-hint" id="hint-axe">Obligatoire pour un remplacement de moteur ou d'axe seul.</div></div>
+        <div class="fd-field" id="field-nblames" style="display:none;"><label>Nombre de lames à remplacer <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" min="1" class="fd-mono" id="f-nblames" placeholder="0"><div class="fd-hint">Compter les lames complètes à changer.</div></div>
         <div class="fd-field full" id="field-lamefinale" style="display:none;">
           <div class="fd-chip-row">
             <div class="fd-chip" id="chip-lamefinale" style="padding:0 18px;">Lame finale à remplacer également</div>
@@ -656,7 +656,7 @@ if('serviceWorker' in navigator){
             <div class="fd-chip" id="chip-serrure" style="padding:0 18px;">Serrure sur lame finale</div>
           </div>
           <div id="serrure-pos-wrap" style="display:none;margin-top:12px;">
-            <label>Position de la serrure <span class="req">*</span></label>
+            <label>Position de la serrure <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
             <div class="fd-toggle-row">
               <div class="fd-toggle" data-field="serrurepos" data-val="gauche">À gauche</div>
               <div class="fd-toggle" data-field="serrurepos" data-val="centre">Centrée</div>
@@ -664,7 +664,7 @@ if('serviceWorker' in navigator){
             </div>
           </div>
           <div id="serrure-dist-wrap" style="display:none;margin-top:12px;">
-            <label>Distance axe serrure &harr; fond de coulisse <span class="req">*</span></label>
+            <label>Distance axe serrure &harr; fond de coulisse <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
             <input type="number" step="1" class="fd-mono" id="f-serrure-dist" placeholder="0">
           </div>
         </div>
@@ -677,7 +677,7 @@ if('serviceWorker' in navigator){
     <div class="fd-section" id="sec-5">
       <div class="fd-section-head"><span class="fd-num">5</span><span class="fd-section-title">Options à sélectionner</span></div>
       <div class="fd-field full" id="sortie-wrap" style="margin-bottom:18px;">
-        <label>Sortie de câble <span class="req">*</span></label>
+        <label>Sortie de câble <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
         <div class="fd-toggle-row">
           <div class="fd-toggle" data-field="sortie" data-val="droite">À droite</div>
           <div class="fd-toggle" data-field="sortie" data-val="gauche">À gauche</div>
@@ -685,7 +685,7 @@ if('serviceWorker' in navigator){
       </div>
       <div class="fd-chip-row" id="grid-options"></div>
       <div class="fd-field full" id="boitier-wrap" style="display:none;margin-top:16px;">
-        <label>Type de boîtier de commande à poser <span class="req">*</span></label>
+        <label>Type de boîtier de commande à poser <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
         <div class="fd-toggle-row">
           <div class="fd-toggle" data-field="boitier" data-val="cle">Contact à clé</div>
           <div class="fd-toggle" data-field="boitier" data-val="poussoir">Bouton poussoir</div>
@@ -699,15 +699,15 @@ if('serviceWorker' in navigator){
     <div class="fd-section" id="sec-6">
       <div class="fd-section-head"><span class="fd-num">6</span><span class="fd-section-title">Moyens à prévoir</span></div>
       <div class="fd-grid">
-        <div class="fd-field"><label>Temps par technicien (h) <span class="req">*</span></label><input type="number" step="0.5" min="0" class="fd-mono" id="f-temps" placeholder="0"></div>
-        <div class="fd-field"><label>Nombre de techniciens <span class="req">*</span></label><input type="number" step="1" min="0" class="fd-mono" id="f-nbtech" placeholder="0"></div>
-        <div class="fd-field"><label>Nacelle <span class="req">*</span></label>
+        <div class="fd-field"><label>Temps par technicien (h) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="0.5" min="0" class="fd-mono" id="f-temps" placeholder="0"></div>
+        <div class="fd-field"><label>Nombre de techniciens <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" min="0" class="fd-mono" id="f-nbtech" placeholder="0"></div>
+        <div class="fd-field"><label>Nacelle <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="nacelle" data-val="oui">Oui</div>
             <div class="fd-toggle" data-field="nacelle" data-val="non">Non</div>
           </div>
         </div>
-        <div class="fd-field"><label>PIRL <span class="req">*</span></label>
+        <div class="fd-field"><label>PIRL <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="pirl" data-val="oui">Oui</div>
             <div class="fd-toggle" data-field="pirl" data-val="non">Non</div>
@@ -728,7 +728,7 @@ if('serviceWorker' in navigator){
     <div class="fd-section" id="sec-8">
       <div class="fd-section-head"><span class="fd-num">8</span><span class="fd-section-title">Photos</span></div>
       <div class="fd-field full">
-        <label>Photos <span class="req">*</span> (au moins 1 obligatoire)</label>
+        <label>Photos <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span> (au moins 1 obligatoire)</label>
         <div class="fd-photo-actions">
           <label class="fd-photo-btn cam" for="f-photo-cam">📷 Prendre une photo</label>
           <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none;">
@@ -762,7 +762,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.11</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.13</div>
 </div>
 
 <script>
@@ -1223,7 +1223,7 @@ if('serviceWorker' in navigator){
     $('field-isea').style.display = axeOnly ? 'none' : '';
     $('field-lames').style.display = axeOnly ? 'none' : '';
     const isTablier = travauxSelected === 'tablier';
-    $('lbl-larg').innerHTML = ((isTablier || isLame) ? 'Longueur des lames' : 'Largeur coulisses comprises') + ' <span class="req">*</span>';
+    $('lbl-larg').innerHTML = ((isTablier || isLame) ? 'Longueur des lames' : 'Largeur coulisses comprises') + ' <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span>';
     if(axeOnly && toggles.isea){
       toggles.isea = null;
       document.querySelectorAll('.fd-toggle[data-field="isea"]').forEach(x=>x.classList.remove('on'));
@@ -2181,19 +2181,24 @@ if('serviceWorker' in navigator){
       items = (items || []).filter(it => it && it.v !== undefined && it.v !== null && String(it.v).trim() !== '');
       if(!items.length) return;
       emit();
-      const gap = 4.5;
-      const w = (contentW - gap * (items.length - 1)) / items.length;
-      checkBreak(24);
-      items.forEach((it, i)=>{
-        const x = margin + i * (w + gap);
-        fillC(SURF);
-        doc.roundedRect(x, y, w, 19, 2.5, 2.5, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
-        doc.text(doc.splitTextToSize(it.k.toUpperCase(), w - 9)[0], x + 5.5, y + 7, { charSpace:0.3 });
-        doc.setFontSize(12.5); setC(INK);
-        doc.text(doc.splitTextToSize(String(it.v), w - 9)[0], x + 5.5, y + 15);
-      });
-      y += 23;
+      const perRow = 3, gap = 4.5;
+      const w = (contentW - gap * (perRow - 1)) / perRow;
+      for(let start = 0; start < items.length; start += perRow){
+        const row = items.slice(start, start + perRow);
+        checkBreak(28);
+        row.forEach((it, i)=>{
+          const x = margin + i * (w + gap);
+          const lbl = doc.setFont('helvetica','bold').setFontSize(7).splitTextToSize(it.k.toUpperCase(), w - 10).slice(0, 2);
+          const h = 19 + (lbl.length > 1 ? 4 : 0);
+          fillC(SURF);
+          doc.roundedRect(x, y, w, h, 2.5, 2.5, 'F');
+          setC(SOFT);
+          doc.text(lbl, x + 5.5, y + 6.6, { charSpace:0.3, lineHeightFactor:1.2 });
+          doc.setFont('helvetica','bold'); doc.setFontSize(12.5); setC(INK);
+          doc.text(doc.splitTextToSize(String(it.v), w - 9)[0], x + 5.5, y + h - 4);
+        });
+        y += 23 + (row.some(it => doc.setFont('helvetica','bold').setFontSize(7).splitTextToSize(it.k.toUpperCase(), w - 10).length > 1) ? 4 : 0);
+      }
     }
 
     function pills(list){
@@ -2292,6 +2297,16 @@ if('serviceWorker' in navigator){
       }
 
       row('Demande', 'Chiffrage des pièces uniquement — la main d’œuvre est traitée en interne.');
+
+      if(schemaImg && schemaImg.dataUrl){
+        section('Schéma de vérification');
+        emit();
+        const sw = Math.min(contentW, 132);
+        const sh = sw * schemaImg.h / schemaImg.w;
+        checkBreak(sh + 6);
+        try{ doc.addImage(schemaImg.dataUrl, 'JPEG', margin + (contentW - sw)/2, y, sw, sh); }catch(e){}
+        y += sh + 6;
+      }
 
       photosPages(data.photos);
       footers();
