@@ -687,10 +687,11 @@ if('serviceWorker' in navigator){
       <div class="fd-field full" id="boitier-wrap" style="display:none;margin-top:16px;">
         <label>Type de boîtier de commande à poser <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
         <div class="fd-toggle-row">
-          <div class="fd-toggle" data-field="boitier" data-val="cle">Contact à clé</div>
-          <div class="fd-toggle" data-field="boitier" data-val="poussoir">Bouton poussoir</div>
-          <div class="fd-toggle" data-field="boitier" data-val="cle_deverr">Boîtier à clé avec déverrouillage</div>
+          <div class="fd-toggle" data-field="boitier" data-multi="1" data-val="cle">Contact à clé</div>
+          <div class="fd-toggle" data-field="boitier" data-multi="1" data-val="poussoir">Bouton poussoir</div>
+          <div class="fd-toggle" data-field="boitier" data-multi="1" data-val="cle_deverr">Boîtier à clé avec déverrouillage</div>
         </div>
+        <div class="fd-hint" style="margin-top:6px;">Plusieurs choix possibles.</div>
       </div>
       <div class="fd-hint" id="options-hint">Tout ce qui est nécessaire à la préparation du chantier — plusieurs choix possibles.</div>
       <button type="button" class="fd-step-next" id="btn-no-option" data-step="sec-5">Aucune option → continuer</button>
@@ -762,7 +763,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.13</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.14</div>
 </div>
 
 <script>
@@ -888,7 +889,7 @@ if('serviceWorker' in navigator){
   loadSharedLists();
   window.addEventListener('focus', loadSharedLists);
 
-  let toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:null, sortie:null, serrurepos:null };
+  let toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:[], sortie:null, serrurepos:null };
   let photos = [];
   let travauxSelected = null;
   function finaleConcernee(){ return travauxSelected === 'complet' || travauxSelected === 'tablier' || (isLameSel() && lameFinale); }
@@ -933,6 +934,20 @@ if('serviceWorker' in navigator){
   document.querySelectorAll('.fd-toggle').forEach(t=>{
     t.addEventListener('click', ()=>{
       const field = t.dataset.field;
+      if(t.dataset.multi){
+        const wasOn = t.classList.contains('on');
+        t.classList.toggle('on', !wasOn);
+        let arr = Array.isArray(toggles[field]) ? toggles[field].slice() : [];
+        if(wasOn) arr = arr.filter(v => v !== t.dataset.val);
+        else arr.push(t.dataset.val);
+        toggles[field] = arr;
+        updateIseaWarn();
+        updateBoitierRule();
+        updateSerrureUI();
+        updateSteps();
+        renderSchema();
+        return;
+      }
       const wasOn = t.classList.contains('on');
       document.querySelectorAll('.fd-toggle[data-field="'+field+'"]').forEach(x=>x.classList.remove('on'));
       if(wasOn){
@@ -1065,8 +1080,8 @@ if('serviceWorker' in navigator){
     if(!wrap) return;
     const need = optionsSelected.indexOf(OPT_BOITIER) >= 0;
     wrap.style.display = need ? '' : 'none';
-    if(!need && toggles.boitier){
-      toggles.boitier = null;
+    if(!need && toggles.boitier && toggles.boitier.length){
+      toggles.boitier = [];
       document.querySelectorAll('.fd-toggle[data-field="boitier"]').forEach(t=>t.classList.remove('on'));
     }
   }
@@ -1134,12 +1149,12 @@ if('serviceWorker' in navigator){
         : "Renseigne le tablier : type de lames, type de lame (P116 ou Autre) et sens d'enroulement." },
     { id:'sec-5', need:()=> cotesOk(), hint:'Complète les cotes relevées pour continuer.' },
     { id:'sec-6',
-      need:()=> (optionsSelected.indexOf(OPT_BOITIER) < 0 || !!toggles.boitier)
+      need:()=> (optionsSelected.indexOf(OPT_BOITIER) < 0 || (toggles.boitier && toggles.boitier.length))
         && (!alimRequise() || alimChoisie())
         && (alimRequise() || !!stepDone['sec-5']),
       hintOf:()=> (alimRequise() && !alimChoisie())
         ? 'Choisis le côté de sortie de câble (droite ou gauche) pour continuer.'
-        : (optionsSelected.indexOf(OPT_BOITIER) >= 0 && !toggles.boitier)
+        : (optionsSelected.indexOf(OPT_BOITIER) >= 0 && !(toggles.boitier && toggles.boitier.length))
           ? 'Précise le type de boîtier de commande pour continuer.'
           : 'Sélectionne les options utiles (ou aucune) puis touche « Aucune option → continuer ».' },
     { id:'sec-7', need:()=> !!($('f-temps').value.trim() && parseFloat($('f-nbtech').value) > 0 && toggles.nacelle && toggles.pirl),
@@ -1782,10 +1797,11 @@ if('serviceWorker' in navigator){
   function applyForm(data){
     fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = data[f] || ''; });
     const t = data.toggles || {};
-    toggles = { lames:t.lames || null, enroulement:t.enroulement || null, isea:t.isea || null, nacelle:t.nacelle || null, pirl:t.pirl || null, boitier:t.boitier || null, sortie:t.sortie || null, serrurepos:t.serrurepos || null };
+    toggles = { lames:t.lames || null, enroulement:t.enroulement || null, isea:t.isea || null, nacelle:t.nacelle || null, pirl:t.pirl || null, boitier:Array.isArray(t.boitier) ? t.boitier : (t.boitier ? [t.boitier] : []), sortie:t.sortie || null, serrurepos:t.serrurepos || null };
     serrure = !!data.serrure;
     document.querySelectorAll('.fd-toggle').forEach(el=>{
-      el.classList.toggle('on', toggles[el.dataset.field] === el.dataset.val);
+      const tv = toggles[el.dataset.field];
+      el.classList.toggle('on', Array.isArray(tv) ? tv.indexOf(el.dataset.val) >= 0 : tv === el.dataset.val);
     });
     const spec = data.travaux ? TRAVAUX_TYPES.find(x => x.label === data.travaux) : null;
     travauxSelected = spec ? spec.id : null;
@@ -1833,7 +1849,7 @@ if('serviceWorker' in navigator){
     fields.forEach(f => $('f-'+f).value = '');
     photos = [];
     renderPhotoGrid();
-    toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:null, sortie:null, serrurepos:null };
+    toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:[], sortie:null, serrurepos:null };
     document.querySelectorAll('.fd-toggle').forEach(t=>t.classList.remove('on'));
     travauxSelected = null;
     serrure = false;
@@ -1914,7 +1930,7 @@ if('serviceWorker' in navigator){
     if(alimRequise() && !alimChoisie()){
       return { msg:'Indique le côté de sortie de câble (droite ou gauche).', target:'.fd-toggle[data-field="sortie"]' };
     }
-    if(optionsSelected.indexOf(OPT_BOITIER) >= 0 && !toggles.boitier){
+    if(optionsSelected.indexOf(OPT_BOITIER) >= 0 && !(toggles.boitier && toggles.boitier.length)){
       return { msg:'Précise le type de boîtier à poser : contact à clé ou bouton poussoir.', target:'.fd-toggle[data-field="boitier"]' };
     }
     if(!toggles.nacelle) return { msg:'Merci de préciser si une nacelle est nécessaire.', target:'.fd-toggle[data-field="nacelle"]' };
@@ -1975,7 +1991,7 @@ if('serviceWorker' in navigator){
       kv('Marque / N° de série', data['marque-serie']),
     ]);
 
-    if(data.toggles.boitier) bloc('Boîtier de commande', [ kv('Type à poser', boitierLabel(data.toggles.boitier)) ]);
+    if(data.toggles.boitier && data.toggles.boitier.length) bloc('Boîtier de commande', [ kv('Type à poser', boitierLabel(data.toggles.boitier)) ]);
 
     bloc('Moyens à prévoir', [
       kv('Temps par technicien', (data.temps ? data.temps + ' h' : '')),
@@ -2003,7 +2019,8 @@ if('serviceWorker' in navigator){
     return v === 'interieur' ? "Vers l'intérieur (vu de l'intérieur)" : v === 'exterieur' ? "Vers l'extérieur (vu de l'intérieur)" : '';
   }
   function boitierLabel(v){
-    return v === 'cle' ? 'Contact à clé' : v === 'poussoir' ? 'Bouton poussoir' : v === 'cle_deverr' ? 'Boîtier à clé avec déverrouillage' : '';
+    const one = x => x === 'cle' ? 'Contact à clé' : x === 'poussoir' ? 'Bouton poussoir' : x === 'cle_deverr' ? 'Boîtier à clé avec déverrouillage' : '';
+    return (Array.isArray(v) ? v : [v]).map(one).filter(Boolean).join('  ·  ');
   }
   function iseaLabel(v){
     if(v === 'P116') return 'Lame P116';
@@ -2289,7 +2306,7 @@ if('serviceWorker' in navigator){
       if(data.serrure) row('Serrure sur lame finale', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + (data['serrure-dist'] ? data['serrure-dist'] + ' mm' : '') + ' du fond de coulisse' : ''));
       row('Marque / N° de série', data['marque-serie']);
 
-      if(data.toggles.boitier) callout('Boîtier de commande à remplacer', boitierLabel(data.toggles.boitier));
+      if(data.toggles.boitier && data.toggles.boitier.length) callout('Boîtier de commande à remplacer', boitierLabel(data.toggles.boitier));
 
       section('Options à prévoir');
       if(data.options && data.options.length){
@@ -2347,7 +2364,7 @@ if('serviceWorker' in navigator){
     if(data.serrure) row('Serrure sur lame finale', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + (data['serrure-dist'] ? data['serrure-dist'] + ' mm' : '') + ' du fond de coulisse' : ''));
 
     if(data.toggles.sortie) row('Sortie de câble', data.toggles.sortie === 'droite' ? 'À droite' : 'À gauche');
-    if(data.toggles.boitier) callout('Boîtier de commande à remplacer', boitierLabel(data.toggles.boitier));
+    if(data.toggles.boitier && data.toggles.boitier.length) callout('Boîtier de commande à remplacer', boitierLabel(data.toggles.boitier));
 
     section('Moyens à prévoir');
     tiles([
