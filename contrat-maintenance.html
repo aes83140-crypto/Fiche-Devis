@@ -522,14 +522,14 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Objet de la demande</span></div>
       <div class="fd-grid">
-        <div class="fd-field full"><label>Nature du signalement <span class="req">*</span></label>
+        <div class="fd-field full"><label>Nature du signalement <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="demande" data-val="ajout">Ajout d'&eacute;quipement<br>(client sous contrat)</div>
             <div class="fd-toggle" data-field="demande" data-val="prospect">Nouveau client<br>(sans contrat)</div>
           </div>
         </div>
-        <div class="fd-field full"><label>Technicien <span class="req">*</span></label><input type="text" id="f-tech"></div>
-        <div class="fd-field full"><label>Priorit&eacute; <span class="req">*</span></label>
+        <div class="fd-field full"><label>Technicien <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-tech"></div>
+        <div class="fd-field full"><label>Priorit&eacute; <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="prio" data-val="normal">Normal</div>
             <div class="fd-toggle" data-field="prio" data-val="rapide">&Agrave; traiter vite</div>
@@ -542,7 +542,7 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Client / site</span></div>
       <div class="fd-grid">
-        <div class="fd-field full"><label>Nom du site / Ville <span class="req">*</span></label><input type="text" id="f-site" placeholder="Ex. Intermarch&eacute; Aubagne"></div>
+        <div class="fd-field full"><label>Nom du site / Ville <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-site" placeholder="Ex. Intermarch&eacute; Aubagne"></div>
         <div class="fd-field full"><label>Adresse</label><input type="text" id="f-adresse" placeholder="Rue, code postal, ville"></div>
         <div class="fd-field"><label>Enseigne / groupe</label><input type="text" id="f-enseigne" placeholder="Ex. Les Mousquetaires"></div>
         <div class="fd-field"><label>Nombre d'&eacute;quipements sur site</label><input type="number" min="0" step="1" id="f-nbsite" placeholder="0"></div>
@@ -553,10 +553,10 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Contact sur place</span></div>
       <div class="fd-grid">
-        <div class="fd-field"><label>Nom du contact <span class="req">*</span></label><input type="text" id="f-contact" placeholder="Nom et pr&eacute;nom"></div>
+        <div class="fd-field"><label>Nom du contact <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-contact" placeholder="Nom et pr&eacute;nom"></div>
         <div class="fd-field"><label>Fonction</label><input type="text" id="f-fonction" placeholder="Ex. Responsable technique"></div>
-        <div class="fd-field"><label>T&eacute;l&eacute;phone <span class="req">*</span></label><input type="tel" id="f-tel" class="fd-mono" placeholder="06 00 00 00 00"></div>
-        <div class="fd-field"><label>Mail du contact <span class="req">*</span></label><input type="email" id="f-mail" placeholder="contact@client.fr"></div>
+        <div class="fd-field"><label>T&eacute;l&eacute;phone <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="tel" id="f-tel" class="fd-mono" placeholder="06 00 00 00 00"></div>
+        <div class="fd-field"><label>Mail du contact <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="email" id="f-mail" placeholder="contact@client.fr"></div>
       </div>
       <div class="fd-photo-hint">Ces coordonn&eacute;es servent au commercial pour rappeler le client &mdash; ce n'est pas l'adresse de destination de l'envoi.</div>
     </div>
@@ -564,9 +564,9 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">&Eacute;quipement(s) concern&eacute;(s)</span></div>
       <div class="fd-grid">
-        <div class="fd-field"><label>Nombre d'&eacute;quipements concern&eacute;s <span class="req">*</span></label><input type="number" min="0" step="1" id="f-nbequip" placeholder="0"></div>
-        <div class="fd-field" id="wrap-equip"><label>N&deg; d'&eacute;quipement</label><input type="text" class="fd-mono" id="f-equip" placeholder="EQ-000000"></div>
-        <div class="fd-field"><label>Type de porte <span class="req">*</span></label>
+        <div class="fd-field"><label>Nombre d'&eacute;quipements concern&eacute;s <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" min="0" step="1" id="f-nbequip" placeholder="0"></div>
+        <div class="fd-field" id="wrap-equip"><label>N&deg; d'&eacute;quipement <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" class="fd-mono" id="f-equip" placeholder="EQ-000000"></div>
+        <div class="fd-field" id="wrap-porte"><label>Type de porte <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <select id="f-porte">
             <option value="">&mdash; &Agrave; choisir &mdash;</option>
             <option>Coulissante automatique</option>
@@ -581,23 +581,23 @@ if('serviceWorker' in navigator){
             <option>Autre</option>
           </select>
         </div>
-        <div class="fd-field"><label>Marque</label><input type="text" id="f-marque" placeholder="Ex. Record"></div>
-        <div class="fd-field"><label>Ann&eacute;e d'installation</label><input type="number" min="1950" max="2100" step="1" class="fd-mono" id="f-annee" placeholder="Ex. 2014"></div>
-        <div class="fd-field"><label>Localisation sur site</label><input type="text" id="f-loc" placeholder="Entr&eacute;e principale, quai 3..."></div>
-        <div class="fd-field full"><label>&Eacute;tat g&eacute;n&eacute;ral <span class="req">*</span></label>
-          <div class="fd-toggle-row">
-            <div class="fd-toggle" data-field="etat" data-val="bon">Bon</div>
-            <div class="fd-toggle" data-field="etat" data-val="moyen">Moyen</div>
-            <div class="fd-toggle" data-field="etat" data-val="mauvais">Mauvais</div>
-          </div>
+        <div class="fd-field full" id="wrap-detail-equip" style="display:none;">
+          <label>D&eacute;tail par &eacute;quipement</label>
+          <div id="equip-list"></div>
         </div>
-        <div class="fd-field full"><label>Moyens n&eacute;cessaires pour l'entretien</label>
-          <div class="fd-chip-row">
-            <div class="fd-chip" data-type="nacelle">Nacelle</div>
-            <div class="fd-chip" data-type="pirl">PIRL</div>
-            <div class="fd-chip" data-type="echafaudage">&Eacute;chafaudage</div>
-            <div class="fd-chip" data-type="hauteur">Acc&egrave;s difficile</div>
-          </div>
+        <div class="fd-field" id="wrap-marque"><label>Marque <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-marque" placeholder="Ex. Record"></div>
+        <div class="fd-field" id="wrap-annee"><label>Ann&eacute;e d'installation <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+          <input type="number" min="1950" max="2100" step="1" class="fd-mono" id="f-annee" placeholder="Ex. 2014">
+          <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12.5px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink-mute);"><input type="checkbox" id="f-annee-est" style="width:auto;">Pas d'info précise (estimation)</label>
+        </div>
+        <div class="fd-field" id="wrap-loc"><label>Localisation sur site <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-loc" placeholder="Entr&eacute;e principale, quai 3..."></div>
+        <div class="fd-field" id="wrap-etat"><label>&Eacute;tat <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+          <select id="f-etat">
+            <option value="">&mdash; &Agrave; choisir &mdash;</option>
+            <option value="bon">Bon</option>
+            <option value="moyen">Moyen</option>
+            <option value="mauvais">Mauvais</option>
+          </select>
         </div>
         <div class="fd-field full"><label>Pr&eacute;cisions d'accessibilit&eacute;</label><input type="text" id="f-acces" placeholder="Ex. intervention hors heures d'ouverture, cl&eacute; &agrave; l'accueil..."></div>
       </div>
@@ -642,15 +642,15 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">R&eacute;alisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.5</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.14</div>
 </div>
 
 <script>
 (function(){
   const $ = id => document.getElementById(id);
   const fields = ['tech','site','adresse','enseigne','nbsite','concurrent','contact','fonction','tel','mail',
-                  'nbequip','equip','porte','marque','annee','loc','acces','remarque'];
-  let toggles = { demande:null, prio:null, etat:null };
+                  'nbequip','equip','porte','marque','annee','loc','etat','acces','remarque'];
+  let toggles = { demande:null, prio:null };
   let chips = { nacelle:false, pirl:false, echafaudage:false, hauteur:false };
   let photos = [];
 
@@ -1121,13 +1121,52 @@ if('serviceWorker' in navigator){
   const PRIO_LABEL = { normal:'Normal', rapide:'À traiter rapidement', urgent:'Urgent' };
   const ETAT_LABEL = { bon:'Bon', moyen:'Moyen', mauvais:'Mauvais' };
 
-  function moyensList(){
-    const l = [];
-    if(chips.nacelle) l.push('Nacelle');
-    if(chips.pirl) l.push('PIRL');
-    if(chips.echafaudage) l.push('Échafaudage');
-    if(chips.hauteur) l.push('Accès difficile');
-    return l;
+
+  const PORTE_OPTIONS = ['Coulissante automatique','Battante automatique','Tambour / tourniquet','Rideau métallique','Porte sectionnelle','Porte souple rapide','Portail / barrière','Porte piétonne manuelle','Autre'];
+  let equipList = [];
+
+  function renderEquipList(){
+    const box = $('equip-list');
+    box.innerHTML = equipList.map((e, i) => `
+      <div class="fd-equip-item" style="border:1px solid var(--line-2);border-radius:12px;padding:14px;margin-bottom:10px;">
+        <div style="font-weight:700;font-size:13px;color:var(--ink-soft);margin-bottom:10px;">Équipement ${i + 1}</div>
+        <div class="fd-grid">
+          <div class="fd-field"><label>Type de porte <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+            <select data-i="${i}" data-k="porte">
+              <option value="">— À choisir —</option>
+              ${PORTE_OPTIONS.map(o => `<option${e.porte===o?' selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="fd-field"><label>N° d'équipement <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" class="fd-mono" data-i="${i}" data-k="num" placeholder="EQ-000000" value="${(e.num||'').replace(/"/g,'&quot;')}"></div>
+          <div class="fd-field"><label>Marque <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" data-i="${i}" data-k="marque" placeholder="Ex. Record" value="${(e.marque||'').replace(/"/g,'&quot;')}"></div>
+          <div class="fd-field"><label>Année d'installation <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+            <input type="number" min="1950" max="2100" step="1" class="fd-mono" data-i="${i}" data-k="annee" placeholder="Ex. 2014" value="${(e.annee||'').replace(/"/g,'&quot;')}">
+            <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink-mute);"><input type="checkbox" data-i="${i}" data-k="anneeEst" style="width:auto;"${e.anneeEst?' checked':''}>Estimation</label>
+          </div>
+        </div>
+        <div class="fd-grid" style="margin-top:12px;">
+          <div class="fd-field"><label>Localisation <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" data-i="${i}" data-k="loc" placeholder="Entrée principale, quai 3..." value="${(e.loc||'').replace(/"/g,'&quot;')}"></div>
+          <div class="fd-field"><label>État <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+            <select data-i="${i}" data-k="etat">
+              <option value="">— À choisir —</option>
+              <option value="bon"${e.etat==='bon'?' selected':''}>Bon</option>
+              <option value="moyen"${e.etat==='moyen'?' selected':''}>Moyen</option>
+              <option value="mauvais"${e.etat==='mauvais'?' selected':''}>Mauvais</option>
+            </select>
+          </div>
+        </div>
+      </div>`).join('');
+    box.querySelectorAll('select[data-i], input[data-i]').forEach(el => {
+      const upd = () => { equipList[+el.dataset.i][el.dataset.k] = el.type === 'checkbox' ? el.checked : el.value; };
+      el.addEventListener('change', upd);
+      el.addEventListener('input', upd);
+    });
+  }
+  function syncEquipCount(n){
+    n = Math.max(0, Math.min(30, n || 0));
+    while(equipList.length < n) equipList.push({});
+    equipList.length = n;
+    renderEquipList();
   }
 
   /* Le n° d'équipement n'existe que chez un client déjà sous contrat ;
@@ -1136,8 +1175,14 @@ if('serviceWorker' in navigator){
     const prospect = toggles.demande === 'prospect';
     $('wrap-concurrent').classList.toggle('fd-mode-hide', toggles.demande === 'ajout');
     $('f-equip').placeholder = prospect ? 'Si déjà identifié' : 'EQ-000000';
+    const nb = parseFloat(String($('f-nbequip').value).replace(',','.'));
+    const multi = nb > 1;
+    ['wrap-equip','wrap-porte','wrap-marque','wrap-annee','wrap-loc','wrap-etat'].forEach(id => $(id).classList.toggle('fd-mode-hide', multi));
+    $('wrap-detail-equip').style.display = multi ? '' : 'none';
+    if(multi) syncEquipCount(nb);
     updateTicketRef();
   }
+  $('f-nbequip').addEventListener('input', applyMode);
   document.querySelectorAll('.fd-toggle[data-field="demande"]').forEach(t=>{
     t.addEventListener('click', applyMode);
   });
@@ -1160,22 +1205,31 @@ if('serviceWorker' in navigator){
 
   function applyForm(data){
     fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = data[f] || ''; });
-    toggles = { demande:(data.toggles||{}).demande || null, prio:(data.toggles||{}).prio || null, etat:(data.toggles||{}).etat || null };
+    $('f-annee-est').checked = !!data.anneeEst;
+    equipList = Array.isArray(data.equipList) ? data.equipList.map(e => ({...e})) : [];
+    toggles = { demande:(data.toggles||{}).demande || null, prio:(data.toggles||{}).prio || null };
     chips = { nacelle:!!(data.chips||{}).nacelle, pirl:!!(data.chips||{}).pirl,
               echafaudage:!!(data.chips||{}).echafaudage, hauteur:!!(data.chips||{}).hauteur };
     document.querySelectorAll('.fd-toggle').forEach(t=> t.classList.toggle('on', toggles[t.dataset.field] === t.dataset.val));
     document.querySelectorAll('.fd-chip').forEach(c=> c.classList.toggle('on', !!chips[c.dataset.type]));
     applyMode();
+    renderEquipList();
   }
 
   function readForm(){
     const data = { toggles: {...toggles}, chips: {...chips}, photos: [...photos] };
     fields.forEach(f => data[f] = $('f-'+f).value.trim());
+    data.anneeEst = $('f-annee-est').checked;
+    const nb = parseFloat(String(data.nbequip).replace(',','.'));
+    data.equipList = (nb > 1) ? equipList.filter(e => e && (e.porte||e.num||e.marque||e.annee||e.loc)) : [];
     return data;
   }
 
   function resetForm(){
     fields.forEach(f => $('f-'+f).value = '');
+    $('f-annee-est').checked = false;
+    equipList = [];
+    renderEquipList();
     photos = [];
     renderPhotoGrid();
     toggles = { demande:null, prio:null, etat:null };
@@ -1348,12 +1402,14 @@ if('serviceWorker' in navigator){
     tiles([
       { k:'Nb concernés', v:data.nbequip },
       { k:'N° équipement', v:data.equip },
-      { k:'État général', v:ETAT_LABEL[data.toggles.etat] }
+      { k:'État', v:ETAT_LABEL[data.etat] }
     ]);
     row('Type de porte', data.porte);
-    row('Marque / Année', [data.marque, data.annee].filter(Boolean).join('  ·  '));
+    if(data.equipList && data.equipList.length){
+      data.equipList.forEach((e, i) => row('Équipement ' + (i+1), [e.num, e.porte, e.marque, (e.annee||e.anneeEst) ? (e.annee||'') + (e.anneeEst?' (estimation)':'') : '', e.loc, e.etat ? 'État ' + ETAT_LABEL[e.etat] : ''].filter(Boolean).join('  ·  ')));
+    }
+    row('Marque / Année', [data.marque, data.annee ? data.annee + (data.anneeEst?' (estimation)':'') : (data.anneeEst ? 'Estimation' : '')].filter(Boolean).join('  ·  '));
     row('Localisation', data.loc);
-    row('Moyens nécessaires', moyensList().join('  ·  '));
     row('Accessibilité', data.acces);
 
     if(has(data.remarque)){
@@ -1409,11 +1465,11 @@ if('serviceWorker' in navigator){
       kv('Nombre concernés', data.nbequip),
       kv('N° équipement', data.equip),
       kv('Type de porte', data.porte),
+      (data.equipList && data.equipList.length) ? data.equipList.map((e,i)=>'  Équipement '+(i+1)+' : '+[e.num,e.porte,e.marque,(e.annee||e.anneeEst)?((e.annee||'')+(e.anneeEst?' (estimation)':'')):'',e.loc,e.etat?('État '+ETAT_LABEL[e.etat]):''].filter(Boolean).join(' · ')).join('\n') : null,
       kv('Marque', data.marque),
-      kv("Année d'installation", data.annee),
-      kv('État général', ETAT_LABEL[data.toggles.etat]),
+      kv("Année d'installation", data.annee ? data.annee + (data.anneeEst?' (estimation)':'') : (data.anneeEst ? 'Estimation' : '')),
+      kv('État', ETAT_LABEL[data.etat]),
       kv('Localisation', data.loc),
-      kv('Moyens nécessaires', moyensList().join(', ')),
       kv('Accessibilité', data.acces)
     ]);
 
@@ -1482,7 +1538,17 @@ if('serviceWorker' in navigator){
     if(!data.nbequip) return { msg:"Le nombre d'équipements concernés est obligatoire.", target:'#f-nbequip' };
     if(parseFloat(String(data.nbequip).replace(',','.')) <= 0) return { msg:"Le nombre d'équipements concernés doit être supérieur à 0.", target:'#f-nbequip' };
     if(!data.porte) return { msg:'Le type de porte est obligatoire.', target:'#f-porte' };
-    if(!toggles.etat) return { msg:"L'état général de l'équipement est obligatoire.", target:'.fd-toggle[data-field="etat"]' };
+    const nbE = parseFloat(String(data.nbequip).replace(',','.'));
+    if(nbE > 1){
+      const incomplete = data.equipList.length < nbE || data.equipList.some(e => !e.num || !e.porte || !e.marque || (!e.annee && !e.anneeEst) || !e.loc || !e.etat);
+      if(incomplete) return { msg:"N° d'équipement, type de porte, marque, année d'installation (ou estimation), localisation et état sont obligatoires pour chaque équipement.", target:'#equip-list' };
+    } else {
+      if(!data.equip) return { msg:"Le n° d'équipement est obligatoire.", target:'#f-equip' };
+      if(!data.marque) return { msg:'La marque est obligatoire.', target:'#f-marque' };
+      if(!data.annee && !data.anneeEst) return { msg:"L'année d'installation est obligatoire (coche « estimation » si tu ne l'as pas).", target:'#f-annee' };
+      if(!data.loc) return { msg:'La localisation sur site est obligatoire.', target:'#f-loc' };
+      if(!data.etat) return { msg:"L'état de l'équipement est obligatoire.", target:'#f-etat' };
+    }
     return null;
   }
 
