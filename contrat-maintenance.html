@@ -542,8 +542,10 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Client / site</span></div>
       <div class="fd-grid">
-        <div class="fd-field full"><label>Nom du site / Ville <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-site" placeholder="Ex. Intermarch&eacute; Aubagne"></div>
-        <div class="fd-field full"><label>Adresse</label><input type="text" id="f-adresse" placeholder="Rue, code postal, ville"></div>
+        <div class="fd-field full"><label>Nom du site <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-site" placeholder="Ex. Intermarch&eacute;"></div>
+        <div class="fd-field full"><label>Adresse <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-adresse" placeholder="Rue"></div>
+        <div class="fd-field"><label>Code postal <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" class="fd-mono" id="f-cp" placeholder="Ex. 13400"></div>
+        <div class="fd-field"><label>Ville <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-ville" placeholder="Ex. Aubagne"></div>
         <div class="fd-field"><label>Enseigne / groupe</label><input type="text" id="f-enseigne" placeholder="Ex. Les Mousquetaires"></div>
         <div class="fd-field"><label>Nombre d'&eacute;quipements sur site</label><input type="number" min="0" step="1" id="f-nbsite" placeholder="0"></div>
         <div class="fd-field full" id="wrap-concurrent"><label>Concurrent actuellement en place</label><input type="text" id="f-concurrent" placeholder="Ex. aucun / nom de la soci&eacute;t&eacute;"></div>
@@ -555,7 +557,8 @@ if('serviceWorker' in navigator){
       <div class="fd-grid">
         <div class="fd-field"><label>Nom du contact <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-contact" placeholder="Nom et pr&eacute;nom"></div>
         <div class="fd-field"><label>Fonction</label><input type="text" id="f-fonction" placeholder="Ex. Responsable technique"></div>
-        <div class="fd-field"><label>T&eacute;l&eacute;phone <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="tel" id="f-tel" class="fd-mono" placeholder="06 00 00 00 00"></div>
+        <div class="fd-field"><label>T&eacute;l&eacute;phone 1 <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="tel" id="f-tel" class="fd-mono" placeholder="06 00 00 00 00"></div>
+        <div class="fd-field"><label>T&eacute;l&eacute;phone 2</label><input type="tel" id="f-tel2" class="fd-mono" placeholder="06 00 00 00 00"></div>
         <div class="fd-field"><label>Mail du contact <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="email" id="f-mail" placeholder="contact@client.fr"></div>
       </div>
       <div class="fd-photo-hint">Ces coordonn&eacute;es servent au commercial pour rappeler le client &mdash; ce n'est pas l'adresse de destination de l'envoi.</div>
@@ -565,7 +568,7 @@ if('serviceWorker' in navigator){
       <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">&Eacute;quipement(s) concern&eacute;(s)</span></div>
       <div class="fd-grid">
         <div class="fd-field"><label>Nombre d'&eacute;quipements concern&eacute;s <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" min="0" step="1" id="f-nbequip" placeholder="0"></div>
-        <div class="fd-field" id="wrap-equip"><label>N&deg; d'&eacute;quipement <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" class="fd-mono" id="f-equip" placeholder="EQ-000000"></div>
+        <div class="fd-field" id="wrap-equip"><label>N&deg; d'&eacute;quipement</label><input type="text" class="fd-mono" id="f-equip" placeholder="EQ-000000"></div>
         <div class="fd-field" id="wrap-porte"><label>Type de porte <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <select id="f-porte">
             <option value="">&mdash; &Agrave; choisir &mdash;</option>
@@ -585,7 +588,7 @@ if('serviceWorker' in navigator){
           <label>D&eacute;tail par &eacute;quipement</label>
           <div id="equip-list"></div>
         </div>
-        <div class="fd-field" id="wrap-marque"><label>Marque <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-marque" placeholder="Ex. Record"></div>
+        <div class="fd-field" id="wrap-marque"><label>Marque</label><input type="text" id="f-marque" placeholder="Ex. Record"></div>
         <div class="fd-field" id="wrap-annee"><label>Ann&eacute;e d'installation <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <input type="number" min="1950" max="2100" step="1" class="fd-mono" id="f-annee" placeholder="Ex. 2014">
           <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12.5px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink-mute);"><input type="checkbox" id="f-annee-est" style="width:auto;">Pas d'info précise (estimation)</label>
@@ -597,6 +600,7 @@ if('serviceWorker' in navigator){
             <option value="bon">Bon</option>
             <option value="moyen">Moyen</option>
             <option value="mauvais">Mauvais</option>
+            <option value="hs">Hors service</option>
           </select>
         </div>
         <div class="fd-field full"><label>Pr&eacute;cisions d'accessibilit&eacute;</label><input type="text" id="f-acces" placeholder="Ex. intervention hors heures d'ouverture, cl&eacute; &agrave; l'accueil..."></div>
@@ -642,13 +646,13 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">R&eacute;alisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.14</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.19</div>
 </div>
 
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  const fields = ['tech','site','adresse','enseigne','nbsite','concurrent','contact','fonction','tel','mail',
+  const fields = ['tech','site','adresse','cp','ville','enseigne','nbsite','concurrent','contact','fonction','tel','tel2','mail',
                   'nbequip','equip','porte','marque','annee','loc','etat','acces','remarque'];
   let toggles = { demande:null, prio:null };
   let chips = { nacelle:false, pirl:false, echafaudage:false, hauteur:false };
@@ -1119,7 +1123,7 @@ if('serviceWorker' in navigator){
     prospect:"Nouveau client / prospect sans contrat de maintenance"
   };
   const PRIO_LABEL = { normal:'Normal', rapide:'À traiter rapidement', urgent:'Urgent' };
-  const ETAT_LABEL = { bon:'Bon', moyen:'Moyen', mauvais:'Mauvais' };
+  const ETAT_LABEL = { bon:'Bon', moyen:'Moyen', mauvais:'Mauvais', hs:'Hors service' };
 
 
   const PORTE_OPTIONS = ['Coulissante automatique','Battante automatique','Tambour / tourniquet','Rideau métallique','Porte sectionnelle','Porte souple rapide','Portail / barrière','Porte piétonne manuelle','Autre'];
@@ -1137,8 +1141,8 @@ if('serviceWorker' in navigator){
               ${PORTE_OPTIONS.map(o => `<option${e.porte===o?' selected':''}>${o}</option>`).join('')}
             </select>
           </div>
-          <div class="fd-field"><label>N° d'équipement <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" class="fd-mono" data-i="${i}" data-k="num" placeholder="EQ-000000" value="${(e.num||'').replace(/"/g,'&quot;')}"></div>
-          <div class="fd-field"><label>Marque <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" data-i="${i}" data-k="marque" placeholder="Ex. Record" value="${(e.marque||'').replace(/"/g,'&quot;')}"></div>
+          <div class="fd-field"><label>N° d'équipement</label><input type="text" class="fd-mono" data-i="${i}" data-k="num" placeholder="EQ-000000" value="${(e.num||'').replace(/"/g,'&quot;')}"></div>
+          <div class="fd-field"><label>Marque</label><input type="text" data-i="${i}" data-k="marque" placeholder="Ex. Record" value="${(e.marque||'').replace(/"/g,'&quot;')}"></div>
           <div class="fd-field"><label>Année d'installation <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
             <input type="number" min="1950" max="2100" step="1" class="fd-mono" data-i="${i}" data-k="annee" placeholder="Ex. 2014" value="${(e.annee||'').replace(/"/g,'&quot;')}">
             <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink-mute);"><input type="checkbox" data-i="${i}" data-k="anneeEst" style="width:auto;"${e.anneeEst?' checked':''}>Estimation</label>
@@ -1152,6 +1156,7 @@ if('serviceWorker' in navigator){
               <option value="bon"${e.etat==='bon'?' selected':''}>Bon</option>
               <option value="moyen"${e.etat==='moyen'?' selected':''}>Moyen</option>
               <option value="mauvais"${e.etat==='mauvais'?' selected':''}>Mauvais</option>
+              <option value="hs"${e.etat==='hs'?' selected':''}>Hors service</option>
             </select>
           </div>
         </div>
@@ -1189,12 +1194,12 @@ if('serviceWorker' in navigator){
 
   function updateTicketRef(){
     const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
-    const site = clean($('f-site').value), eq = clean($('f-equip').value);
-    $('fd-ticket-no').textContent = (site || eq)
-      ? 'FC-' + (site || 'client') + '-' + (eq || 'equipement')
+    const tech = clean($('f-tech').value), site = clean($('f-site').value);
+    $('fd-ticket-no').textContent = (tech || site)
+      ? 'FC-' + (tech || 'technicien') + '-' + (site || 'site')
       : 'FC \u2014';
   }
-  ['f-site','f-equip'].forEach(id => $(id).addEventListener('input', updateTicketRef));
+  ['f-tech','f-site'].forEach(id => { $(id).addEventListener('input', updateTicketRef); $(id).addEventListener('change', updateTicketRef); });
 
   function histTitle(data){
     return [data.site || 'Site non renseigné',
@@ -1385,8 +1390,9 @@ if('serviceWorker' in navigator){
     }
 
     section('Client / site');
-    row('Site / Ville', data.site);
+    row('Site', data.site);
     row('Adresse', data.adresse);
+    row('Code postal / Ville', [data.cp, data.ville].filter(Boolean).join('  ·  '));
     tiles([
       { k:'Enseigne / groupe', v:data.enseigne },
       { k:'Éq. sur site', v:data.nbsite },
@@ -1395,7 +1401,7 @@ if('serviceWorker' in navigator){
 
     section('Contact sur place');
     row('Nom', [data.contact, data.fonction ? '(' + data.fonction + ')' : ''].filter(Boolean).join(' '));
-    row('Téléphone', data.tel);
+    row('Téléphone', [data.tel, data.tel2].filter(Boolean).join('  ·  '));
     row('Mail', data.mail);
 
     section('Équipement(s) concerné(s)');
@@ -1447,8 +1453,9 @@ if('serviceWorker' in navigator){
     L.push('Priorité : ' + (PRIO_LABEL[data.toggles.prio] || '—'));
 
     bloc('Client / site', [
-      kv('Site / Ville', data.site),
+      kv('Site', data.site),
       kv('Adresse', data.adresse),
+      kv('Code postal / Ville', [data.cp, data.ville].filter(Boolean).join('  ·  ')),
       kv('Enseigne / groupe', data.enseigne),
       kv("Nombre d'équipements sur site", data.nbsite),
       data.toggles.demande === 'prospect' ? kv('Concurrent en place', data.concurrent) : null
@@ -1457,7 +1464,7 @@ if('serviceWorker' in navigator){
     bloc('Contact sur place', [
       kv('Nom', data.contact),
       kv('Fonction', data.fonction),
-      kv('Téléphone', data.tel),
+      kv('Téléphone', [data.tel, data.tel2].filter(Boolean).join('  ·  ')),
       kv('Mail', data.mail)
     ]);
 
@@ -1531,8 +1538,11 @@ if('serviceWorker' in navigator){
     if(!data.tech) return { msg:'Le technicien est obligatoire.', target:'#f-tech' };
     if(!toggles.prio) return { msg:'La priorité est obligatoire.', target:'.fd-toggle[data-field="prio"]' };
     if(!data.site) return { msg:'Le nom du site est obligatoire.', target:'#f-site' };
+    if(!data.adresse) return { msg:"L'adresse est obligatoire.", target:'#f-adresse' };
+    if(!data.cp) return { msg:'Le code postal est obligatoire.', target:'#f-cp' };
+    if(!data.ville) return { msg:'La ville est obligatoire.', target:'#f-ville' };
     if(!data.contact) return { msg:'Le nom du contact sur place est obligatoire.', target:'#f-contact' };
-    if(!data.tel) return { msg:'Le téléphone du contact est obligatoire.', target:'#f-tel' };
+    if(!data.tel && !data.tel2) return { msg:'Au moins un numéro de téléphone est obligatoire.', target:'#f-tel' };
     if(!data.mail) return { msg:'Le mail du contact est obligatoire.', target:'#f-mail' };
     if(!mailOk(data.mail)) return { msg:"L'adresse mail du contact n'est pas valide (exemple : nom@societe.fr).", target:'#f-mail' };
     if(!data.nbequip) return { msg:"Le nombre d'équipements concernés est obligatoire.", target:'#f-nbequip' };
@@ -1540,11 +1550,9 @@ if('serviceWorker' in navigator){
     if(!data.porte) return { msg:'Le type de porte est obligatoire.', target:'#f-porte' };
     const nbE = parseFloat(String(data.nbequip).replace(',','.'));
     if(nbE > 1){
-      const incomplete = data.equipList.length < nbE || data.equipList.some(e => !e.num || !e.porte || !e.marque || (!e.annee && !e.anneeEst) || !e.loc || !e.etat);
-      if(incomplete) return { msg:"N° d'équipement, type de porte, marque, année d'installation (ou estimation), localisation et état sont obligatoires pour chaque équipement.", target:'#equip-list' };
+      const incomplete = data.equipList.length < nbE || data.equipList.some(e => !e.porte || (!e.annee && !e.anneeEst) || !e.loc || !e.etat);
+      if(incomplete) return { msg:"Type de porte, année d'installation (ou estimation), localisation et état sont obligatoires pour chaque équipement.", target:'#equip-list' };
     } else {
-      if(!data.equip) return { msg:"Le n° d'équipement est obligatoire.", target:'#f-equip' };
-      if(!data.marque) return { msg:'La marque est obligatoire.', target:'#f-marque' };
       if(!data.annee && !data.anneeEst) return { msg:"L'année d'installation est obligatoire (coche « estimation » si tu ne l'as pas).", target:'#f-annee' };
       if(!data.loc) return { msg:'La localisation sur site est obligatoire.', target:'#f-loc' };
       if(!data.etat) return { msg:"L'état de l'équipement est obligatoire.", target:'#f-etat' };
