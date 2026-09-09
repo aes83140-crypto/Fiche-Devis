@@ -272,9 +272,15 @@
   .fd-panel-btn.broken::before{content:"\2715 CASSÉ  ";font-weight:800;}
 
   /* ---------- Tableaux profilés ---------- */
-  .fd-profile-table{
-    width:100%;border-collapse:separate;border-spacing:0;margin-top:14px;font-size:13.5px;
+  .fd-profile-table-plain{border:none;border-radius:0;margin-top:0;background:transparent;}
+  .fd-profile-table-plain th, .fd-profile-table-plain td{background:transparent;}
+  .fd-profile-encart.on{border-color:var(--steel-2);background:var(--steel-soft);box-shadow:0 0 0 1.5px var(--steel-2) inset;}
+  .fd-profile-encart.on .fd-profile-table-plain{border-left-color:var(--steel-2);}
+  .fd-profile-encart.current{border-color:#E7CB97;background:var(--amber-soft);}
+  .fd-profile-encart.current.on{border-color:var(--steel-2);background:var(--steel-soft);}
+    width:100%;height:100%;border-collapse:separate;border-spacing:0;margin-top:0;font-size:13.5px;
     border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    transition:border-color .15s, background .15s;
   }
   .fd-profile-table th,.fd-profile-table td{padding:11px 8px;text-align:center;}
   .fd-profile-table th{
@@ -562,16 +568,16 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Identification</span></div>
       <div class="fd-grid">
-        <div class="fd-field"><label>Technicien <span class="req">*</span></label><input type="text" id="f-tech"></div>
-        <div class="fd-field"><label>Numéro de porte <span class="req">*</span></label><input type="text" class="fd-mono" id="f-numero-porte" placeholder="N° de porte"></div>
-        <div class="fd-field full"><label>Client / Chantier <span class="req">*</span></label><input type="text" id="f-client" placeholder="Nom du client, ville..."></div>
-        <div class="fd-field full"><label>Mail client <span class="req">*</span></label><input type="email" id="f-mailclient" placeholder="contact@client.fr"></div>
+        <div class="fd-field"><label>Technicien <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-tech"></div>
+        <div class="fd-field"><label>Numéro de porte <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" class="fd-mono" id="f-numero-porte" placeholder="N° de porte"></div>
+        <div class="fd-field full"><label>Client / Chantier <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-client" placeholder="Nom du client, ville..."></div>
+        <div class="fd-field full"><label>Mail client <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="email" id="f-mailclient" placeholder="contact@client.fr"></div>
       </div>
     </div>
 
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Configuration &amp; vantail cassé</span></div>
-      <label>Configuration de la porte <span class="req">*</span></label>
+      <label>Configuration de la porte <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
       <div class="fd-visual-grid" id="grid-config"></div>
       <div class="fd-hint">Vue de face, porte fermée · hachuré = partie fixe · flèche = sens de refoulement sur le fixe · montant hachuré = joint, montant noir plein = capot DIN · <strong>R</strong> = vantail rapide, <strong>L</strong> = vantail lent.</div>
       <div id="panel-box-wrap"></div>
@@ -580,11 +586,11 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Vantail — dimensions</span></div>
       <div class="fd-grid">
-        <div class="fd-field"><label>Hauteur (mm) <span class="req">*</span></label><input type="number" step="1" id="f-hauteur" placeholder="0"></div>
-        <div class="fd-field"><label>Largeur (mm) <span class="req">*</span></label><input type="number" step="1" id="f-largeur" placeholder="0"></div>
-        <div class="fd-field"><label>Finition <span class="req">*</span></label><input type="text" id="f-finition" placeholder="Ex. RAL 9016"></div>
-        <div class="fd-field"><label>Type de vitrage <span class="req">*</span></label><input type="text" id="f-vitrage" list="dl-vitrage" placeholder="Simple, Double, Tôlée..." autocomplete="off"><datalist id="dl-vitrage"><option value="Simple"><option value="Double"><option value="Tôlée"></datalist></div>
-        <div class="fd-field full"><label>★ Hauteur méca impératif <span class="req">*</span></label>
+        <div class="fd-field"><label>Hauteur (mm) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" id="f-hauteur" placeholder="0"></div>
+        <div class="fd-field"><label>Largeur (mm) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" id="f-largeur" placeholder="0"></div>
+        <div class="fd-field"><label>Finition <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-finition" placeholder="Ex. RAL 9016"></div>
+        <div class="fd-field"><label>Type de vitrage <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-vitrage" list="dl-vitrage" placeholder="Simple, Double, Tôlée..." autocomplete="off"><datalist id="dl-vitrage"><option value="Simple"><option value="Double"><option value="Tôlée"></datalist></div>
+        <div class="fd-field full"><label>★ Hauteur méca impératif <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="meca" data-val="108">108</div>
             <div class="fd-toggle" data-field="meca" data-val="150">150</div>
@@ -598,13 +604,13 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Infos complémentaires</span></div>
       <div class="fd-grid">
-        <div class="fd-field"><label>Rails au sol <span class="req">*</span></label>
+        <div class="fd-field"><label>Rails au sol <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="rails_sol" data-val="oui">Oui</div>
             <div class="fd-toggle" data-field="rails_sol" data-val="non">Non</div>
           </div>
         </div>
-        <div class="fd-field"><label>Capot DIN ou Joint arrière <span class="req">*</span></label>
+        <div class="fd-field"><label>Capot DIN ou Joint arrière <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <div class="fd-toggle-row">
             <div class="fd-toggle" data-field="capot_ou_joint" data-val="capot_din">Capot DIN</div>
             <div class="fd-toggle" data-field="capot_ou_joint" data-val="joint_arriere">Joint arrière</div>
@@ -615,10 +621,15 @@ if('serviceWorker' in navigator){
 
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">5</span><span class="fd-section-title">Type de profilé alu</span></div>
-      <label>Type de profilé alu <span class="req">*</span></label>
+      <label>Type de profilé alu <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
       <div class="fd-hint" style="margin-bottom:10px;margin-top:0;">22R et 32R = gammes actuelles. Choisis la photo correspondante — ou identifie le profil à partir de tes mesures dans la rubrique suivante.</div>
-      <div class="fd-visual-grid" id="grid-profil" style="margin-top:16px;"></div>
-      <div id="profile-table-wrap"></div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="flex:1;min-width:220px;">
+          <div class="fd-visual-grid" id="grid-profil" style="display:flex;flex-wrap:wrap;gap:20px;"></div>
+          <button type="button" id="btn-autre-gamme" class="fd-add-btn" style="margin-top:14px;">Autre gamme</button>
+          <div class="fd-visual-grid" id="grid-profil-autre" style="margin-top:14px;display:none;"></div>
+        </div>
+      </div>
     </div>
 
     <div class="fd-section">
@@ -632,7 +643,7 @@ if('serviceWorker' in navigator){
       </div>
       <div class="fd-hint" id="cimaise-rule-hint" style="margin-top:10px;"></div>
       <div class="fd-hint" id="profile-match-hint" style="margin-top:6px;"></div>
-      <div class="fd-schema-box" style="margin-top:16px;"><div id="schema-svg"></div></div>
+      <div class="fd-schema-box" style="margin-top:16px;"><div id="schema-config-code" style="text-align:center;font-family:var(--mono);font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--ink-mute);margin-bottom:8px;"></div><div id="schema-svg"></div></div>
       <div class="fd-hint" style="text-align:center;">Le schéma se met à jour avec tes saisies et les options choisies — vérifie qu'il correspond bien à la porte.</div>
     </div>
 
@@ -647,7 +658,7 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">8</span><span class="fd-section-title">Photos</span></div>
       <div class="fd-field full">
-        <label>Photos <span class="req">*</span> (au moins 1 obligatoire)</label>
+        <label>Photos <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span> (au moins 1 obligatoire)</label>
         <div class="fd-photo-actions">
           <label class="fd-photo-btn cam" for="f-photo-cam">📷 Prendre une photo</label>
           <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none;">
@@ -680,7 +691,11 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.5</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.30</div>
+  <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
+    Actualiser la version
+  </button>
 </div>
 
 <script>
@@ -794,12 +809,13 @@ if('serviceWorker' in navigator){
     });
   }
   async function loadSharedFromCloud(){
-    let url = '';
-    try{ url = localStorage.getItem('record-stats-url') || window.RECORD_STATS_URL || ''; }catch(e){ url = window.RECORD_STATS_URL || ''; }
-    if(!url) return;
+    if(!window.RECORD_SUPABASE_URL || !window.RECORD_SUPABASE_KEY) return;
     try{
-      const d = await cloudGet(url, { what:'lists' });
-      const t = dedupe(d.techniciens);
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1&select=techniciens', {
+        headers:{ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY }, cache:'no-store'
+      });
+      const d = await r.json();
+      const t = dedupe(d[0] && d[0].techniciens || []);
       if(t.length){ lsSet(TECH_KEY, t); refreshAllDatalists(); }
     }catch(e){}
   }
@@ -839,18 +855,18 @@ if('serviceWorker' in navigator){
 
   // --- Configurations (d'après la fiche SAV papier) ---
   const CONFIG_TYPES = [
-    { id:'2VC',      label:'2 Vantaux Coulissants',                          order:['V','V'],                 arrows:['left','right'],                    labels:['Vantail Gauche','Vantail Droite'] },
-    { id:'2VC+2F',   label:'2 Vantaux Coulissants + 2 Fixes',                order:['F','V','V','F'],         arrows:[null,'left','right',null],          labels:['Fixe Gauche','Vantail Gauche','Vantail Droite','Fixe Droite'] },
-    { id:'1VCR',     label:'1 Vantail Coulissant vers la Droite',            order:['V'],                     arrows:['right'],                           labels:['Vantail'] },
-    { id:'1VCR+1F',  label:'1 Vantail Coulissant vers la Droite + 1 Fixe',   order:['V','F'],                 arrows:['right',null],                      labels:['Vantail','Fixe'] },
-    { id:'1VCL',     label:'1 Vantail Coulissant vers la Gauche',            order:['V'],                     arrows:['left'],                            labels:['Vantail'] },
-    { id:'1VCL+1F',  label:'1 Vantail Coulissant vers la Gauche + 1 Fixe',   order:['F','V'],                 arrows:[null,'left'],                       labels:['Fixe','Vantail'] },
-    { id:'2VTL',     label:'2 Vantaux Télescopiques vers la Gauche',         order:['V','V'],                 arrows:['left','left'],                     labels:['Vantail Gauche Lent','Vantail Gauche Rapide'] },
-    { id:'2VTL+1F',  label:'2 Vantaux Télescopiques vers la Gauche + 1 Fixe',order:['F','V','V'],             arrows:[null,'left','left'],                labels:['Fixe','Vantail Gauche Lent','Vantail Gauche Rapide'] },
-    { id:'2VTR',     label:'2 Vantaux Télescopiques vers la Droite',         order:['V','V'],                 arrows:['right','right'],                   labels:['Vantail Droite Rapide','Vantail Droite Lent'] },
-    { id:'2VTR+1F',  label:'2 Vantaux Télescopiques vers la Droite + 1 Fixe',order:['V','V','F'],             arrows:['right','right',null],              labels:['Vantail Droite Rapide','Vantail Droite Lent','Fixe'] },
-    { id:'4VTX',     label:'4 Vantaux Télescopiques Croisés',                order:['V','V','V','V'],         arrows:['left','left','right','right'],     labels:['Vantail Gauche Lent','Vantail Gauche Rapide','Vantail Droite Rapide','Vantail Droite Lent'] },
-    { id:'4VTX+2F',  label:'4 Vantaux Télescopiques Croisés + 2 Fixes',      order:['F','V','V','V','V','F'], arrows:[null,'left','left','right','right',null], labels:['Fixe Gauche','Vantail Gauche Lent','Vantail Gauche Rapide','Vantail Droite Rapide','Vantail Droite Lent','Fixe Droite'] },
+    { id:'2VC',      label:'2 Vantaux Coulissants',                          code:'DSTA', order:['V','V'],                 arrows:['left','right'],                    labels:['Vantail Gauche','Vantail Droite'] },
+    { id:'2VC+2F',   label:'2 Vantaux Coulissants + 2 Fixes',                code:'DSTA + 2 PF', order:['F','V','V','F'],         arrows:[null,'left','right',null],          labels:['Fixe Gauche','Vantail Gauche','Vantail Droite','Fixe Droite'] },
+    { id:'1VCR',     label:'1 Vantail Coulissant vers la Droite',            code:'ESTA R', order:['V'],                     arrows:['right'],                           labels:['Vantail'] },
+    { id:'1VCR+1F',  label:'1 Vantail Coulissant vers la Droite + 1 Fixe',   code:'ESTA R + 1 PF', order:['V','F'],                 arrows:['right',null],                      labels:['Vantail','Fixe'] },
+    { id:'1VCL',     label:'1 Vantail Coulissant vers la Gauche',            code:'ESTA L', order:['V'],                     arrows:['left'],                            labels:['Vantail'] },
+    { id:'1VCL+1F',  label:'1 Vantail Coulissant vers la Gauche + 1 Fixe',   code:'ESTA L + 1 PF', order:['F','V'],                 arrows:[null,'left'],                       labels:['Fixe','Vantail'] },
+    { id:'2VTL',     label:'2 Vantaux Télescopiques vers la Gauche',         code:'ETSA L', order:['V','V'],                 arrows:['left','left'],                     labels:['Vantail Gauche Lent','Vantail Gauche Rapide'] },
+    { id:'2VTL+1F',  label:'2 Vantaux Télescopiques vers la Gauche + 1 Fixe',code:'ETSA L + 1 PF', order:['F','V','V'],             arrows:[null,'left','left'],                labels:['Fixe','Vantail Gauche Lent','Vantail Gauche Rapide'] },
+    { id:'2VTR',     label:'2 Vantaux Télescopiques vers la Droite',         code:'ETSA R', order:['V','V'],                 arrows:['right','right'],                   labels:['Vantail Droite Rapide','Vantail Droite Lent'] },
+    { id:'2VTR+1F',  label:'2 Vantaux Télescopiques vers la Droite + 1 Fixe',code:'ETSA R + 1 PF', order:['V','V','F'],             arrows:['right','right',null],              labels:['Vantail Droite Rapide','Vantail Droite Lent','Fixe'] },
+    { id:'4VTX',     label:'4 Vantaux Télescopiques',                code:'DTSA', order:['V','V','V','V'],         arrows:['left','left','right','right'],     labels:['Vantail Gauche Lent','Vantail Gauche Rapide','Vantail Droite Rapide','Vantail Droite Lent'] },
+    { id:'4VTX+2F',  label:'4 Vantaux Télescopiques + 2 Fixes',      code:'DTSA + 2 PF', order:['F','V','V','V','V','F'], arrows:[null,'left','left','right','right',null], labels:['Fixe Gauche','Vantail Gauche Lent','Vantail Gauche Rapide','Vantail Droite Rapide','Vantail Droite Lent','Fixe Droite'] },
   ];
 
   function buildConfigIconSVG(spec){
@@ -886,7 +902,7 @@ if('serviceWorker' in navigator){
     CONFIG_TYPES.forEach(spec=>{
       const card = document.createElement('div');
       card.className = 'fd-visual-card' + (configSelected === spec.id ? ' on' : '');
-      card.innerHTML = buildConfigIconSVG(spec) + '<div class="fd-visual-label">'+spec.label+'</div>';
+      card.innerHTML = (spec.code ? '<div class="fd-visual-code" style="margin:0 0 6px;">'+spec.code+'</div>' : '') + buildConfigIconSVG(spec) + '<div class="fd-visual-label">'+spec.label+'</div>';
       card.addEventListener('click', ()=>{
         if(configSelected !== spec.id){ configSelected = spec.id; brokenPanelIndex = null; }
         else { configSelected = null; brokenPanelIndex = null; }
@@ -987,39 +1003,26 @@ if('serviceWorker' in navigator){
   fillMesureSelect('f-mes-pl','pl');
 
 
-  function renderFullProfileTable(){
-    const wrap = $('profile-full-table-wrap');
-    if(!wrap) return;
-    const rows = PROFILE_TYPES.map(spec=>{
-      const isSel = profilSelected === spec.code;
-      return '<tr class="'+(isSel?'fd-row-selected':'')+(spec.current?' fd-row-current':'')+'">' +
-        '<td>'+spec.code+(spec.current?' <span class="fd-mini-badge">actuel</span>':'')+'</td>' +
-        '<td>'+spec.av+'</td><td>'+spec.ar+'</td><td>'+spec.ci+'</td><td>'+spec.pl+'</td></tr>';
-    }).join('');
-    wrap.innerHTML =
-      '<table class="fd-profile-table"><thead><tr><th>Type</th><th>AV</th><th>AR</th><th>CI</th><th>PL</th></tr></thead>' +
-      '<tbody>'+rows+'</tbody></table>' +
-      '<div class="fd-hint">Largeur profilé alu (mm) — cotes de référence, se référer au plan d\'usinage pour confirmation.</div>';
-  }
+  function renderFullProfileTable(){}
 
-  function renderProfileTable(spec){
-    const wrap = $('profile-table-wrap');
-    if(!spec){ wrap.innerHTML = ''; return; }
-    wrap.innerHTML =
-      '<table class="fd-profile-table"><thead><tr><th>Type</th><th>AV</th><th>AR</th><th>CI</th><th>PL</th></tr></thead>' +
-      '<tbody><tr><td>'+spec.code+'</td><td>'+spec.av+'</td><td>'+spec.ar+'</td><td>'+spec.ci+'</td><td>'+spec.pl+'</td></tr></tbody></table>' +
-      '<div class="fd-hint">Largeur profilé alu (mm) — vue simplifiée, se référer au plan d\'usinage pour les cotes exactes.</div>';
-  }
+  function renderProfileTable(spec){}
 
   function renderProfileGrid(){
     const grid = $('grid-profil');
+    const gridAutre = $('grid-profil-autre');
     grid.innerHTML = '';
-    PROFILE_TYPES.forEach(spec=>{
+    gridAutre.innerHTML = '';
+    const heading = null;
+    function buildCard(spec, target){
+      const wrapper = document.createElement('div');
+      const isOn = profilSelected === spec.code;
+      wrapper.className = 'fd-visual-card fd-profile-encart' + (isOn ? ' on' : '') + (spec.current ? ' current' : '');
+      wrapper.style.cssText = 'display:flex;align-items:stretch;gap:0;padding:0;overflow:hidden;text-align:left;cursor:pointer;';
       const card = document.createElement('div');
-      card.className = 'fd-visual-card' + (profilSelected === spec.code ? ' on' : '') + (spec.current ? ' current' : '');
-      const badge = spec.current ? '<div class="fd-visual-badge">Gamme actuelle</div>' : '';
+      card.style.cssText = 'flex:1;padding:12px 10px;text-align:center;';
+      const badge = spec.current ? '<div class="fd-visual-badge">'+(spec.code==='22R'?'20 mm':spec.code==='32R'?'32 mm':'')+'<br>Gamme actuelle</div>' : '';
       card.innerHTML = badge + '<img src="'+PROFILE_IMAGES[spec.code]+'" alt="Section '+spec.code+'"><div class="fd-visual-code">'+spec.code+'</div>';
-      card.addEventListener('click', ()=>{
+      const doSelect = ()=>{
         profilSelected = (profilSelected === spec.code) ? null : spec.code;
         if(profilSelected){
           const p = PROFILE_TYPES.find(x=>x.code===profilSelected);
@@ -1039,10 +1042,36 @@ if('serviceWorker' in navigator){
         renderProfileTable(profilSelected ? PROFILE_TYPES.find(p=>p.code===profilSelected) : null);
         renderFullProfileTable();
         applyProfileLocks();
-      });
-      grid.appendChild(card);
-    });
+      };
+      wrapper.addEventListener('click', doSelect);
+      wrapper.appendChild(card);
+      if(spec.current){
+        const t = document.createElement('table');
+        t.className = 'fd-profile-table fd-profile-table-plain';
+        t.style.cssText = 'font-size:13.5px;flex:1;border-left:1.5px solid var(--line);border-radius:0;';
+        t.innerHTML = '<tbody>' +
+          '<tr><th>Avant</th><td>'+spec.av+'</td></tr>' +
+          '<tr><th>Arrière</th><td>'+spec.ar+'</td></tr>' +
+          '<tr><th>Cimaise</th><td>'+spec.ci+'</td></tr>' +
+          '<tr><th>Plinthe</th><td>'+spec.pl+'</td></tr>' +
+          '</tbody>';
+        wrapper.appendChild(t);
+      }
+      target.appendChild(wrapper);
+    }
+    PROFILE_TYPES.forEach(spec => buildCard(spec, spec.current ? grid : gridAutre));
+    const autreOpen = gridAutre.style.display !== 'none';
+    if(autreOpen && profilSelected && PROFILE_TYPES.find(p=>p.code===profilSelected && p.current)){
+      gridAutre.style.display = 'none';
+      $('btn-autre-gamme').textContent = 'Autre gamme';
+    }
   }
+  $('btn-autre-gamme').addEventListener('click', ()=>{
+    const gridAutre = $('grid-profil-autre');
+    const open = gridAutre.style.display === 'none';
+    gridAutre.style.display = open ? '' : 'none';
+    $('btn-autre-gamme').textContent = open ? 'Masquer les autres gammes' : 'Autre gamme';
+  });
   renderProfileGrid();
   renderFullProfileTable();
 
@@ -1146,6 +1175,7 @@ if('serviceWorker' in navigator){
     const meca = val('f-meca') || '\u2014';
     const av = val('f-mes-av'), ar = val('f-mes-ar'), ci = val('f-mes-ci'), pl = val('f-mes-pl');
     const spec = configSelected ? CONFIG_TYPES.find(c=>c.id===configSelected) : null;
+    $('schema-config-code').textContent = spec ? (spec.label + (spec.code ? ' \u2014 ' + spec.code : '')) : '';
     const panel = (spec && brokenPanelIndex !== null) ? panelsForConfig(spec)[brokenPanelIndex] : null;
     const rails = toggles.rails_sol === 'oui';
     const isCapot = toggles.capot_ou_joint === 'capot_din';
@@ -2070,6 +2100,22 @@ if('serviceWorker' in navigator){
     }
   });
 
+
+  $('fd-force-refresh') && $('fd-force-refresh').addEventListener('click', async ()=>{
+    const btn = $('fd-force-refresh');
+    btn.disabled = true; btn.textContent = 'Mise à jour...';
+    try{
+      if('serviceWorker' in navigator){
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for(const r of regs){ await r.unregister(); }
+      }
+      if(window.caches){
+        const keys = await caches.keys();
+        for(const k of keys){ await caches.delete(k); }
+      }
+    }catch(e){}
+    location.reload(true);
+  });
 })();
 </script>
 </body>
