@@ -420,6 +420,9 @@ if('serviceWorker' in navigator){
       <button type="button" id="install-btn">Installer</button>
       <button type="button" class="fd-install-x" id="install-close">✕</button>
     </div>
+    <div id="install-link-wrap" style="text-align:center;margin:-4px 0 14px;display:none;">
+      <button type="button" id="install-link" style="font-family:var(--sans);font-size:12.5px;color:var(--ink-mute);background:none;border:none;border-bottom:1px dotted var(--line-2);cursor:pointer;padding:2px 0;">Installer l'application sur cet appareil</button>
+    </div>
 
     <a class="fd-card" href="fiche-devis.html">
       <div class="fd-card-icon">📋</div>
@@ -454,7 +457,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.12</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.13</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -921,27 +924,33 @@ if('serviceWorker' in navigator){
   // --- Installation sur l'écran d'accueil ---
   (function(){
     const bar = $('install-bar'), btn = $('install-btn'), desc = $('install-desc');
+    const linkWrap = $('install-link-wrap'), link = $('install-link');
     const HIDE = 'record-install-hide';
     let prompt = null;
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if(standalone) return;
     let hidden = false;
     try{ hidden = localStorage.getItem(HIDE) === '1'; }catch(e){}
-    if(standalone || hidden) return;
 
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+    if(!hidden){
+      if(ios){
+        desc.textContent = "Ajoute une icône RECORD sur l'écran d'accueil : touche le bouton Partager de Safari, puis « Sur l'écran d'accueil ».";
+        btn.style.display = 'none';
+        bar.classList.add('show');
+      }
+    } else if(!ios){
+      linkWrap.style.display = '';
+    }
+
     window.addEventListener('beforeinstallprompt', e=>{
       e.preventDefault();
       prompt = e;
-      bar.classList.add('show');
+      if(!hidden) bar.classList.add('show');
+      else linkWrap.style.display = '';
     });
-
-    if(ios){
-      desc.textContent = "Ajoute une icône RECORD sur l'écran d'accueil : touche le bouton Partager de Safari, puis « Sur l'écran d'accueil ».";
-      btn.style.display = 'none';
-      bar.classList.add('show');
-    }
 
     btn.addEventListener('click', async ()=>{
       if(!prompt) return;
@@ -953,8 +962,20 @@ if('serviceWorker' in navigator){
     $('install-close').addEventListener('click', ()=>{
       bar.classList.remove('show');
       try{ localStorage.setItem(HIDE, '1'); }catch(e){}
+      linkWrap.style.display = '';
     });
-    window.addEventListener('appinstalled', ()=> bar.classList.remove('show'));
+    window.addEventListener('appinstalled', ()=>{ bar.classList.remove('show'); linkWrap.style.display = 'none'; });
+
+    link.addEventListener('click', async ()=>{
+      if(prompt){
+        prompt.prompt();
+        const res = await prompt.userChoice;
+        prompt = null;
+        if(res && res.outcome === 'accepted') linkWrap.style.display = 'none';
+      } else {
+        bar.classList.add('show');
+      }
+    });
   })();
   async function statsPull(){
     if(!sbReady()){ renderStats(); return; }
