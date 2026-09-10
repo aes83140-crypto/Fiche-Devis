@@ -633,13 +633,13 @@ if('serviceWorker' in navigator){
       <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Cotes relevées (mm)</span></div>
       <div class="fd-grid">
         <div class="fd-field" id="field-ht"><label>Hauteur sous drapeau <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-hauteur-tableau" placeholder="0"></div>
-        <div class="fd-field" id="field-htot"><label>Hauteur d'enroulement <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-hauteur-totale" placeholder="0"></div>
+        <div class="fd-field" id="field-htot"><label>Hauteur drapeau <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-hauteur-totale" placeholder="0"></div>
         <div class="fd-field full" id="field-htotal" style="display:none;">
           <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);">
             <span style="font-size:13.5px;font-weight:700;color:var(--ink-mute);">Hauteur totale du rideau</span>
             <span class="fd-mono" id="htotal-val" style="margin-left:auto;font-size:17px;font-weight:700;color:var(--steel);">— mm</span>
           </div>
-          <div class="fd-hint">Somme de la hauteur sous drapeau et de la hauteur d'enroulement.</div>
+          <div class="fd-hint">Somme de la hauteur sous drapeau et de la hauteur drapeau.</div>
         </div>
         <div class="fd-field" id="field-larg"><label id="lbl-larg">Largeur coulisses comprises <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-largeur-coulisses" placeholder="0"></div>
         <div class="fd-field" id="field-longaxe" style="display:none;"><label>Longueur de l'axe <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" class="fd-mono" id="f-longueur-axe" placeholder="0"><div class="fd-hint">Mesure d'about à about, joues d'extrémité comprises.</div></div>
@@ -763,7 +763,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.18</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.19</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -1917,7 +1917,7 @@ if('serviceWorker' in navigator){
     if(!toggles.enroulement) return { msg:"Le sens d'enroulement du tablier est obligatoire.", target:'.fd-toggle[data-field="enroulement"]' };
     if(travauxSelected !== 'lame'){
       if(!data['hauteur-tableau']) return { msg:'La hauteur sous drapeau est obligatoire.', target:'#f-hauteur-tableau' };
-      if(travauxSelected !== 'tablier' && !data['hauteur-totale']) return { msg:"La hauteur d'enroulement est obligatoire.", target:'#f-hauteur-totale' };
+      if(travauxSelected !== 'tablier' && !data['hauteur-totale']) return { msg:"La hauteur drapeau est obligatoire.", target:'#f-hauteur-totale' };
     }
 
     if(travauxSelected === 'axe' || travauxSelected === 'moteur' || travauxSelected === 'axe_lame'){
@@ -1985,7 +1985,7 @@ if('serviceWorker' in navigator){
 
     bloc('Cotes relevées', [
       kv('Hauteur sous drapeau', mm(data['hauteur-tableau'])),
-      kv("Hauteur d'enroulement", mm(data['hauteur-totale'])),
+      kv("Hauteur drapeau", mm(data['hauteur-totale'])),
       ((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) ? kv('Hauteur totale du rideau', ((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) + ' mm') : null,
       kv((/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur coulisses comprises'), mm(data['largeur-coulisses'])),
       data['longueur-axe'] ? kv("Longueur de l'axe", mm(data['longueur-axe'])) : null,
@@ -2300,7 +2300,7 @@ if('serviceWorker' in navigator){
       section('Cotes relevées (mm)');
       tiles([
         { k:'Hauteur sous drapeau', v:data['hauteur-tableau'] },
-        { k:"Hauteur d'enroulement", v:data['hauteur-totale'] },
+        { k:"Hauteur drapeau", v:data['hauteur-totale'] },
         { k:'Hauteur totale du rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
         { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur des coulisses'), v:data['largeur-coulisses'] },
         { k:"Longueur de l'axe (entre joues)", v:data['longueur-axe'] },
@@ -2358,7 +2358,7 @@ if('serviceWorker' in navigator){
     section('Cotes relevées (mm)');
     tiles([
       { k:'Hauteur sous drapeau', v:data['hauteur-tableau'] },
-      { k:"Hauteur d'enroulement", v:data['hauteur-totale'] },
+      { k:"Hauteur drapeau", v:data['hauteur-totale'] },
       { k:'Hauteur totale du rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
       { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur des coulisses'), v:data['largeur-coulisses'] },
       { k:"Longueur de l'axe (entre joues)", v:data['longueur-axe'] },
