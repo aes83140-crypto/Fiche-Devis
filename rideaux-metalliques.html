@@ -763,7 +763,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.19</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.21</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -2303,7 +2303,7 @@ if('serviceWorker' in navigator){
         { k:"Hauteur drapeau", v:data['hauteur-totale'] },
         { k:'Hauteur totale du rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
         { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur des coulisses'), v:data['largeur-coulisses'] },
-        { k:"Longueur de l'axe (entre joues)", v:data['longueur-axe'] },
+        { k:"Longueur de l'axe", v:data['longueur-axe'] },
         { k:'Diamètre de l\u2019axe motorisé', v:data['diametre-axe'] },
       ]);
       if(data.nblames) row('Nombre de lames à remplacer', data.nblames);
@@ -2361,7 +2361,7 @@ if('serviceWorker' in navigator){
       { k:"Hauteur drapeau", v:data['hauteur-totale'] },
       { k:'Hauteur totale du rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
       { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur des coulisses'), v:data['largeur-coulisses'] },
-      { k:"Longueur de l'axe (entre joues)", v:data['longueur-axe'] },
+      { k:"Longueur de l'axe", v:data['longueur-axe'] },
       { k:'Diamètre de l\u2019axe motorisé', v:data['diametre-axe'] },
     ]);
     if(data.nblames) row('Nombre de lames à remplacer', data.nblames);
