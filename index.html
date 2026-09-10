@@ -365,6 +365,7 @@
     border-radius:11px;border:none;background:#fff;color:var(--steel);cursor:pointer;flex-shrink:0;
   }
   .fd-install .fd-install-x{background:transparent;color:rgba(255,255,255,.6);padding:8px 4px;min-height:0;font-size:15px;}
+  @keyframes fd-share-bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
 </style>
 <script src="config.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
@@ -416,6 +417,12 @@ if('serviceWorker' in navigator){
       <div class="fd-install-txt">
         <div class="fd-install-title">Installer l'application</div>
         <div class="fd-install-desc" id="install-desc">Ajoute une icône RECORD sur l'écran d'accueil de la tablette — les fiches s'ouvrent alors en plein écran, même sans réseau.</div>
+        <div id="install-ios-visual" style="display:none;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:rgba(255,255,255,.85);">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1.6px solid rgba(255,255,255,.85);border-radius:8px;flex-shrink:0;animation:fd-share-bounce 1.3s ease-in-out infinite;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+          </span>
+          <span>Appuie sur <strong>Partager</strong> dans Safari (en bas ou en haut de l'écran), puis « <strong>Sur l'écran d'accueil</strong> ».</span>
+        </div>
       </div>
       <button type="button" id="install-btn">Installer</button>
       <button type="button" class="fd-install-x" id="install-close">✕</button>
@@ -457,7 +464,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.16</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.17</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -936,8 +943,9 @@ if('serviceWorker' in navigator){
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     if(ios){
-      desc.textContent = "Ajoute une icône RECORD sur l'écran d'accueil : touche le bouton Partager de Safari, puis « Sur l'écran d'accueil ».";
+      desc.textContent = "Ajoute une icône RECORD sur l'écran d'accueil pour ouvrir les fiches en plein écran, même sans réseau.";
       btn.style.display = 'none';
+      $('install-ios-visual').style.display = 'flex';
     }
     if(!hidden){
       if(ios) bar.classList.add('show');
