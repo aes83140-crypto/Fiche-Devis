@@ -650,7 +650,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">R&eacute;alisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.24</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.25</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -1692,17 +1692,24 @@ if('serviceWorker' in navigator){
     function tiles(items){
       items = items.filter(it => has(it.v));
       if(!items.length) return;
-      const gap = 4.5, w = (contentW - gap * (items.length - 1)) / items.length;
-      checkBreak(24);
-      items.forEach((it, i)=>{
-        const x = margin + i * (w + gap);
-        fillC(SURF); doc.roundedRect(x, y, w, 19, 2.5, 2.5, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
-        doc.text(it.k.toUpperCase(), x + 5.5, y + 7, { charSpace:0.35, maxWidth: w - 9 });
-        doc.setFontSize(12.5); setC(INK);
-        doc.text(doc.splitTextToSize(String(it.v), w - 10)[0], x + 5.5, y + 15);
-      });
-      y += 23;
+      const perRow = 4, gap = 4.5;
+      for(let r = 0; r < items.length; r += perRow){
+        const row = items.slice(r, r + perRow);
+        const w = (contentW - gap * (row.length - 1)) / row.length;
+        const labelLines = row.map(it => doc.setFont('helvetica','bold') && doc.setFontSize(7.2) && doc.splitTextToSize(it.k.toUpperCase(), w - 9));
+        const maxLines = Math.max(...labelLines.map(l => l.length));
+        const h = 9 + maxLines * 3.6 + 9;
+        checkBreak(h + 4);
+        row.forEach((it, i)=>{
+          const x = margin + i * (w + gap);
+          fillC(SURF); doc.roundedRect(x, y, w, h, 2.5, 2.5, 'F');
+          doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
+          doc.text(labelLines[i], x + 5.5, y + 7, { charSpace:0.35 });
+          doc.setFont('helvetica','normal'); doc.setFontSize(12.5); setC(INK);
+          doc.text(doc.splitTextToSize(String(it.v), w - 10)[0], x + 5.5, y + 7 + maxLines * 3.6 + 6);
+        });
+        y += h + 4;
+      }
     }
     function photosPages(list){
       if(!list || !list.length) return;
