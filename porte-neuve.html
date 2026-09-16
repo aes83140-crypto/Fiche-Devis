@@ -669,6 +669,32 @@ if('serviceWorker' in navigator){
   let fixeUniqueSide = 'gauche';
   let mecaSelected = null;
   let motifSelected = [];
+  let schemaImg = null;
+  function captureSchemaImg(){
+    const svgEl = document.querySelector('#config-detail-icon svg');
+    if(!svgEl){ schemaImg = null; return; }
+    const vb = svgEl.viewBox.baseVal;
+    const W = vb && vb.width ? vb.width : 460, H = vb && vb.height ? vb.height : 210;
+    const clone = svgEl.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.removeAttribute('style');
+    clone.setAttribute('width', W); clone.setAttribute('height', H);
+    const svgStr = new XMLSerializer().serializeToString(clone);
+    const img = new Image();
+    img.onload = function(){
+      try{
+        const s = 2.4;
+        const c = document.createElement('canvas');
+        c.width = W * s; c.height = H * s;
+        const cx = c.getContext('2d');
+        cx.fillStyle = '#FFFFFF'; cx.fillRect(0, 0, c.width, c.height);
+        cx.drawImage(img, 0, 0, c.width, c.height);
+        schemaImg = { dataUrl: c.toDataURL('image/jpeg', 0.92), w:W, h:H };
+      }catch(e){}
+    };
+    img.onerror = function(){ schemaImg = null; };
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+  }
   let railSolOn = false;
   let gammeSelected = null;
   let vitrageOn = false;
@@ -1440,6 +1466,7 @@ if('serviceWorker' in navigator){
       $('f-largeur-pf').value = lv ? Math.round((lv * 1.5 + 200 - lv) / 2) : '';
     }
     iconBox.innerHTML = '<div style="max-width:560px;margin:0 auto;text-align:center;">' + buildConfigIconSVG(spec, true, mecaSelected ? parseInt(mecaSelected,10) : null, $('f-hauteur').value.trim(), $('f-largeur').value.trim(), $('f-largeur-pf').value.trim(), railSolOn, gammeSelected, vitrageOn) + '<div class="fd-visual-label">'+spec.label+'</div></div>' + extra;
+    captureSchemaImg();
     const meca108Btn = document.querySelector('.fd-toggle[data-field="meca"][data-val="108"]');
     const no108 = configSelected === 'tel-bi-4';
     meca108Btn.classList.toggle('fd-mode-hide', no108);
@@ -1742,6 +1769,14 @@ if('serviceWorker' in navigator){
       { k:'Gamme alu', v:data.gamme ? data.gamme + ' mm' : '' },
       { k:'Double vitrage', v:data.gamme === '30' ? (data.vitrage ? 'Oui' : 'Non') : '' }
     ]);
+    if(schemaImg && schemaImg.dataUrl){
+      const sw = Math.min(contentW, 130);
+      const sh = sw * schemaImg.h / schemaImg.w;
+      checkBreak(sh + 10);
+      fillC(SURF); doc.roundedRect(margin + (contentW - sw)/2 - 4, y, sw + 8, sh + 8, 2.5, 2.5, 'F');
+      try{ doc.addImage(schemaImg.dataUrl, 'JPEG', margin + (contentW - sw)/2, y + 4, sw, sh); }catch(e){}
+      y += sh + 12;
+    }
 
     if(has(data.remarque)){
       section('Remarques');
