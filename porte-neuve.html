@@ -1,0 +1,1954 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Relevé Porte Neuve — RECORD</title>
+<div class="fd-anno hidden" id="anno-modal">
+    <div class="fd-anno-bar">
+      <button type="button" id="anno-arrow" class="on">↗ Flèche</button>
+      <button type="button" id="anno-circle">◯ Cercle</button>
+      <button type="button" id="anno-move">✥ Déplacer</button>
+      <button type="button" id="anno-undo">↶ Annuler</button>
+      <span class="sp"></span>
+      <button type="button" id="anno-cancel">Fermer</button>
+      <button type="button" class="ok" id="anno-save">Valider</button>
+    </div>
+    <div class="fd-anno-stage"><canvas id="anno-canvas"></canvas></div>
+    <div class="fd-anno-hint">Facultatif — trace une flèche ou un cercle, puis « Déplacer » pour l'ajuster (glisse le repère au centre pour tout bouger, un repère d'extrémité pour l'étirer).</div>
+  </div>
+
+<script src="config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  window.addEventListener('error', function(e){
+    var b = document.createElement('div');
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#B3403A;color:#fff;padding:10px 14px;font-size:13px;z-index:99999;font-family:sans-serif;line-height:1.4;';
+    b.textContent = 'Erreur technique : ' + e.message + ' (ligne ' + e.lineno + ')';
+    document.body.appendChild(b);
+  });
+</script>
+<style>
+  :root{
+    --bg:#EDEFF3;
+    --surface:#FFFFFF;
+    --surface-2:#F6F8FA;
+    --ink:#12171C;
+    --ink-soft:#5A646E;
+    --ink-mute:#8A939C;
+    --steel:#1E3448;
+    --steel-2:#2F5674;
+    --steel-soft:#E9EEF3;
+    --line:#E3E6EB;
+    --line-2:#CCD3DB;
+    --amber:#C8811A;
+    --amber-dark:#9A6210;
+    --amber-soft:#FCF3E2;
+    --red:#B3403A;
+    --red-bg:#FBEAE8;
+    --green:#3F7A46;
+    --green-bg:#E9F1EA;
+    --paper:#FFFFFF;
+    --paper-dim:#EDEFF3;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --disp:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --r:16px;
+    --shadow:0 1px 2px rgba(18,23,28,.05),0 12px 30px -20px rgba(18,23,28,.45);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.45;
+    padding:calc(18px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right))
+      calc(48px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
+    min-height:100vh;
+  }
+  .fd-wrap{max-width:780px;margin:0 auto;}
+  a{color:var(--steel-2);}
+  a:hover{color:var(--steel);}
+
+  /* ---------- En-tête ---------- */
+  .fd-ticket{
+    background:var(--steel);
+    color:#fff;
+    padding:26px 24px 26px;
+    position:relative;
+    border-radius:20px;
+    box-shadow:0 18px 40px -26px rgba(18,23,28,.75);
+    overflow:hidden;
+  }
+  .fd-ticket::after{content:none;}
+  .fd-ticket::before{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--amber);
+  }
+  .fd-eyebrow{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(255,255,255,.62);display:flex;flex-wrap:wrap;justify-content:space-between;
+    align-items:center;gap:8px 12px;margin-bottom:14px;
+  }
+  .fd-eyebrow span:first-child{min-width:0;}
+  .fd-eyebrow span:last-child{
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);
+    padding:5px 11px;border-radius:999px;letter-spacing:.06em;color:#fff;
+    white-space:normal;text-align:right;max-width:100%;min-width:0;overflow-wrap:anywhere;
+  }
+  .fd-eyebrow span:only-child{background:none;border:none;padding:0;}
+  .fd-title{
+    font-family:var(--disp);font-weight:700;font-size:27px;line-height:1.15;
+    letter-spacing:-.015em;text-transform:none;margin:0;max-width:92%;
+  }
+  .fd-sub{font-size:14.5px;color:rgba(255,255,255,.68);margin-top:7px;}
+
+  .fd-admin-btn{
+    position:absolute;top:20px;right:20px;width:42px;height:42px;border-radius:13px;
+    border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#fff;
+    font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .fd-admin-btn:active{background:rgba(255,255,255,.18);}
+
+  /* ---------- Corps : sections en cartes ---------- */
+  .fd-body{background:transparent;padding:18px 0 0;border:none;border-radius:0;}
+
+  .fd-section{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:22px 20px;margin-bottom:14px;box-shadow:var(--shadow);
+  }
+  .fd-section-head{
+    display:flex;align-items:center;gap:12px;margin:0 0 20px;
+    padding-bottom:14px;border-bottom:1px solid var(--line);
+  }
+  .fd-num{
+    font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--steel);
+    background:var(--steel-soft);width:30px;height:30px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .fd-section-title{
+    font-family:var(--disp);font-weight:700;font-size:16px;letter-spacing:-.01em;
+    text-transform:none;color:var(--ink);
+  }
+
+  .fd-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .fd-field{margin-bottom:0;}
+  .fd-field.full{grid-column:1/-1;}
+  label{
+    display:block;font-size:11.5px;font-weight:700;color:var(--ink-mute);
+    text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;
+  }
+  label .req{color:var(--red);}
+
+  input[type=date]{-webkit-appearance:none;appearance:none;text-align:left;}
+  input[type=date]::-webkit-date-and-time-value{text-align:left;}
+  input[type=text],input[type=email],input[type=date],input[type=number],textarea,select{
+    width:100%;font-family:var(--sans);font-size:16.5px;color:var(--ink);background:#fff;
+    border:1.5px solid var(--line-2);border-radius:12px;padding:14px 15px;outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input::placeholder,textarea::placeholder{color:var(--ink-mute);}
+  input:focus,textarea:focus,select:focus{
+    border-color:var(--steel-2);box-shadow:0 0 0 4px rgba(47,86,116,.13);
+  }
+  input.fd-mono,select.fd-mono{font-family:var(--mono);letter-spacing:.02em;}
+  textarea{resize:vertical;min-height:110px;line-height:1.5;}
+  select{
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%235A646E" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>');
+    background-repeat:no-repeat;background-position:right 15px center;background-size:16px;
+    padding-right:40px;appearance:none;-webkit-appearance:none;
+  }
+  .fd-add-row{display:flex;gap:8px;margin-top:8px;}
+  .fd-add-row input{flex:1;}
+  .fd-add-row.hidden{display:none;}
+  input.hidden,select.hidden{display:none;}
+
+  .fd-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .fd-photo-btn.cam{border-style:solid;background:var(--steel);color:#fff;border-color:var(--steel);}
+  .fd-photo-btn.cam:active{background:var(--steel-2);}
+  @media (max-width:420px){ .fd-photo-actions{grid-template-columns:1fr;} }
+
+  /* ---------- Champ avec recherche ---------- */
+  .fd-combo{position:relative;}
+  .fd-combo-field{display:flex;align-items:stretch;}
+  .fd-combo-field input{border-radius:12px 0 0 12px;border-right-width:0;}
+  .fd-combo-arrow{
+    width:48px;flex-shrink:0;border:1.5px solid var(--line-2);border-left:none;
+    border-radius:0 12px 12px 0;background:var(--surface-2);color:var(--ink-soft);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;
+  }
+  .fd-combo-arrow:active{background:var(--steel-soft);}
+  .fd-combo.open .fd-combo-arrow{background:var(--steel-soft);color:var(--steel);}
+  .fd-combo-list{
+    position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:60;display:none;
+    background:#fff;border:1.5px solid var(--line-2);border-radius:12px;
+    box-shadow:0 20px 40px -22px rgba(18,23,28,.55);max-height:260px;overflow-y:auto;padding:6px;
+  }
+  .fd-combo.open .fd-combo-list{display:block;}
+  .fd-combo-opt{
+    padding:13px 14px;border-radius:9px;font-size:15.5px;color:var(--ink);cursor:pointer;
+    display:flex;align-items:center;min-height:48px;
+  }
+  .fd-combo-opt:hover,.fd-combo-opt.active{background:var(--steel-soft);color:var(--steel);font-weight:650;}
+  .fd-combo-none{padding:13px 14px;font-size:13.5px;color:var(--ink-mute);}
+
+
+  .fd-toggle-row{display:flex;gap:10px;}
+  .fd-toggle{
+    flex:1;text-align:center;padding:12px 8px;min-height:52px;
+    display:flex;align-items:center;justify-content:center;
+    border:1.5px solid var(--line-2);border-radius:12px;font-size:15px;font-weight:650;
+    cursor:pointer;background:var(--surface-2);color:var(--ink-soft);user-select:none;
+    transition:background .12s,border-color .12s,color .12s;
+  }
+  .fd-toggle.on{
+    background:var(--steel);border-color:var(--steel);color:#fff;
+    box-shadow:0 8px 18px -12px rgba(30,52,72,.9);
+  }
+
+  .fd-chip-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .fd-chip{
+    padding:0 20px;min-height:50px;display:flex;align-items:center;border-radius:999px;
+    border:1.5px solid var(--line-2);background:var(--surface-2);font-size:15px;font-weight:650;
+    cursor:pointer;color:var(--ink-soft);user-select:none;
+  }
+  .fd-chip[data-type="arret"].on,.fd-chip[data-type="urgent"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-chip[data-type="preventif"].on{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+
+  .fd-hint,.fd-photo-hint{font-size:12.5px;color:var(--ink-mute);margin-top:8px;line-height:1.5;}
+
+  /* ---------- Alerte ---------- */
+  .fd-alert-box{
+    background:var(--amber-soft);border:1px solid #EBD4A8;border-radius:14px;
+    padding:15px 18px;margin-bottom:14px;text-align:left;
+    font-family:var(--disp);font-weight:700;font-size:14.5px;letter-spacing:0;
+    text-transform:none;color:var(--amber-dark);
+  }
+
+  /* ---------- Cartes visuelles ---------- */
+  .fd-visual-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(134px,1fr));gap:12px;margin-top:4px;}
+  .fd-visual-card{
+    border:1.5px solid var(--line);border-radius:14px;background:var(--surface-2);
+    padding:12px 10px;text-align:center;cursor:pointer;user-select:none;
+    transition:border-color .12s,background .12s,transform .1s;
+  }
+  .fd-visual-card:active{transform:scale(.985);}
+  .fd-visual-card.on{border-color:var(--steel-2);background:var(--steel-soft);box-shadow:0 0 0 1.5px var(--steel-2) inset;}
+  .fd-visual-card svg{display:block;margin:0 auto;}
+  .fd-visual-label{font-size:11.5px;font-weight:600;color:var(--ink-soft);margin-top:8px;line-height:1.35;}
+  .fd-visual-card.on .fd-visual-label{color:var(--steel);}
+  .fd-visual-code{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);margin-top:6px;}
+  .fd-visual-card.current{border-color:#E7CB97;background:var(--amber-soft);}
+  .fd-visual-card.current.on{border-color:var(--steel-2);background:var(--steel-soft);}
+  .fd-visual-badge{
+    display:inline-block;font-family:var(--disp);font-size:9px;font-weight:700;letter-spacing:.05em;
+    text-transform:uppercase;color:#fff;background:var(--amber);border-radius:999px;padding:3px 8px;margin-bottom:6px;
+  }
+  .fd-visual-card img{display:block;margin:0 auto;max-width:100%;height:auto;border-radius:8px;background:#fff;}
+
+  /* ---------- Sélection panneau cassé ---------- */
+  .fd-panel-box{
+    border:1.5px dashed var(--line-2);border-radius:14px;background:var(--surface-2);
+    padding:18px;margin-top:18px;
+  }
+  .fd-panel-title{
+    font-size:12.5px;font-weight:700;color:var(--ink-soft);text-transform:none;
+    letter-spacing:0;margin-bottom:14px;text-align:left;
+  }
+  .fd-panel-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-start;}
+  .fd-panel-btn{
+    border:1.5px solid var(--line-2);border-radius:12px;background:#fff;padding:13px 15px;
+    min-width:132px;min-height:62px;text-align:left;cursor:pointer;user-select:none;
+    font-size:13px;font-weight:650;color:var(--ink);
+  }
+  .fd-panel-btn .fd-panel-kind{
+    font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-mute);
+    display:block;margin-bottom:5px;font-weight:700;
+  }
+  .fd-panel-btn.broken{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-panel-btn.broken .fd-panel-kind{color:var(--red);}
+  .fd-panel-btn.broken::before{content:"\2715 CASSÉ  ";font-weight:800;}
+
+  /* ---------- Tableaux profilés ---------- */
+  .fd-profile-table{
+    width:100%;border-collapse:separate;border-spacing:0;margin-top:14px;font-size:13.5px;
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;
+  }
+  .fd-profile-table th,.fd-profile-table td{padding:11px 8px;text-align:center;}
+  .fd-profile-table th{
+    background:var(--surface-2);color:var(--ink-mute);font-weight:700;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line);
+  }
+  .fd-profile-table td{border-bottom:1px solid var(--line);font-family:var(--mono);}
+  .fd-profile-table tr:last-child td{border-bottom:none;}
+  .fd-profile-table td:first-child{font-weight:700;background:transparent;font-family:var(--sans);}
+  .fd-profile-table tr.fd-row-current td:first-child{color:var(--amber-dark);}
+  .fd-profile-table tr.fd-row-selected td{background:var(--steel-soft);}
+  .fd-profile-table tr.fd-row-selected td:first-child{background:var(--steel);color:#fff;}
+  .fd-mini-badge{font-size:9px;font-weight:700;color:var(--amber-dark);text-transform:uppercase;letter-spacing:.06em;}
+
+  .fd-schema-box{
+    border:1px solid var(--line);border-radius:14px;background:var(--surface);
+    padding:18px;margin-bottom:14px;display:flex;justify-content:center;
+  }
+
+  /* ---------- Photos ---------- */
+  .fd-photo-actions{margin-top:4px;}
+  .fd-photo-btn{
+    display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    font-family:var(--sans);font-weight:700;font-size:15px;padding:16px;min-height:68px;
+    border-radius:14px;border:2px dashed var(--line-2);background:var(--surface-2);
+    color:var(--steel);cursor:pointer;text-align:center;
+  }
+  .fd-photo-btn:active{background:var(--steel-soft);}
+  .fd-photo-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(96px,1fr));gap:12px;margin-top:14px;}
+  .fd-photo-thumb{
+    position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+    aspect-ratio:1/1;background:var(--surface-2);
+  }
+  .fd-photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .fd-photo-del{
+    position:absolute;top:5px;right:5px;width:28px;height:28px;border-radius:50%;
+    background:rgba(18,23,28,.62);color:#fff;border:none;font-size:14px;line-height:1;cursor:pointer;
+  }
+
+  /* ---------- Actions ---------- */
+  .fd-actions{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;
+    padding:18px;border:1px solid var(--line);border-top:1px solid var(--line);
+    border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);
+  }
+  .fd-btn{
+    font-family:var(--sans);font-weight:700;font-size:15.5px;padding:15px 16px;min-height:54px;
+    border-radius:12px;border:1.5px solid var(--steel);background:var(--steel);color:#fff;cursor:pointer;
+  }
+  #btn-mail{grid-column:1/-1;box-shadow:0 10px 22px -14px rgba(30,52,72,.95);}
+  .fd-btn.secondary{background:#fff;color:var(--steel);border-color:var(--line-2);}
+  .fd-btn.ghost{background:transparent;color:var(--ink-mute);border-color:var(--line);}
+  .fd-btn.wide{grid-column:1/-1;}
+  .fd-btn:active{transform:translateY(1px);opacity:.9;}
+
+  .fd-msg{
+    font-family:var(--sans);font-size:15px;font-weight:650;text-align:left;line-height:1.45;
+    margin-top:14px;padding:0;border-radius:14px;max-height:0;overflow:hidden;opacity:0;
+    transition:all .2s ease;
+  }
+  .fd-msg.show{padding:16px 18px;max-height:240px;opacity:1;border:1px solid;box-shadow:var(--shadow);}
+  .fd-msg.error{background:var(--red-bg);color:var(--red);border-color:#E9BEB9;}
+  .fd-msg.success{background:var(--green-bg);color:var(--green);border-color:#C3DAC6;}
+
+  /* ---------- Accueil ---------- */
+  .fd-card{
+    display:flex;align-items:center;gap:18px;text-decoration:none;color:inherit;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:20px;margin-bottom:14px;box-shadow:var(--shadow);
+    transition:border-color .15s,transform .12s;
+  }
+  .fd-card:active{transform:scale(.99);}
+  .fd-card:hover{border-color:var(--steel-2);}
+  .fd-card-icon{
+    font-size:26px;width:58px;height:58px;flex-shrink:0;background:var(--steel-soft);
+    border-radius:15px;display:flex;align-items:center;justify-content:center;
+  }
+  .fd-card-title{font-family:var(--disp);font-weight:700;font-size:17.5px;letter-spacing:-.01em;color:var(--ink);margin-bottom:5px;}
+  .fd-card-desc{font-size:13.5px;color:var(--ink-soft);line-height:1.5;}
+  .fd-card-arrow{margin-left:auto;font-size:24px;color:var(--line-2);flex-shrink:0;}
+  .fd-card-main{cursor:pointer;flex:1;min-width:0;}
+  .fd-empty{text-align:center;color:var(--ink-mute);font-size:14px;padding:22px 0;}
+
+  .fd-footer-credit{text-align:center;max-width:780px;margin:26px auto 8px;padding:0;border-top:none;}
+  .fd-footer-credit .fd-credit-label{
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);
+  }
+  .fd-footer-credit .fd-credit-name{
+    font-family:var(--disp);font-weight:650;font-size:13.5px;letter-spacing:.01em;color:var(--ink-soft);margin-top:2px;
+  }
+
+  /* ---------- Administration ---------- */
+  .fd-modal{position:fixed;inset:0;background:rgba(12,17,22,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9000;}
+  .fd-modal.hidden{display:none;}
+  .fd-modal-box{
+    background:var(--bg);width:100%;max-width:640px;max-height:88vh;overflow-y:auto;
+    border-radius:24px 24px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom));
+  }
+  .fd-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .fd-modal-head h3{
+    font-family:var(--disp);font-weight:700;font-size:20px;text-transform:none;
+    letter-spacing:-.01em;color:var(--ink);margin:0;
+  }
+  .fd-modal-close{
+    width:40px;height:40px;border-radius:13px;border:1px solid var(--line-2);
+    background:#fff;color:var(--ink-soft);font-size:16px;cursor:pointer;
+  }
+  .fd-modal-section{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:18px;margin-bottom:14px;
+  }
+  .fd-modal-section h4{
+    font-family:var(--disp);font-weight:700;font-size:11.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 0 14px;
+  }
+  .fd-admin-row{display:flex;gap:8px;margin-bottom:10px;}
+  .fd-admin-row input{flex:1;padding:12px 14px;font-size:16px;font-family:var(--sans);border:1.5px solid var(--line-2);border-radius:11px;}
+  .fd-admin-del{
+    width:48px;height:48px;flex-shrink:0;border-radius:11px;border:1.5px solid #E9BEB9;
+    background:var(--red-bg);color:var(--red);font-size:16px;cursor:pointer;
+  }
+  .fd-admin-empty{font-size:13px;color:var(--ink-mute);margin-bottom:10px;}
+  .fd-add-btn{
+    font-family:var(--sans);font-weight:700;font-size:15px;padding:0 18px;border-radius:11px;
+    border:1.5px solid var(--steel);background:var(--steel);color:#fff;cursor:pointer;
+    white-space:nowrap;min-height:48px;
+  }
+
+  @media (max-width:640px){
+    .fd-grid{grid-template-columns:1fr;}
+    .fd-actions{grid-template-columns:1fr 1fr;}
+    .fd-title{font-size:24px;}
+  }
+  @media (max-width:420px){
+    .fd-actions{grid-template-columns:1fr;}
+  }
+
+  /* ---------- Champ en erreur ---------- */
+  .fd-invalid{
+    border-color:var(--red)!important;
+    box-shadow:0 0 0 4px rgba(179,64,58,.14)!important;
+    background:#FFFCFC!important;
+  }
+  .fd-flag{
+    border-radius:14px;
+    box-shadow:0 0 0 2px var(--red),0 0 0 6px rgba(179,64,58,.13);
+  }
+
+  /* ---------- Ajustements ---------- */
+  #btn-new{grid-column:1/-1;justify-self:center;width:100%;max-width:300px;}
+  #grid-config{grid-template-columns:repeat(auto-fill, minmax(190px,1fr));}
+  #grid-config .fd-visual-card{display:flex;flex-direction:column;align-items:stretch;padding:10px 10px 12px;}
+  #grid-config svg{width:100%;height:auto;display:block;}
+  #grid-config .fd-visual-label{margin-top:auto;padding-top:8px;}
+
+  /* ---------- Historique ---------- */
+  .fd-hist-list{display:flex;flex-direction:column;gap:10px;}
+  .fd-hist-item{
+    display:flex;align-items:center;gap:12px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:12px;padding:13px 14px;
+  }
+  .fd-hist-main{flex:1;min-width:0;}
+  .fd-hist-title{font-size:14.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere;}
+  .fd-hist-meta{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-top:3px;letter-spacing:.02em;}
+  .fd-hist-btn{
+    font-family:var(--sans);font-weight:700;font-size:13.5px;padding:0 14px;min-height:44px;
+    border-radius:10px;border:1.5px solid var(--line-2);background:#fff;color:var(--steel);cursor:pointer;flex-shrink:0;
+  }
+  .fd-hist-del{
+    width:44px;min-height:44px;flex-shrink:0;border-radius:10px;border:1.5px solid #E9BEB9;
+    background:var(--red-bg);color:var(--red);font-size:14px;cursor:pointer;
+  }
+
+  /* ---------- Annotation photo ---------- */
+  .fd-photo-edit{
+    position:absolute;bottom:5px;right:5px;width:28px;height:28px;border-radius:50%;
+    background:rgba(18,23,28,.62);color:#fff;border:none;font-size:13px;line-height:1;cursor:pointer;
+  }
+  .fd-anno{position:fixed;inset:0;background:rgba(12,17,22,.88);z-index:9500;display:flex;flex-direction:column;}
+  .fd-anno.hidden{display:none;}
+  .fd-anno-bar{
+    display:flex;align-items:center;gap:8px;padding:12px 14px;flex-wrap:wrap;
+    padding-top:calc(12px + env(safe-area-inset-top));
+  }
+  .fd-anno-bar button{
+    font-family:var(--sans);font-weight:700;font-size:14px;padding:0 14px;min-height:46px;
+    border-radius:11px;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);
+    color:#fff;cursor:pointer;
+  }
+  .fd-anno-bar button.on{background:#fff;color:var(--steel);border-color:#fff;}
+  .fd-anno-bar .ok{background:var(--amber);border-color:var(--amber);}
+  .fd-anno-bar .sp{flex:1;}
+  .fd-anno-stage{flex:1;display:flex;align-items:center;justify-content:center;padding:0 12px 12px;min-height:0;}
+  .fd-anno-stage canvas{max-width:100%;max-height:100%;touch-action:none;border-radius:10px;background:#000;}
+  .fd-anno-hint{color:rgba(255,255,255,.6);font-size:12.5px;text-align:center;padding:0 16px calc(14px + env(safe-area-inset-bottom));}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1E3448">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="RECORD">
+<link rel="apple-touch-icon" href="icone-192.png">
+<link rel="icon" href="icone-192.png">
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').then(reg=>{
+      reg.update().catch(()=>{});
+      // une nouvelle version est prête : on l'active et on recharge une fois
+      reg.addEventListener('updatefound', ()=>{
+        const sw = reg.installing;
+        if(!sw) return;
+        sw.addEventListener('statechange', ()=>{
+          if(sw.state === 'installed' && navigator.serviceWorker.controller){
+            sw.postMessage('skip-waiting');
+          }
+        });
+      });
+    }).catch(()=>{});
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+      if(reloaded) return;
+      reloaded = true;
+      location.reload();
+    });
+  });
+}
+</script>
+<style>
+  .fd-chip.on{background:var(--steel-soft);border-color:var(--steel-2);color:var(--steel);}
+  .fd-chip[data-type="urgent"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-toggle[data-val="urgent"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-toggle[data-val="mauvais"].on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .fd-mode-hide{display:none !important;}
+</style>
+</head>
+<body>
+
+<div class="fd-wrap">
+  <div class="fd-ticket">
+    <div class="fd-eyebrow"><span>RECORD &middot; PORTE NEUVE</span><span id="fd-ticket-no">PN &mdash;</span></div>
+    <div class="fd-title">Relev&eacute; Porte Neuve</div>
+    <div class="fd-sub">Relev&eacute; technicien pour transmission au commercial</div>
+  </div>
+
+  <div class="fd-body">
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Identification</span></div>
+      <div class="fd-grid">
+        <div class="fd-field"><label>Technicien <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-tech"></div>
+        <div class="fd-field"><label>Date <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="date" id="f-date"></div>
+        <div class="fd-field full"><label>Motif de remplacement</label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="motif" data-val="vetuste">Trop v&eacute;tuste</div>
+            <div class="fd-toggle" data-field="motif" data-val="pieces">Plus de pi&egrave;ces disponibles</div>
+            <div class="fd-toggle" data-field="motif" data-val="non-rentable">Non r&eacute;parable &eacute;conomiquement</div>
+          </div>
+        </div>
+        <div class="fd-field full"><label>Pr&eacute;cisions sur le motif <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><textarea id="f-motif-precision" rows="2" placeholder="D&eacute;tails compl&eacute;mentaires si besoin"></textarea></div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Client</span></div>
+      <div class="fd-grid">
+        <div class="fd-field full"><label>Nom du client <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-nomclient" placeholder="Nom du client / soci&eacute;t&eacute;"></div>
+        <div class="fd-field"><label>Num&eacute;ro de porte</label><input type="text" id="f-numporte" placeholder="Ex: P12"></div>
+        <div class="fd-field full"><label>Adresse <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-adresse" placeholder="Rue, num&eacute;ro..."></div>
+        <div class="fd-field full"><label>Mail client <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="email" id="f-mail" placeholder="contact@client.fr"></div>
+        <div class="fd-field"><label>T&eacute;l&eacute;phone client <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="tel" id="f-tel" class="fd-mono" placeholder="06 00 00 00 00"></div>
+        <div class="fd-field"><label>Code postal ou ville <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-cpville" placeholder="Ex. 13400 ou Aubagne"></div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Configuration de la porte</span></div>
+      <label>Type de configuration <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+      <div class="fd-visual-grid" id="grid-config"></div>
+    </div>
+
+    <div class="fd-section" id="config-detail" style="display:none;">
+      <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Descriptifs</span></div>
+      <div class="fd-grid">
+        <div class="fd-field"><label>Hauteur de passage libre (mm) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" id="f-hauteur" placeholder="0"></div>
+        <div class="fd-field"><label>Largeur de passage libre (mm) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" id="f-largeur" placeholder="0"></div>
+        <div class="fd-field" id="wrap-largeur-pf" style="display:none;"><label>Largeur des parties fixes (mm)</label><input type="number" step="1" id="f-largeur-pf" placeholder="0"></div>
+        <div class="fd-field full"><label>Hauteur du m&eacute;canisme (mm) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="meca" data-val="108">108</div>
+            <div class="fd-toggle" data-field="meca" data-val="150">150</div>
+            <div class="fd-toggle" data-field="meca" data-val="200">200</div>
+          </div>
+        </div>
+        <div class="fd-field full">
+          <label>Gamme alu</label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="gamme" data-val="20">20 mm</div>
+            <div class="fd-toggle" data-field="gamme" data-val="30">30 mm</div>
+          </div>
+        </div>
+        <div class="fd-field full" id="wrap-vitrage" style="display:none;">
+          <label>Double vitrage</label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" id="btn-vitrage" data-val="on">Avec double vitrage</div>
+          </div>
+        </div>
+        <div class="fd-field full">
+          <label>Rail au sol</label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" id="btn-rail-sol" data-val="on">Avec rail au sol</div>
+          </div>
+        </div>
+      </div>
+      <div id="config-detail-icon" style="max-width:560px;margin:18px auto 0;"></div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">5</span><span class="fd-section-title">Remarques &amp; photos</span></div>
+      <div class="fd-field full">
+        <label>Remarques pour le commercial</label>
+        <textarea id="f-remarque" placeholder="Ex. le client attend un chiffrage avant fin du mois, 2 autres portes &agrave; venir..."></textarea>
+      </div>
+      <div class="fd-field full" style="margin-top:18px;">
+        <label>Photo int&eacute;rieure <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+        <div class="fd-photo-actions">
+          <label class="fd-photo-btn cam" for="f-photo-int-cam">&#128247; Prendre une photo</label>
+          <input type="file" id="f-photo-int-cam" accept="image/*" capture="environment" style="display:none;">
+          <label class="fd-photo-btn" for="f-photo-int-input">&#127912; Choisir dans la galerie</label>
+          <input type="file" id="f-photo-int-input" accept="image/*" style="display:none;">
+        </div>
+        <div class="fd-photo-grid" id="fd-photo-int-grid"></div>
+      </div>
+      <div class="fd-field full" style="margin-top:18px;">
+        <label>Photo ext&eacute;rieure <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+        <div class="fd-photo-actions">
+          <label class="fd-photo-btn cam" for="f-photo-ext-cam">&#128247; Prendre une photo</label>
+          <input type="file" id="f-photo-ext-cam" accept="image/*" capture="environment" style="display:none;">
+          <label class="fd-photo-btn" for="f-photo-ext-input">&#127912; Choisir dans la galerie</label>
+          <input type="file" id="f-photo-ext-input" accept="image/*" style="display:none;">
+        </div>
+        <div class="fd-photo-grid" id="fd-photo-ext-grid"></div>
+      </div>
+      <div class="fd-field full" style="margin-top:18px;">
+        <label>Photos suppl&eacute;mentaires (facultatives)</label>
+        <div class="fd-photo-actions">
+          <label class="fd-photo-btn cam" for="f-photo-cam">&#128247; Prendre une photo</label>
+          <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none;">
+          <label class="fd-photo-btn" for="f-photo-input">&#127912; Choisir dans la galerie</label>
+          <input type="file" id="f-photo-input" accept="image/*" multiple style="display:none;">
+        </div>
+        <div class="fd-photo-hint">Vue d'ensemble de la porte et de son environnement : c'est ce qui permet au commercial de chiffrer le contrat.</div>
+        <div class="fd-photo-grid" id="fd-photo-grid"></div>
+      </div>
+    </div>
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">&#8635;</span><span class="fd-section-title">Fiches envoy&eacute;es depuis cet appareil</span></div>
+      <div class="fd-hist-list" id="hist-list"></div>
+      <div class="fd-hint">&laquo; Reprendre &raquo; recharge la fiche pour un nouvel envoi (les photos ne sont pas conserv&eacute;es).</div>
+    </div>
+
+    <div class="fd-actions">
+      <button class="fd-btn" id="btn-mail">Envoyer par mail avec photos</button>
+      <button class="fd-btn secondary" id="btn-pdf">T&eacute;l&eacute;charger le PDF</button>
+      <button class="fd-btn secondary" id="btn-copy">Copier le texte</button>
+      <a class="fd-btn secondary" id="btn-new" href="index.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">&larr; Retour au menu</a>
+    </div>
+    <div class="fd-photo-hint" style="text-align:center;margin-top:8px;">Le PDF reprend la fiche compl&egrave;te, photos incluses.</div>
+    <div class="fd-msg" id="fd-msg"></div>
+  </div>
+</div>
+
+<div class="fd-footer-credit">
+  <div class="fd-credit-label">R&eacute;alisation</div>
+  <div class="fd-credit-name">Christophe BATAILLE</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.24</div>
+  <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
+    Actualiser la version
+  </button>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fields = ['tech','date','nomclient','numporte','adresse','mail','tel','cpville','remarque','hauteur','largeur','largeur-pf','motif-precision'];
+  let photos = [];
+  let photoInt = null, photoExt = null;
+  let configSelected = null;
+  let fixeSelected = false;
+  let fixeUniqueOn = false;
+  let fixeUniqueSide = 'gauche';
+  let mecaSelected = null;
+  let motifSelected = [];
+  let railSolOn = false;
+  let gammeSelected = null;
+  let vitrageOn = false;
+  let pfUserEdited = false;
+
+  function resizeImage(file){
+    return new Promise((resolve)=>{
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const img = new Image();
+        img.onload = function(){
+          const maxDim = 1280;
+          let w = img.width, h = img.height;
+          if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.65), w, h });
+        };
+        img.onerror = function(){ resolve(null); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function(){ resolve(null); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function photoOf(p){
+    return (p && typeof p === 'object') ? p : { dataUrl: p, w: 4, h: 3 };
+  }
+
+  function renderPhotoGrid(){
+    const grid = $('fd-photo-grid');
+    grid.innerHTML = '';
+    photos.forEach((p, i)=>{
+      const ph = photoOf(p);
+      const div = document.createElement('div');
+      div.className = 'fd-photo-thumb';
+      div.innerHTML = '<img src="'+ph.dataUrl+'" alt="photo">' +
+        '<button type="button" class="fd-photo-del" data-i="'+i+'">✕</button>' +
+        '<button type="button" class="fd-photo-edit" data-e="'+i+'" title="Annoter">✎</button>';
+      grid.appendChild(div);
+    });
+    grid.querySelectorAll('.fd-photo-del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        photos.splice(parseInt(btn.dataset.i,10), 1);
+        renderPhotoGrid();
+      });
+    });
+    grid.querySelectorAll('.fd-photo-edit').forEach(btn=>{
+      btn.addEventListener('click', ()=> anno.open(parseInt(btn.dataset.e, 10)));
+    });
+  }
+
+  ['f-photo-input','f-photo-cam'].forEach(id => $(id).addEventListener('change', onPhotoPick));
+
+  function renderSinglePhoto(gridId, photo){
+    const grid = $(gridId);
+    grid.innerHTML = '';
+    if(!photo) return;
+    const ph = photoOf(photo);
+    const div = document.createElement('div');
+    div.className = 'fd-photo-thumb';
+    div.innerHTML = '<img src="'+ph.dataUrl+'" alt="photo"><button type="button" class="fd-photo-del">✕</button>';
+    grid.appendChild(div);
+    return div;
+  }
+  function renderPhotoInt(){
+    const div = renderSinglePhoto('fd-photo-int-grid', photoInt);
+    if(div) div.querySelector('.fd-photo-del').addEventListener('click', ()=>{ photoInt = null; renderPhotoInt(); });
+  }
+  function renderPhotoExt(){
+    const div = renderSinglePhoto('fd-photo-ext-grid', photoExt);
+    if(div) div.querySelector('.fd-photo-del').addEventListener('click', ()=>{ photoExt = null; renderPhotoExt(); });
+  }
+  ['f-photo-int-input','f-photo-int-cam'].forEach(id => $(id).addEventListener('change', async e=>{
+    const file = (e.target.files || [])[0];
+    e.target.value = '';
+    if(!file) return;
+    const result = await resizeImage(file);
+    if(result) photoInt = result;
+    renderPhotoInt();
+  }));
+  ['f-photo-ext-input','f-photo-ext-cam'].forEach(id => $(id).addEventListener('change', async e=>{
+    const file = (e.target.files || [])[0];
+    e.target.value = '';
+    if(!file) return;
+    const result = await resizeImage(file);
+    if(result) photoExt = result;
+    renderPhotoExt();
+  }));
+  async function onPhotoPick(e){
+    const files = Array.from(e.target.files || []);
+    for(const file of files){
+      const result = await resizeImage(file);
+      if(result) photos.push(result);
+    }
+    renderPhotoGrid();
+    e.target.value = '';
+  }
+
+  function dataUrlToFileSync(dataUrl, name){
+    const parts = dataUrl.split(',');
+    const mimeMatch = parts[0].match(/data:(.*?);base64/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const binary = atob(parts[1]);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for(let i=0;i<len;i++){ bytes[i] = binary.charCodeAt(i); }
+    return new File([bytes], name, { type: mime });
+  }
+
+  function pdfFileName(prefix, chantier, equip){
+    const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return [prefix, clean(chantier) || 'chantier', clean(equip) || 'equipement'].join('-') + '.pdf';
+  }
+
+  function lsGet(key){
+    try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; }
+  }
+  function lsSet(key, val){
+    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+  }
+
+  // --- Listes préenregistrées (gérées depuis la page d'accueil > Administration) ---
+  const TECH_KEY = 'techniciens-preenregistres';
+
+  function loadPreList(key){ return lsGet(key) || []; }
+
+  function setupCombo(inputId, key, placeholder){
+    const input = $(inputId);
+    if(!input) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'fd-combo';
+    const field = document.createElement('div');
+    field.className = 'fd-combo-field';
+    input.parentNode.insertBefore(wrap, input);
+    field.appendChild(input);
+    const arrow = document.createElement('button');
+    arrow.type = 'button';
+    arrow.className = 'fd-combo-arrow';
+    arrow.setAttribute('aria-label', 'Afficher la liste');
+    arrow.innerHTML = '\u25BC';
+    field.appendChild(arrow);
+    const list = document.createElement('div');
+    list.className = 'fd-combo-list';
+    wrap.appendChild(field);
+    wrap.appendChild(list);
+    input.placeholder = placeholder;
+    input.setAttribute('autocomplete', 'off');
+
+    function items(){ return lsGet(key) || []; }
+    function fold(s){
+      return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    function render(filter){
+      const f = fold(filter).trim();
+      const found = items().filter(v => !f || fold(v).indexOf(f) >= 0);
+      list.innerHTML = found.length
+        ? found.map(v => '<div class="fd-combo-opt" data-v="' + v.replace(/"/g,'&quot;') + '">' + v.replace(/</g,'&lt;') + '</div>').join('')
+        : '<div class="fd-combo-none">Aucune correspondance \u2014 tape la valeur, elle sera utilisée telle quelle.</div>';
+    }
+    function open(filter){ render(filter); wrap.classList.add('open'); }
+    function close(){ wrap.classList.remove('open'); }
+
+    arrow.addEventListener('click', ()=>{
+      if(wrap.classList.contains('open')) close();
+      else { open(''); input.focus(); }
+    });
+    input.addEventListener('input', ()=>{ open(input.value); });
+    input.addEventListener('keydown', e=>{
+      if(e.key === 'Escape') close();
+      if(e.key === 'Enter' && wrap.classList.contains('open')){ e.preventDefault(); close(); }
+    });
+    list.addEventListener('mousedown', e=>{
+      const opt = e.target.closest('.fd-combo-opt');
+      if(!opt) return;
+      e.preventDefault();
+      input.value = opt.dataset.v;
+      close();
+      input.dispatchEvent(new Event('change', { bubbles:true }));
+    });
+    document.addEventListener('click', e=>{ if(!wrap.contains(e.target)) close(); });
+    return { refresh: ()=>{ if(wrap.classList.contains('open')) render(input.value); } };
+  }
+
+  const comboTech = setupCombo('f-tech', TECH_KEY, 'Chercher ou saisir un technicien');
+  function refreshAllDatalists(){
+    if(comboTech) comboTech.refresh();
+  }
+
+  refreshAllDatalists();
+  window.addEventListener('focus', refreshAllDatalists);
+  window.addEventListener('pageshow', refreshAllDatalists);
+  window.addEventListener('storage', refreshAllDatalists);
+
+  function dedupe(a){ const o = []; (a || []).forEach(v=>{ v = String(v).trim(); if(v && o.indexOf(v) < 0) o.push(v); }); return o; }
+  async function loadSharedLists(){
+    try{
+      const r = await fetch('listes.json?v=' + Date.now(), { cache:'no-store' });
+      if(!r.ok) return;
+      const d = await r.json();
+      lsSet(TECH_KEY, dedupe(d.techniciens));
+      if(typeof d.statsUrl === 'string') try{ localStorage.setItem('record-stats-url', d.statsUrl); }catch(e){}
+      refreshAllDatalists();
+      statFlush();
+      loadSharedFromCloud();
+    }catch(e){}
+  }
+  /* Liste tenue à jour par les responsables depuis le mode administrateur (espace partagé) :
+     elle fait référence dès qu'elle répond. */
+  /* Lecture des données de l'espace partagé sans requête inter-origine :
+     Google renvoie parfois une page de connexion aux fetch ; le chargement
+     par balise <script> (JSONP) est traité comme une navigation et passe. */
+  function cloudGet(url, params, timeoutMs){
+    return new Promise((resolve, reject)=>{
+      if(!url) return reject(new Error('adresse absente'));
+      const cb = 'recordCb' + Math.random().toString(36).slice(2);
+      const s = document.createElement('script');
+      const q = Object.keys(params || {}).map(k => k + '=' + encodeURIComponent(params[k]));
+      q.push('callback=' + cb, 'v=' + Date.now());
+      let done = false;
+      const clean = ()=>{ try{ delete window[cb]; }catch(e){ window[cb] = undefined; } if(s.parentNode) s.parentNode.removeChild(s); };
+      const timer = setTimeout(()=>{ if(!done){ done = true; clean(); reject(new Error('pas de réponse (10 s)')); } }, timeoutMs || 10000);
+      window[cb] = d =>{ if(done) return; done = true; clearTimeout(timer); clean(); resolve(d || {}); };
+      s.onerror = ()=>{ if(done) return; done = true; clearTimeout(timer); clean(); reject(new Error('adresse injoignable')); };
+      s.src = url + (url.indexOf('?') < 0 ? '?' : '&') + q.join('&');
+      document.head.appendChild(s);
+    });
+  }
+  async function loadSharedFromCloud(){
+    if(!window.RECORD_SUPABASE_URL || !window.RECORD_SUPABASE_KEY) return;
+    try{
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1&select=techniciens', {
+        headers:{ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY }, cache:'no-store'
+      });
+      const d = await r.json();
+      const t = dedupe(d[0] && d[0].techniciens || []);
+      if(t.length){ lsSet(TECH_KEY, t); refreshAllDatalists(); }
+    }catch(e){}
+  }
+  loadSharedLists();
+  window.addEventListener('focus', loadSharedLists);
+
+
+  document.querySelectorAll('.fd-chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const type = c.dataset.type;
+      chips[type] = !chips[type];
+      c.classList.toggle('on', chips[type]);
+    });
+  });
+
+
+  /* ---------- Contrôle des adresses mail ---------- */
+  function mailOk(v){ return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(String(v || '').trim()); }
+
+  /* ---------- Historique des fiches envoyées ---------- */
+  const HIST_KEY = 'record-hist-porte-neuve';
+  function histLoad(){
+    try{ const a = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+    catch(e){ return []; }
+  }
+  function histSave(list){
+    try{ localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, 10))); }catch(e){}
+  }
+  /* --- Journal d'utilisation (statistiques, mode administrateur) --- */
+  const STAT_KEY = 'record-stats-usage';
+  const STAT_Q = 'record-stats-queue';
+  function statLog(tech, fiche, how){
+    const row = { d: new Date().toISOString(), t: String(tech || '').trim() || 'Non renseigné', f: fiche, h: how || '' };
+    try{
+      const a = JSON.parse(localStorage.getItem(STAT_KEY) || '[]');
+      a.push(row);
+      localStorage.setItem(STAT_KEY, JSON.stringify(a.slice(-2000)));
+    }catch(e){}
+    try{
+      const q = JSON.parse(localStorage.getItem(STAT_Q) || '[]');
+      q.push(row);
+      localStorage.setItem(STAT_Q, JSON.stringify(q.slice(-500)));
+    }catch(e){}
+    statFlush();
+  }
+  /* Remonte les compteurs vers l'espace partagé Supabase, sans aucune action du technicien.
+     Hors réseau, les lignes restent en attente et repartent à la prochaine ouverture. */
+  async function statFlush(){
+    const SB_URL = window.RECORD_SUPABASE_URL, SB_KEY = window.RECORD_SUPABASE_KEY;
+    if(!SB_URL || !SB_KEY) return;
+    let q = [];
+    try{ q = JSON.parse(localStorage.getItem(STAT_Q) || '[]'); }catch(e){}
+    if(!q.length) return;
+    try{
+      const r = await fetch(SB_URL + '/rest/v1/stats', {
+        method:'POST', keepalive:true,
+        headers:{ apikey: SB_KEY, Authorization:'Bearer ' + SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify(q)
+      });
+      if(r.ok) localStorage.setItem(STAT_Q, '[]');
+    }catch(e){}
+  }
+  window.addEventListener('online', statFlush);
+  function histAdd(data, how){
+    statLog(data.tech, 'PN', how);
+    const clean = {...data};
+    delete clean.photos;
+    const list = histLoad();
+    list.unshift({
+      id: Date.now(),
+      when: new Date().toISOString(),
+      how: how || '',
+      nbPhotos: (data.photos || []).length,
+      label: histTitle(data),
+      data: clean
+    });
+    histSave(list);
+    renderHistory();
+  }
+  function renderHistory(){
+    const wrap = $('hist-list');
+    if(!wrap) return;
+    const list = histLoad();
+    if(!list.length){
+      wrap.innerHTML = '<div class="fd-empty">Aucune fiche envoyée depuis cet appareil.</div>';
+      return;
+    }
+    wrap.innerHTML = list.map(e=>{
+      const d = new Date(e.when);
+      const meta = d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) + '  ·  ' +
+        d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) +
+        (e.how ? '  ·  ' + e.how : '') + (e.nbPhotos ? '  ·  ' + e.nbPhotos + ' photo(s)' : '');
+      return '<div class="fd-hist-item">' +
+        '<div class="fd-hist-main"><div class="fd-hist-title">' + String(e.label || 'Fiche devis').replace(/</g,'&lt;') + '</div>' +
+        '<div class="fd-hist-meta">' + meta + '</div></div>' +
+        '<button type="button" class="fd-hist-btn" data-load="' + e.id + '">Reprendre</button>' +
+        '<button type="button" class="fd-hist-del" data-del="' + e.id + '">✕</button>' +
+        '</div>';
+    }).join('');
+    wrap.querySelectorAll('[data-load]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const e = histLoad().find(x => String(x.id) === b.dataset.load);
+        if(!e) return;
+        applyForm(e.data);
+        showMsg('Fiche reprise \u2014 les photos ne sont pas conservées, pense à les reprendre.');
+        window.scrollTo({ top:0, behavior:'smooth' });
+      });
+    });
+    wrap.querySelectorAll('[data-del]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        histSave(histLoad().filter(x => String(x.id) !== b.dataset.del));
+        renderHistory();
+      });
+    });
+  }
+
+  /* ---------- Annotation des photos ---------- */
+  const anno = (function(){
+    const modal = $('anno-modal'), cv = $('anno-canvas');
+    if(!modal || !cv) return { open(){} };
+    const ctx = cv.getContext('2d');
+    let base = null, idx = null, tool = 'arrow', strokes = [], cur = null, drag = null;
+
+    function redraw(){
+      if(!base) return;
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(base, 0, 0, cv.width, cv.height);
+      const lw = Math.max(4, cv.width * 0.008);
+      ctx.strokeStyle = '#E02A20'; ctx.fillStyle = '#E02A20';
+      ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      strokes.concat(cur ? [cur] : []).forEach(s=>{
+        if(s.t === 'circle'){
+          const rx = Math.abs(s.x2 - s.x1) / 2, ry = Math.abs(s.y2 - s.y1) / 2;
+          ctx.beginPath();
+          ctx.ellipse((s.x1 + s.x2)/2, (s.y1 + s.y2)/2, Math.max(rx, lw), Math.max(ry, lw), 0, 0, Math.PI*2);
+          ctx.stroke();
+        } else {
+          ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+          const a = Math.atan2(s.y2 - s.y1, s.x2 - s.x1), hl = lw * 4;
+          ctx.beginPath();
+          ctx.moveTo(s.x2, s.y2);
+          ctx.lineTo(s.x2 - hl * Math.cos(a - 0.45), s.y2 - hl * Math.sin(a - 0.45));
+          ctx.lineTo(s.x2 - hl * Math.cos(a + 0.45), s.y2 - hl * Math.sin(a + 0.45));
+          ctx.closePath(); ctx.fill();
+        }
+      });
+      if(tool === 'move'){
+        const r = Math.max(9, cv.width * 0.013);
+        ctx.lineWidth = Math.max(2, lw * 0.4);
+        strokes.forEach(s=>{
+          [[s.x1, s.y1], [s.x2, s.y2], [(s.x1 + s.x2)/2, (s.y1 + s.y2)/2]].forEach((p, k)=>{
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], k === 2 ? r * 1.15 : r, 0, Math.PI*2);
+            ctx.fillStyle = k === 2 ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.85)';
+            ctx.fill();
+            ctx.strokeStyle = '#E02A20';
+            ctx.stroke();
+          });
+        });
+        ctx.strokeStyle = '#E02A20'; ctx.fillStyle = '#E02A20';
+      }
+    }
+    function hit(p){
+      const r = Math.max(16, cv.width * 0.03);
+      for(let i = strokes.length - 1; i >= 0; i--){
+        const s = strokes[i];
+        const pts = [['p1', s.x1, s.y1], ['p2', s.x2, s.y2], ['all', (s.x1 + s.x2)/2, (s.y1 + s.y2)/2]];
+        for(const q of pts){
+          if(Math.hypot(p.x - q[1], p.y - q[2]) <= r) return { s:s, part:q[0], ox:p.x, oy:p.y };
+        }
+      }
+      return null;
+    }
+    function pos(e){
+      const r = cv.getBoundingClientRect();
+      const p = e.touches ? e.touches[0] : e;
+      return { x:(p.clientX - r.left) * cv.width / r.width, y:(p.clientY - r.top) * cv.height / r.height };
+    }
+    function down(e){
+      e.preventDefault();
+      const p = pos(e);
+      if(tool === 'move'){ drag = hit(p); return; }
+      cur = { t:tool, x1:p.x, y1:p.y, x2:p.x, y2:p.y };
+    }
+    function move(e){
+      const p = pos(e);
+      if(drag){
+        e.preventDefault();
+        const dx = p.x - drag.ox, dy = p.y - drag.oy;
+        const s = drag.s;
+        if(drag.part === 'p1'){ s.x1 = p.x; s.y1 = p.y; }
+        else if(drag.part === 'p2'){ s.x2 = p.x; s.y2 = p.y; }
+        else { s.x1 += dx; s.y1 += dy; s.x2 += dx; s.y2 += dy; drag.ox = p.x; drag.oy = p.y; }
+        redraw();
+        return;
+      }
+      if(!cur) return;
+      e.preventDefault();
+      cur.x2 = p.x; cur.y2 = p.y;
+      redraw();
+    }
+    function up(e){
+      if(drag){ drag = null; redraw(); return; }
+      if(!cur) return;
+      if(Math.abs(cur.x2 - cur.x1) > 6 || Math.abs(cur.y2 - cur.y1) > 6) strokes.push(cur);
+      cur = null;
+      if(strokes.length) setTool('move');
+      redraw();
+    }
+    cv.addEventListener('mousedown', down); cv.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    cv.addEventListener('touchstart', down, { passive:false });
+    cv.addEventListener('touchmove', move, { passive:false });
+    cv.addEventListener('touchend', up);
+
+    function setTool(t){
+      tool = t;
+      $('anno-arrow').classList.toggle('on', t === 'arrow');
+      $('anno-circle').classList.toggle('on', t === 'circle');
+      $('anno-move').classList.toggle('on', t === 'move');
+      redraw();
+    }
+    $('anno-arrow').addEventListener('click', ()=> setTool('arrow'));
+    $('anno-circle').addEventListener('click', ()=> setTool('circle'));
+    $('anno-move').addEventListener('click', ()=> setTool('move'));
+    $('anno-undo').addEventListener('click', ()=>{ strokes.pop(); redraw(); });
+    $('anno-cancel').addEventListener('click', ()=> modal.classList.add('hidden'));
+    $('anno-save').addEventListener('click', ()=>{
+      tool = 'arrow'; redraw();
+      if(idx !== null && base){
+        photos[idx] = { dataUrl: cv.toDataURL('image/jpeg', 0.7), w: cv.width, h: cv.height };
+        renderPhotoGrid();
+      }
+      modal.classList.add('hidden');
+    });
+
+    return {
+      open(i){
+        const ph = photoOf(photos[i]);
+        if(!ph || !ph.dataUrl) return;
+        idx = i; strokes = []; cur = null;
+        const img = new Image();
+        img.onload = function(){
+          base = img;
+          cv.width = img.width; cv.height = img.height;
+          setTool('arrow');
+          redraw();
+          modal.classList.remove('hidden');
+        };
+        img.src = ph.dataUrl;
+      }
+    };
+  })();
+
+
+
+  const CONFIG_TYPES = [
+    { id:'2v',    label:'2 Vantaux',                    order:['V','V'], arrows:{0:'left',1:'right'},
+      fixe:{ order:['F','V','V','F'], arrows:{1:'left',2:'right'} },
+      fixeUnique:{
+        gauche:{ order:['F','V','V'], arrows:{1:'left',2:'right'} },
+        droite:{ order:['V','V','F'], arrows:{0:'left',1:'right'} }
+      } },
+    { id:'1v-g',  label:'Simple vantail coulissant gauche', order:['V'], arrows:{0:'left'},
+      fixe:{ order:['F','V'], arrows:{1:'left'} } },
+    { id:'1v-d',  label:'Simple vantail coulissant droite', order:['V'], arrows:{0:'right'},
+      fixe:{ order:['V','F'], arrows:{0:'right'} } },
+    { id:'tel-bi-4', label:'Télescopique bilatéral 4 vantaux', order:['V','V','V','V'], arrows:{0:'left',1:'left',2:'right',3:'right'},
+      fixe:{ order:['F','V','V','V','V','F'], arrows:{1:'left',2:'left',3:'right',4:'right'} },
+      fixeUnique:{
+        gauche:{ order:['F','V','V','V','V'], arrows:{1:'left',2:'left',3:'right',4:'right'} },
+        droite:{ order:['V','V','V','V','F'], arrows:{0:'left',1:'left',2:'right',3:'right'} }
+      } },
+    { id:'tel-g', label:'Télescopique gauche', order:['V','V'], arrows:{0:'left',1:'left'},
+      fixe:{ order:['F','V','V'], arrows:{1:'left',2:'left'} } },
+    { id:'tel-d', label:'Télescopique droite', order:['V','V'], arrows:{0:'right',1:'right'},
+      fixe:{ order:['V','V','F'], arrows:{0:'right',1:'right'} } }
+  ];
+  function effectiveSpec(spec, withFixe, uniqueOn, uniqueSide){
+    if(!spec) return null;
+    if(!withFixe) return spec;
+    if(uniqueOn && spec.fixeUnique){
+      const v = spec.fixeUnique[uniqueSide] || spec.fixeUnique.gauche;
+      return { id:spec.id, label:spec.label + ' + 1 partie fixe (' + uniqueSide + ')', order:v.order, arrows:v.arrows };
+    }
+    return { id:spec.id, label:spec.label + ' + partie fixe', order:spec.fixe.order, arrows:spec.fixe.arrows };
+  }
+
+  function buildConfigIconSVG(spec, big, mecaVal, hauteurVal, largeurVal, fixeLargeurVal, railSolVal, gammeVal, vitrageVal){
+    const n = spec.order.length;
+    const padL = big ? 52 : 0, padB = big ? (railSolVal ? 54 : 34) : 0;
+    const frameW = big ? 460 : 150, frameH = big ? 440 : 128, margin = 4;
+    const totalW = frameW + padL, totalH = frameH + padB;
+    const mecaBand = big ? Math.round((frameH - margin*2) * (mecaVal ? (0.07 + 0.04 * ((mecaVal-108)/(200-108))) : 0.08)) : Math.round((frameH - margin*2) * 0.11);
+    const topY = margin + mecaBand;
+    const panelW = (frameW - margin*2) / n;
+    const vIdxsAll = spec.order.map((k,i)=>k==='V'?i:-1).filter(i=>i>=0);
+    let mecaX = margin, mecaW = frameW - margin*2;
+    if(vIdxsAll.length === 1 && spec.arrows[vIdxsAll[0]]){
+      const arrow = spec.arrows[vIdxsAll[0]];
+      mecaW = panelW * 2;
+      mecaX = arrow === 'left' ? (frameW - margin - mecaW) : margin;
+    } else if(vIdxsAll.length >= 2){
+      const firstV = vIdxsAll[0], lastV = vIdxsAll[vIdxsAll.length-1];
+      const span = (lastV - firstV + 1) * panelW;
+      let x1 = margin + firstV * panelW, x2 = x1 + span;
+      if(spec.arrows[firstV] === 'left') x1 -= panelW;
+      if(spec.arrows[lastV] === 'right') x2 += panelW;
+      mecaX = x1; mecaW = x2 - x1;
+    }
+    if(largeurVal && fixeLargeurVal && spec.order.indexOf('F') >= 0){
+      const lvN2 = parseInt(largeurVal,10), pfVal2 = parseInt(fixeLargeurVal,10);
+      const mecaLenRule2 = spec.id === '2v' ? { mult:2, add:100 } : (spec.id === 'tel-g' || spec.id === 'tel-d') ? { mult:1.5, add:150 } : (spec.id === '1v-g' || spec.id === '1v-d') ? { mult:2, add:150 } : (spec.id === 'tel-bi-4') ? { mult:1.5, add:200 } : null;
+      if(mecaLenRule2 && lvN2){
+        const mecaBase2 = lvN2 * mecaLenRule2.mult + mecaLenRule2.add;
+        const sidesCount2 = (spec.id === '2v' || spec.id === 'tel-bi-4') ? 2 : 1;
+        const pfBase2 = sidesCount2 === 2 ? (mecaBase2 - lvN2) / 2 : (mecaBase2 - lvN2 - 50);
+        if(pfVal2 < pfBase2){
+          const extra = big ? 14 : 5;
+          const fIdxs = spec.order.map((k,i)=>k==='F'?i:-1).filter(i=>i>=0);
+          fIdxs.forEach(fi=>{
+            const fx = margin + fi * panelW;
+            if(fx < mecaX + mecaW/2){ mecaX -= extra; mecaW += extra; }
+            else { mecaW += extra; }
+          });
+        }
+      }
+    }
+    let montantSide = null;
+    if(vIdxsAll.length >= 1){
+      const dirs = vIdxsAll.map(i=>spec.arrows[i]);
+      if(dirs.length && dirs.every(d=>d === dirs[0]) && dirs[0]) montantSide = dirs[0] === 'left' ? 'right' : 'left';
+    }
+    const montantW = big ? 16 : 6;
+    const overhangL = mecaBand ? Math.max(0, -mecaX) : 0;
+    const overhangR = mecaBand ? Math.max(0, (mecaX+mecaW) - frameW) : 0;
+    let inner = '';
+    spec.order.forEach((k, i)=>{
+      const x = margin + i * panelW;
+      if(k === 'F'){
+        inner += '<rect x="'+x+'" y="'+topY+'" width="'+panelW+'" height="'+(frameH-margin-topY)+'" fill="#E3E6EB" stroke="#8A939C" stroke-width="1"></rect>';
+        inner += '<pattern id="hatch'+i+spec.id+'" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="6" stroke="#B7C0C8" stroke-width="1.4"></line></pattern>';
+        inner += '<rect x="'+x+'" y="'+topY+'" width="'+panelW+'" height="'+(frameH-margin-topY)+'" fill="url(#hatch'+i+spec.id+')"></rect>';
+        if(big){
+          const fcx = x + panelW/2, fcy = topY + (frameH-margin-topY)/2;
+          inner += '<text x="'+fcx+'" y="'+fcy+'" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="700" fill="#C8811A" font-family="monospace">PARTIE FIXE</text>';
+        }
+      } else {
+        inner += '<rect x="'+x+'" y="'+topY+'" width="'+panelW+'" height="'+(frameH-margin-topY)+'" fill="#F6F8FA" stroke="#1E3448" stroke-width="1.6"></rect>';
+        const arrow = spec.arrows[i];
+        if(arrow){
+          const cy = (topY + frameH - margin) / 2, cx = x + panelW/2, len = Math.min(panelW*0.55, big?38:22);
+          const x1 = arrow === 'left' ? cx + len/2 : cx - len/2;
+          const x2 = arrow === 'left' ? cx - len/2 : cx + len/2;
+          inner += '<line x1="'+x1+'" y1="'+cy+'" x2="'+x2+'" y2="'+cy+'" stroke="#C8811A" stroke-width="'+(big?3:2.2)+'" stroke-linecap="round"></line>';
+          const tipX = x2, dir = arrow === 'left' ? 1 : -1, ah = big?7:5;
+          inner += '<polyline points="'+(tipX+ah*dir)+','+(cy-ah)+' '+tipX+','+cy+' '+(tipX+ah*dir)+','+(cy+ah)+'" fill="none" stroke="#C8811A" stroke-width="'+(big?3:2.2)+'" stroke-linecap="round" stroke-linejoin="round"></polyline>';
+        }
+      }
+    });
+    if(big && gammeVal){
+      const vitrageLabel = gammeVal === '30' && vitrageVal ? 'Double Vitrage' : 'Simple Vitrage';
+      const firstVi = spec.order.indexOf('V'), lastVi = spec.order.lastIndexOf('V');
+      let spanX1 = margin + firstVi*panelW, spanX2 = margin + (lastVi+1)*panelW;
+      if(montantSide === 'left') spanX1 += montantW;
+      if(montantSide === 'right') spanX2 -= montantW;
+      const spanW = spanX2 - spanX1, spanCx = (spanX1+spanX2)/2;
+      const vFont = Math.max(8, Math.min(20, (spanW - 8) / (vitrageLabel.length * 0.62)));
+      const gFont = Math.max(10, Math.min(20, (spanW - 8) / 4.2));
+      inner += '<text x="'+spanCx+'" y="'+(frameH-margin-38)+'" text-anchor="middle" font-size="'+vFont+'" font-weight="700" fill="#C8811A" font-family="monospace">'+vitrageLabel+'</text>';
+      inner += '<text x="'+spanCx+'" y="'+(frameH-margin-14)+'" text-anchor="middle" font-size="'+gFont+'" font-weight="700" fill="#C8811A" font-family="monospace">'+gammeVal+' mm</text>';
+    }
+    if(mecaBand){
+      inner += '<pattern id="mecaHatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="6" stroke="#5A7C93" stroke-width="1.6"></line></pattern>';
+      inner += '<rect x="'+mecaX+'" y="'+margin+'" width="'+mecaW+'" height="'+mecaBand+'" fill="#DCE6EC"></rect>';
+      inner += '<rect x="'+mecaX+'" y="'+margin+'" width="'+mecaW+'" height="'+mecaBand+'" fill="url(#mecaHatch)" stroke="#5A7C93" stroke-width="1"></rect>';
+      if(big && mecaVal){
+        inner += '<text x="'+(mecaX+mecaW/2)+'" y="'+(margin+mecaBand*0.35+3)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#1E3448" font-family="monospace">M&#201;CA '+mecaVal+' mm</text>';
+      }
+      if(big){
+        const firstV = spec.order.indexOf('V'), lastV = spec.order.lastIndexOf('V');
+        const pStart = margin + firstV*panelW, pEnd = margin + (lastV+1)*panelW;
+        const radarCy = margin + mecaBand*0.72, rw = 52, rh = 11;
+        const radarCx = (pStart+pEnd)/2;
+        inner += '<rect x="'+(radarCx-rw/2)+'" y="'+(radarCy-rh/2)+'" width="'+rw+'" height="'+rh+'" fill="#12171C"></rect>';
+        if(mecaX < pStart - 1){
+          const rc = (mecaX + pStart)/2;
+          inner += '<rect x="'+(rc-rw/2)+'" y="'+(radarCy-rh/2)+'" width="'+rw+'" height="'+rh+'" fill="#12171C"></rect>';
+        }
+        if(mecaX + mecaW > pEnd + 1){
+          const rc = (pEnd + mecaX + mecaW)/2;
+          inner += '<rect x="'+(rc-rw/2)+'" y="'+(radarCy-rh/2)+'" width="'+rw+'" height="'+rh+'" fill="#12171C"></rect>';
+        }
+      }
+    }
+    if(railSolVal){
+      const ry = frameH - margin;
+      inner += '<line x1="'+mecaX+'" y1="'+ry+'" x2="'+(mecaX+mecaW)+'" y2="'+ry+'" stroke="#12171C" stroke-width="'+(big?8:5.5)+'" stroke-linecap="square"></line>';
+      if(big){
+        inner += '<text x="'+(mecaX+mecaW/2)+'" y="'+(frameH-margin+47)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#5A7C93" font-family="monospace">RAIL AU SOL</text>';
+      }
+    }
+    if(montantSide){
+      const mx = montantSide === 'right' ? (frameW - margin - montantW) : margin;
+      inner += '<pattern id="montantHatch'+spec.id+'" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="6" stroke="#5A7C93" stroke-width="1.8"></line></pattern>';
+      inner += '<rect x="'+mx+'" y="'+topY+'" width="'+montantW+'" height="'+(frameH-margin-topY)+'" fill="#DCE6EC" stroke="#5A7C93" stroke-width="1"></rect>';
+      inner += '<rect x="'+mx+'" y="'+topY+'" width="'+montantW+'" height="'+(frameH-margin-topY)+'" fill="url(#montantHatch'+spec.id+')"></rect>';
+      if(big){
+        const tcx = mx + montantW/2, tcy = topY + (frameH-margin-topY)/2;
+        inner += '<text x="'+tcx+'" y="'+tcy+'" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="700" fill="#1E3448" font-family="monospace" transform="rotate(-90 '+tcx+' '+tcy+')">MONTANT DE R&#201;CEPTION</text>';
+      }
+    }
+    let dims = '';
+    if(big){
+      const dimColor = '#1E3448';
+      const hx = margin - 14, hy1 = topY, hy2 = frameH - margin;
+      dims += '<line x1="'+hx+'" y1="'+hy1+'" x2="'+hx+'" y2="'+hy2+'" stroke="'+dimColor+'" stroke-width="1.4"></line>';
+      dims += '<line x1="'+(hx-4)+'" y1="'+hy1+'" x2="'+(hx+4)+'" y2="'+hy1+'" stroke="'+dimColor+'" stroke-width="1.4"></line>';
+      dims += '<line x1="'+(hx-4)+'" y1="'+hy2+'" x2="'+(hx+4)+'" y2="'+hy2+'" stroke="'+dimColor+'" stroke-width="1.4"></line>';
+      dims += '<text x="'+(hx-6)+'" y="'+((hy1+hy2)/2)+'" text-anchor="middle" font-size="14" font-weight="700" fill="'+dimColor+'" font-family="monospace" transform="rotate(-90 '+(hx-6)+' '+((hy1+hy2)/2)+')">HAUTEUR'+(hauteurVal?' = '+hauteurVal+' mm':'')+'</text>';
+      if(mecaBand && mecaVal && hauteurVal){
+        const hTot = parseInt(hauteurVal,10) + mecaVal, hx2 = hx - 24, hty1 = margin, hty2 = frameH - margin;
+        dims += '<line x1="'+hx2+'" y1="'+hty1+'" x2="'+hx2+'" y2="'+hty2+'" stroke="#5A7C93" stroke-width="1.4"></line>';
+        dims += '<line x1="'+(hx2-4)+'" y1="'+hty1+'" x2="'+(hx2+4)+'" y2="'+hty1+'" stroke="#5A7C93" stroke-width="1.4"></line>';
+        dims += '<line x1="'+(hx2-4)+'" y1="'+hty2+'" x2="'+(hx2+4)+'" y2="'+hty2+'" stroke="#5A7C93" stroke-width="1.4"></line>';
+        dims += '<text x="'+(hx2-6)+'" y="'+((hty1+hty2)/2)+'" text-anchor="middle" font-size="14" font-weight="700" fill="#5A7C93" font-family="monospace" transform="rotate(-90 '+(hx2-6)+' '+((hty1+hty2)/2)+')">HAUTEUR TOTALE = '+hTot+' mm</text>';
+      }
+
+      const wy = frameH - margin + 16, firstV = spec.order.indexOf('V'), lastV = spec.order.lastIndexOf('V');
+      let wx1 = margin + firstV * panelW, wx2 = margin + (lastV + 1) * panelW;
+      if(montantSide === 'left') wx1 += montantW;
+      if(montantSide === 'right') wx2 -= montantW;
+      dims += '<line x1="'+wx1+'" y1="'+wy+'" x2="'+wx2+'" y2="'+wy+'" stroke="'+dimColor+'" stroke-width="1.4"></line>';
+      dims += '<line x1="'+wx1+'" y1="'+(wy-4)+'" x2="'+wx1+'" y2="'+(wy+4)+'" stroke="'+dimColor+'" stroke-width="1.4"></line>';
+      dims += '<line x1="'+wx2+'" y1="'+(wy-4)+'" x2="'+wx2+'" y2="'+(wy+4)+'" stroke="'+dimColor+'" stroke-width="1.4"></line>';
+      dims += '<text x="'+((wx1+wx2)/2)+'" y="'+(wy+15)+'" text-anchor="middle" font-size="14" font-weight="700" fill="'+dimColor+'" font-family="monospace">LARGEUR'+(largeurVal?' = '+largeurVal+' mm':'')+'</text>';
+      if(spec.order.indexOf('F') >= 0){
+        spec.order.forEach((k, i)=>{
+          if(k !== 'F') return;
+          const fx1 = margin + i * panelW, fx2 = fx1 + panelW, fy = frameH - margin + 16;
+          dims += '<line x1="'+fx1+'" y1="'+fy+'" x2="'+fx2+'" y2="'+fy+'" stroke="'+dimColor+'" stroke-width="1.2" stroke-dasharray="2,2"></line>';
+          dims += '<text x="'+((fx1+fx2)/2)+'" y="'+(fy+15)+'" text-anchor="middle" font-size="11" font-weight="700" fill="'+dimColor+'" font-family="monospace">PF'+(fixeLargeurVal?' = '+fixeLargeurVal+' mm':'')+'</text>';
+        });
+      }
+    }
+    const mecaLenRule = spec.id === '2v' ? { mult:2, add:100 } : (spec.id === 'tel-g' || spec.id === 'tel-d') ? { mult:1.5, add:150 } : (spec.id === '1v-g' || spec.id === '1v-d') ? { mult:2, add:150 } : (spec.id === 'tel-bi-4') ? { mult:1.5, add:200 } : null;
+    const showMecaLen = big && mecaLenRule !== null && largeurVal;
+    let curTop = margin;
+    if(showMecaLen){
+      const lvN = parseInt(largeurVal,10);
+      let mecaLen = lvN * mecaLenRule.mult + mecaLenRule.add;
+      if(fixeLargeurVal){
+        const pfVal = parseInt(fixeLargeurVal,10);
+        const sidesCount = (spec.id === '2v' || spec.id === 'tel-bi-4') ? 2 : 1;
+        const pfBase = sidesCount === 2 ? (mecaLen - lvN) / 2 : (mecaLen - lvN - 50);
+        const delta = Math.max(0, pfVal - pfBase);
+        mecaLen += delta * sidesCount;
+      }
+      const my = curTop - 12;
+      dims += '<line x1="'+mecaX+'" y1="'+my+'" x2="'+(mecaX+mecaW)+'" y2="'+my+'" stroke="#5A7C93" stroke-width="1.4"></line>';
+      dims += '<line x1="'+mecaX+'" y1="'+(my-4)+'" x2="'+mecaX+'" y2="'+(my+4)+'" stroke="#5A7C93" stroke-width="1.4"></line>';
+      dims += '<line x1="'+(mecaX+mecaW)+'" y1="'+(my-4)+'" x2="'+(mecaX+mecaW)+'" y2="'+(my+4)+'" stroke="#5A7C93" stroke-width="1.4"></line>';
+      dims += '<text x="'+(mecaX+mecaW/2)+'" y="'+(my-8)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#5A7C93" font-family="monospace">M&#201;CANISME = '+mecaLen+' mm</text>';
+      curTop = my - 20;
+    }
+    if(big){
+      dims += '<text x="'+(frameW/2)+'" y="'+(curTop-10)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#8A939C" font-family="monospace" font-style="italic">VUE DE L&#8217;INT&#201;RIEUR &#8211; PORTE FERM&#201;E</text>';
+      curTop -= 24;
+    }
+    const padT = Math.max(0, margin - curTop + 6);
+    return svgOut();
+    function svgOut(){
+    const vbX = Math.min(-padL, mecaX - 2), vbRight = Math.max(totalW - padL, mecaX + mecaW + 2), vbW = vbRight - vbX;
+    const scale = Math.min(1, (big ? 480 : (frameW + 20)) / vbW);
+    const dispW = Math.round(vbW * scale), dispH = Math.round((totalH + padT) * scale);
+    return '<svg viewBox="'+vbX+' '+(-padT)+' '+vbW+' '+(totalH+padT)+'" style="width:'+dispW+'px;height:'+dispH+'px;max-width:100%;display:block;margin:0 auto;">'+inner+dims+'</svg>';
+    }
+  }
+
+  function renderConfigGrid(){
+    const grid = $('grid-config');
+    grid.innerHTML = '';
+    CONFIG_TYPES.forEach(spec=>{
+      const card = document.createElement('div');
+      card.className = 'fd-visual-card' + (configSelected === spec.id ? ' on' : '');
+      card.innerHTML = buildConfigIconSVG(spec, false) + '<div class="fd-visual-label">'+spec.label+'</div>';
+      card.addEventListener('click', ()=>{
+        configSelected = (configSelected === spec.id) ? null : spec.id;
+        fixeSelected = false;
+        renderConfigGrid();
+        renderConfigDetail();
+        updateTicketRef();
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  function renderConfigDetail(){
+    const box = $('config-detail'), iconBox = $('config-detail-icon');
+    const baseSpec = configSelected ? CONFIG_TYPES.find(c=>c.id===configSelected) : null;
+    const spec = baseSpec ? effectiveSpec(baseSpec, fixeSelected, fixeUniqueOn, fixeUniqueSide) : null;
+    if(!spec){ box.style.display = 'none'; return; }
+    box.style.display = '';
+    const canUnique = fixeSelected && baseSpec.fixeUnique;
+    let extra = '<button type="button" id="btn-toggle-fixe" class="fd-add-btn" style="margin-top:12px;width:100%;">'+(fixeSelected ? '✕ Retirer la partie fixe' : '+ Ajouter une partie fixe')+'</button>';
+    if(canUnique){
+      extra += '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:14px;font-weight:600;cursor:pointer;"><input type="checkbox" id="chk-fixe-unique" '+(fixeUniqueOn?'checked':'')+' style="width:18px;height:18px;">1 seule partie fixe</label>';
+      if(fixeUniqueOn){
+        extra += '<div class="fd-toggle-row" style="margin-top:8px;">' +
+          '<div class="fd-toggle'+(fixeUniqueSide==='gauche'?' on':'')+'" id="btn-fixe-side-gauche" data-val="gauche">Gauche</div>' +
+          '<div class="fd-toggle'+(fixeUniqueSide==='droite'?' on':'')+'" id="btn-fixe-side-droite" data-val="droite">Droite</div>' +
+          '</div>';
+      }
+    }
+    $('wrap-largeur-pf').style.display = fixeSelected ? '' : 'none';
+    if(fixeSelected && configSelected === '2v' && !pfUserEdited){
+      const lv = parseInt($('f-largeur').value.trim(), 10);
+      $('f-largeur-pf').value = lv ? (Math.round(lv / 2) + 50) : '';
+    }
+    if(fixeSelected && (configSelected === '1v-g' || configSelected === '1v-d') && !pfUserEdited){
+      const lv = parseInt($('f-largeur').value.trim(), 10);
+      $('f-largeur-pf').value = lv ? (lv * 2 + 150 - lv - 50) : '';
+    }
+    if(fixeSelected && (configSelected === 'tel-g' || configSelected === 'tel-d') && !pfUserEdited){
+      const lv = parseInt($('f-largeur').value.trim(), 10);
+      $('f-largeur-pf').value = lv ? Math.round(lv * 1.5 + 150 - lv - 50) : '';
+    }
+    if(fixeSelected && configSelected === 'tel-bi-4' && !pfUserEdited){
+      const lv = parseInt($('f-largeur').value.trim(), 10);
+      $('f-largeur-pf').value = lv ? Math.round((lv * 1.5 + 200 - lv) / 2) : '';
+    }
+    iconBox.innerHTML = '<div style="max-width:560px;margin:0 auto;text-align:center;">' + buildConfigIconSVG(spec, true, mecaSelected ? parseInt(mecaSelected,10) : null, $('f-hauteur').value.trim(), $('f-largeur').value.trim(), $('f-largeur-pf').value.trim(), railSolOn, gammeSelected, vitrageOn) + '<div class="fd-visual-label">'+spec.label+'</div></div>' + extra;
+    const meca108Btn = document.querySelector('.fd-toggle[data-field="meca"][data-val="108"]');
+    const no108 = configSelected === 'tel-bi-4';
+    meca108Btn.classList.toggle('fd-mode-hide', no108);
+    if(no108 && mecaSelected === '108'){ mecaSelected = null; meca108Btn.classList.remove('on'); }
+    $('btn-toggle-fixe').addEventListener('click', ()=>{
+      fixeSelected = !fixeSelected;
+      if(!fixeSelected){ fixeUniqueOn = false; pfUserEdited = false; }
+      renderConfigDetail();
+    });
+    if(canUnique){
+      $('chk-fixe-unique').addEventListener('change', e=>{
+        fixeUniqueOn = e.target.checked;
+        renderConfigDetail();
+      });
+      if(fixeUniqueOn){
+        $('btn-fixe-side-gauche').addEventListener('click', ()=>{ fixeUniqueSide = 'gauche'; renderConfigDetail(); });
+        $('btn-fixe-side-droite').addEventListener('click', ()=>{ fixeUniqueSide = 'droite'; renderConfigDetail(); });
+      }
+    }
+  }
+  renderConfigGrid();
+  renderConfigDetail();
+
+  $('btn-rail-sol').addEventListener('click', ()=>{
+    railSolOn = !railSolOn;
+    $('btn-rail-sol').classList.toggle('on', railSolOn);
+    renderConfigDetail();
+  });
+  document.querySelectorAll('.fd-toggle[data-field="gamme"]').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      gammeSelected = (gammeSelected === t.dataset.val) ? null : t.dataset.val;
+      document.querySelectorAll('.fd-toggle[data-field="gamme"]').forEach(x=>x.classList.toggle('on', x.dataset.val === gammeSelected));
+      if(gammeSelected !== '30'){ vitrageOn = false; $('btn-vitrage').classList.remove('on'); }
+      $('wrap-vitrage').style.display = gammeSelected === '30' ? '' : 'none';
+      renderConfigDetail();
+    });
+  });
+  $('btn-vitrage').addEventListener('click', ()=>{
+    vitrageOn = !vitrageOn;
+    $('btn-vitrage').classList.toggle('on', vitrageOn);
+    renderConfigDetail();
+  });
+  document.querySelectorAll('.fd-toggle[data-field="motif"]').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      const v = t.dataset.val, i = motifSelected.indexOf(v);
+      if(i >= 0) motifSelected.splice(i, 1); else motifSelected.push(v);
+      t.classList.toggle('on', i < 0);
+    });
+  });
+  document.querySelectorAll('.fd-toggle[data-field="meca"]').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      mecaSelected = (mecaSelected === t.dataset.val) ? null : t.dataset.val;
+      document.querySelectorAll('.fd-toggle[data-field="meca"]').forEach(x=>x.classList.toggle('on', x.dataset.val === mecaSelected));
+      renderConfigDetail();
+    });
+  });
+
+  $('f-hauteur').addEventListener('input', renderConfigDetail);
+  $('f-largeur').addEventListener('input', renderConfigDetail);
+  $('f-largeur-pf').addEventListener('input', ()=>{ pfUserEdited = true; renderConfigDetail(); });
+
+  function updateTicketRef(){
+    const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const tech = clean($('f-tech').value);
+    $('fd-ticket-no').textContent = tech ? 'PN-' + tech : 'PN \u2014';
+  }
+  $('f-tech').addEventListener('input', updateTicketRef);
+  $('f-tech').addEventListener('change', updateTicketRef);
+
+  function histTitle(data){
+    return [data.tech || 'Technicien non renseigné', data.date || ''].filter(Boolean).join('  ·  ');
+  }
+
+  function applyForm(data){
+    fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = data[f] || ''; });
+    configSelected = data.config || null;
+    fixeSelected = !!data.fixeSelected;
+    motifSelected = Array.isArray(data.motif) ? data.motif : [];
+    document.querySelectorAll('.fd-toggle[data-field="motif"]').forEach(x=>x.classList.toggle('on', motifSelected.indexOf(x.dataset.val) >= 0));
+    fixeUniqueOn = !!data.fixeUniqueOn;
+    fixeUniqueSide = data.fixeUniqueSide || 'gauche';
+    mecaSelected = data.meca || null;
+    railSolOn = !!data.railSol;
+    $('btn-rail-sol').classList.toggle('on', railSolOn);
+    gammeSelected = data.gamme || null;
+    document.querySelectorAll('.fd-toggle[data-field="gamme"]').forEach(x=>x.classList.toggle('on', x.dataset.val === gammeSelected));
+    vitrageOn = !!data.vitrage;
+    $('btn-vitrage').classList.toggle('on', vitrageOn);
+    $('wrap-vitrage').style.display = gammeSelected === '30' ? '' : 'none';
+    document.querySelectorAll('.fd-toggle[data-field="meca"]').forEach(x=>x.classList.toggle('on', x.dataset.val === mecaSelected));
+    renderConfigGrid();
+    renderConfigDetail();
+  }
+
+  function readForm(){
+    const data = { photos: [...photos] };
+    fields.forEach(f => data[f] = $('f-'+f).value.trim());
+    data.motif = motifSelected;
+    const merged = [];
+    if(photoInt) merged.push({ ...photoOf(photoInt), label:'Intérieur' });
+    if(photoExt) merged.push({ ...photoOf(photoExt), label:'Extérieur' });
+    data.photos = merged.concat(data.photos);
+    data.photoInt = !!photoInt;
+    data.photoExt = !!photoExt;
+    const spec = configSelected ? effectiveSpec(CONFIG_TYPES.find(c=>c.id===configSelected), fixeSelected, fixeUniqueOn, fixeUniqueSide) : null;
+    data.config = configSelected;
+    data.fixeSelected = fixeSelected;
+    data.fixeUniqueOn = fixeUniqueOn;
+    data.fixeUniqueSide = fixeUniqueSide;
+    data.configLabel = spec ? spec.label : '';
+    data.meca = mecaSelected;
+    data.railSol = railSolOn;
+    data.gamme = gammeSelected;
+    data.vitrage = gammeSelected === '30' ? vitrageOn : false;
+    return data;
+  }
+
+  function resetForm(){
+    fields.forEach(f => $('f-'+f).value = '');
+    motifSelected = [];
+    document.querySelectorAll('.fd-toggle[data-field="motif"]').forEach(x=>x.classList.remove('on'));
+    $('f-date').value = new Date().toISOString().slice(0, 10);
+    photos = [];
+    renderPhotoGrid();
+    configSelected = null;
+    fixeSelected = false;
+    fixeUniqueOn = false;
+    pfUserEdited = false;
+    fixeUniqueSide = 'gauche';
+    mecaSelected = null;
+    railSolOn = false;
+    $('btn-rail-sol').classList.remove('on');
+    gammeSelected = null;
+    vitrageOn = false;
+    document.querySelectorAll('.fd-toggle[data-field="gamme"]').forEach(x=>x.classList.remove('on'));
+    $('btn-vitrage').classList.remove('on');
+    $('wrap-vitrage').style.display = 'none';
+    document.querySelectorAll('.fd-toggle[data-field="meca"]').forEach(x=>x.classList.remove('on'));
+    renderConfigGrid();
+    renderConfigDetail();
+  }
+  $('f-date').value = new Date().toISOString().slice(0, 10);
+
+  /* ---------- PDF ---------- */
+  function generateFichePDF(data){
+    if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('Bibliothèque PDF non disponible (hors-ligne ?)');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 18, contentW = pageW - margin*2, LABEL_X = 66;
+    let y = 0;
+    const STEEL=[30,52,72], INK=[18,23,28], SOFT=[100,110,120], LINE=[226,230,235],
+          SURF=[246,248,250], AMBER=[200,129,26], RED=[179,64,58], REDBG=[251,234,232],
+          GREEN=[63,122,70], GREENBG=[233,241,234];
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const setC = c => doc.setTextColor(c[0],c[1],c[2]);
+    const fillC = c => doc.setFillColor(c[0],c[1],c[2]);
+    const drawC = c => doc.setDrawColor(c[0],c[1],c[2]);
+    const has = v => v !== undefined && v !== null && String(v).trim() !== '';
+
+    function header(){
+      fillC(STEEL); doc.rect(0,0,pageW,46,'F');
+      fillC(AMBER); doc.rect(0,46,pageW,1.4,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(150,175,196);
+      doc.text('RECORD  ·  PORTE NEUVE', margin, 15, { charSpace:0.7 });
+      doc.setTextColor(255,255,255); doc.setFontSize(20);
+      doc.text('Relevé Porte Neuve', margin, 29);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(180,198,213);
+      doc.text((data.tech || 'Technicien non renseigné') + '   ·   ' + dateStr, margin, 38, { maxWidth: contentW - 20 });
+      y = 62; setC(INK);
+    }
+    function checkBreak(need){ if(y + need > pageH - 24){ doc.addPage(); y = 26; } }
+    function section(title){
+      checkBreak(30); y += 3;
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); setC(STEEL);
+      doc.text(title.toUpperCase(), margin, y, { charSpace:0.9 });
+      y += 3.6; drawC(LINE); doc.setLineWidth(0.4);
+      doc.line(margin, y, pageW - margin, y);
+      y += 7; setC(INK);
+    }
+    function row(label, value){
+      if(!has(value)) return;
+      const val = String(value);
+      doc.setFont('helvetica','normal'); doc.setFontSize(11);
+      const lines = doc.splitTextToSize(val, contentW - LABEL_X - 8);
+      const h = Math.max(13.5, lines.length * 5.8 + 7.6);
+      checkBreak(h + 4);
+      fillC(SURF); doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
+      doc.text(label.toUpperCase(), margin + 7, y + 8.6, { charSpace:0.35, maxWidth: LABEL_X - 12 });
+      doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
+      doc.text(lines, margin + LABEL_X, y + 8.8);
+      y += h + 3.4;
+    }
+    function block(label, value){
+      if(!has(value)) return;
+      doc.setFont('helvetica','normal'); doc.setFontSize(11);
+      const lines = doc.splitTextToSize(String(value), contentW - 14);
+      const h = 15 + lines.length * 5.8;
+      checkBreak(h + 4);
+      fillC(SURF); doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
+      doc.text(label.toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
+      doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
+      doc.text(lines, margin + 7, y + 16.5);
+      y += h + 3.4;
+    }
+    function callout(label, value, tone){
+      const bg = tone === 'red' ? REDBG : GREENBG, fg = tone === 'red' ? RED : GREEN;
+      doc.setFont('helvetica','bold'); doc.setFontSize(13.5);
+      const lines = doc.splitTextToSize(String(value || '—'), contentW - 16);
+      const h = 17 + lines.length * 6.4;
+      checkBreak(h + 5);
+      fillC(bg); doc.roundedRect(margin, y, contentW, h, 3, 3, 'F');
+      fillC(fg); doc.rect(margin, y, 1.8, h, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(fg);
+      doc.text(label.toUpperCase(), margin + 8, y + 8.6, { charSpace:0.4 });
+      doc.setFontSize(13.5);
+      doc.text(lines, margin + 8, y + 17);
+      y += h + 4;
+    }
+    function tiles(items){
+      items = items.filter(it => has(it.v));
+      if(!items.length) return;
+      const gap = 4.5, w = (contentW - gap * (items.length - 1)) / items.length;
+      checkBreak(24);
+      items.forEach((it, i)=>{
+        const x = margin + i * (w + gap);
+        fillC(SURF); doc.roundedRect(x, y, w, 19, 2.5, 2.5, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
+        doc.text(it.k.toUpperCase(), x + 5.5, y + 7, { charSpace:0.35, maxWidth: w - 9 });
+        doc.setFontSize(12.5); setC(INK);
+        doc.text(doc.splitTextToSize(String(it.v), w - 10)[0], x + 5.5, y + 15);
+      });
+      y += 23;
+    }
+    function photosPages(list){
+      if(!list || !list.length) return;
+      doc.addPage(); y = 26;
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); setC(STEEL);
+      doc.text('PHOTOS  ·  ' + list.length, margin, y, { charSpace:0.9 });
+      y += 3.6; drawC(LINE); doc.setLineWidth(0.4);
+      doc.line(margin, y, pageW - margin, y); y += 8;
+      const gap = 6, cellW = (contentW - gap) / 2, cellH = cellW * 0.8;
+      let col = 0;
+      list.forEach((p, i)=>{
+        const ph = photoOf(p);
+        if(col === 0) checkBreak(cellH + 13);
+        const x = margin + col * (cellW + gap);
+        fillC(SURF); doc.roundedRect(x, y, cellW, cellH, 2.5, 2.5, 'F');
+        const ratio = (ph.w || 4) / (ph.h || 3);
+        let iw = cellW - 5, ih = iw / ratio;
+        if(ih > cellH - 5){ ih = cellH - 5; iw = ih * ratio; }
+        try{ doc.addImage(ph.dataUrl, 'JPEG', x + (cellW - iw)/2, y + (cellH - ih)/2, iw, ih); }catch(err){}
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
+        doc.text('PHOTO ' + (i+1) + (p && p.label ? ' — ' + p.label : ''), x, y + cellH + 5.2, { charSpace:0.4 });
+        col++;
+        if(col === 2){ col = 0; y += cellH + 12; }
+      });
+      if(col === 1) y += cellH + 12;
+    }
+    function footers(){
+      const total = doc.internal.getNumberOfPages();
+      for(let p = 1; p <= total; p++){
+        doc.setPage(p);
+        drawC(LINE); doc.setLineWidth(0.4);
+        doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); setC(SOFT);
+        doc.text('Réalisation Christophe BATAILLE  ·  ' + dateStr, margin, pageH - 10);
+        doc.text('Page ' + p + ' / ' + total, pageW - margin, pageH - 10, { align:'right' });
+      }
+    }
+
+    header();
+
+    section('Identification');
+    row('Technicien', data.tech);
+    row('Date', data.date);
+    const motifLabels = {vetuste:'Trop vétuste', pieces:'Plus de pièces disponibles', 'non-rentable':'Non réparable économiquement'};
+    if(data.motif && data.motif.length) row('Motif de remplacement', data.motif.map(m=>motifLabels[m]||m).join(', '));
+    if(data['motif-precision']) row('Précisions', data['motif-precision']);
+
+    section('Client');
+    row('Nom du client', data.nomclient);
+    row('N° de porte', data.numporte);
+    row('Adresse', data.adresse);
+    row('Mail client', data.mail);
+    row('Téléphone client', data.tel);
+    row('Code postal / Ville', data.cpville);
+
+    section('Configuration de la porte');
+    row('Type', data.configLabel);
+    tiles([
+      { k:'Hauteur passage libre (mm)', v:data.hauteur },
+      { k:'Largeur passage libre (mm)', v:data.largeur },
+      { k:'Largeur parties fixes (mm)', v:data['largeur-pf'] },
+      { k:'Hauteur mécanisme (mm)', v:data.meca },
+      { k:'Rail au sol', v:data.railSol ? 'Oui' : 'Non' },
+      { k:'Gamme alu', v:data.gamme ? data.gamme + ' mm' : '' },
+      { k:'Double vitrage', v:data.gamme === '30' ? (data.vitrage ? 'Oui' : 'Non') : '' }
+    ]);
+
+    if(has(data.remarque)){
+      section('Remarques');
+      block('Remarques', data.remarque);
+    }
+    photosPages(data.photos);
+    footers();
+    return doc;
+  }
+
+  /* ---------- Texte du mail ---------- */
+  function formatText(data, opts){
+    opts = opts || {};
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const L = [], rule = '────────────────────';
+    const has = v => v !== undefined && v !== null && String(v).trim() !== '';
+    function bloc(titre, lignes){
+      lignes = lignes.filter(Boolean);
+      if(!lignes.length) return;
+      L.push(''); L.push(titre.toUpperCase()); L.push(rule);
+      lignes.forEach(l => L.push(l));
+    }
+    const kv = (k, v) => has(v) ? (k + ' : ' + v) : null;
+
+    L.push('RELEVÉ PORTE NEUVE');
+    L.push(rule);
+    L.push((data.tech || 'Technicien non renseigné') + '  ·  ' + (data.date || dateStr));
+
+    bloc('Identification', [
+      kv('Technicien', data.tech),
+      kv('Date', data.date),
+      kv('Motif de remplacement', data.motif && data.motif.length ? data.motif.map(m=>({vetuste:'Trop v\u00e9tuste', pieces:'Plus de pi\u00e8ces disponibles', 'non-rentable':'Non r\u00e9parable \u00e9conomiquement'}[m]||m)).join(', ') : ''),
+      kv('Pr\u00e9cisions', data['motif-precision'])
+    ]);
+
+    bloc('Client', [
+      kv('Nom du client', data.nomclient),
+      kv('N° de porte', data.numporte),
+      kv('Adresse', data.adresse),
+      kv('Mail client', data.mail),
+      kv('Téléphone client', data.tel),
+      kv('Code postal / Ville', data.cpville)
+    ]);
+
+    bloc('Configuration de la porte', [
+      kv('Type', data.configLabel),
+      kv('Hauteur passage libre', data.hauteur ? data.hauteur + ' mm' : ''),
+      kv('Largeur passage libre', data.largeur ? data.largeur + ' mm' : ''),
+      kv('Largeur parties fixes', data['largeur-pf'] ? data['largeur-pf'] + ' mm' : ''),
+      kv('Hauteur mécanisme', data.meca ? data.meca + ' mm' : ''),
+      kv('Rail au sol', data.railSol ? 'Oui' : 'Non'),
+      kv('Gamme alu', data.gamme ? data.gamme + ' mm' : ''),
+      kv('Double vitrage', data.gamme === '30' ? (data.vitrage ? 'Oui' : 'Non') : '')
+    ]);
+
+    bloc('Remarques', [ has(data.remarque) ? data.remarque : null ]);
+
+    if(opts.notePhotos || opts.note){
+      const lignes = [];
+      if(opts.notePhotos){
+        lignes.push(data.photos && data.photos.length
+          ? data.photos.length + ' photo(s) à joindre manuellement' : 'Aucune photo');
+      }
+      if(opts.note) lignes.push(opts.note);
+      bloc('Pièces jointes', lignes);
+    }
+    L.push('');
+    L.push('— Relevé technicien RECORD');
+    return L.join('\n');
+  }
+
+  let msgTimeout = null;
+  function showMsg(text, ok, noScroll){
+    const el = $('fd-msg');
+    el.textContent = (ok===false ? '⚠️ ' : '✓ ') + text;
+    el.className = 'fd-msg show ' + (ok===false ? 'error' : 'success');
+    if(!noScroll){
+      const r = el.getBoundingClientRect();
+      window.scrollTo({ top: Math.max(0, window.pageYOffset + r.top - 160), behavior:'smooth' });
+    }
+    clearTimeout(msgTimeout);
+    msgTimeout = setTimeout(()=>{ el.classList.remove('show'); }, ok===false ? 7000 : 3500);
+  }
+
+  function clearFlags(){
+    document.querySelectorAll('.fd-invalid,.fd-flag').forEach(e=>{
+      e.classList.remove('fd-invalid'); e.classList.remove('fd-flag');
+    });
+  }
+  function highlight(sel){
+    clearFlags();
+    if(!sel) return;
+    const el = document.querySelector(sel);
+    if(!el) return;
+    const isInput = /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
+    const box = isInput ? el : (el.closest('.fd-toggle-row, .fd-chip-row, .fd-photo-actions') || el);
+    box.classList.add(isInput ? 'fd-invalid' : 'fd-flag');
+    const r = box.getBoundingClientRect();
+    window.scrollTo({ top: Math.max(0, window.pageYOffset + r.top - 110), behavior:'smooth' });
+    if(isInput && typeof el.focus === 'function'){ try{ el.focus({ preventScroll:true }); }catch(e){} }
+  }
+  document.addEventListener('input', clearFlags, true);
+  document.addEventListener('change', clearFlags, true);
+  document.addEventListener('click', e=>{
+    if(e.target && e.target.closest && e.target.closest('.fd-flag')) clearFlags();
+  }, true);
+
+  function validate(data){
+    if(!data.tech) return { msg:'Le technicien est obligatoire.', target:'#f-tech' };
+    if(!data.date) return { msg:'La date est obligatoire.', target:'#f-date' };
+    if(!data.nomclient) return { msg:'Le nom du client est obligatoire.', target:'#f-nomclient' };
+    if(!data.adresse) return { msg:"L'adresse est obligatoire.", target:'#f-adresse' };
+    if(!data.mail) return { msg:'Le mail client est obligatoire.', target:'#f-mail' };
+    if(!mailOk(data.mail)) return { msg:"L'adresse mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mail' };
+    if(!data.tel) return { msg:'Le téléphone client est obligatoire.', target:'#f-tel' };
+    if(!data.cpville) return { msg:'Le code postal ou la ville est obligatoire.', target:'#f-cpville' };
+    if(!data.config) return { msg:'Le type de configuration est obligatoire.', target:'#grid-config' };
+    if(!data.hauteur) return { msg:'La hauteur de passage libre est obligatoire.', target:'#f-hauteur' };
+    if(!data.largeur) return { msg:'La largeur de passage libre est obligatoire.', target:'#f-largeur' };
+    if(fixeSelected && configSelected !== '2v' && !data['largeur-pf']) return { msg:'La largeur des parties fixes est obligatoire.', target:'#f-largeur-pf' };
+    if(!data['motif-precision']) return { msg:'Les précisions sur le motif sont obligatoires.', target:'#f-motif-precision' };
+    if(!data.meca) return { msg:'La hauteur du mécanisme est obligatoire.', target:'.fd-toggle[data-field="meca"]' };
+    if(!data.photoInt) return { msg:'La photo intérieure est obligatoire.', target:'#f-photo-int-cam' };
+    if(!data.photoExt) return { msg:'La photo extérieure est obligatoire.', target:'#f-photo-ext-cam' };
+    return null;
+  }
+
+  updateTicketRef();
+  renderHistory();
+
+  $('btn-copy').addEventListener('click', async ()=>{
+    const text = formatText(readForm(), { notePhotos:true });
+    try{
+      await navigator.clipboard.writeText(text);
+      showMsg('Texte copié dans le presse-papiers.');
+    }catch(e){ showMsg('Copie impossible sur cet appareil.', false); }
+  });
+
+  $('btn-mail').addEventListener('click', ()=>{
+    const data = readForm();
+    const err = validate(data);
+    if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
+    const objet = 'Relevé Porte Neuve - ' + (data.tech || 'Technicien');
+    let pdfFile = null, pdfDoc = null;
+    const pdfName = pdfFileName('PN', data.tech, data.cpville);
+    try{
+      pdfDoc = generateFichePDF(data);
+      pdfFile = new File([pdfDoc.output('blob')], pdfName, { type:'application/pdf' });
+    }catch(e){
+      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ') — utilise "Copier le texte" en secours.', false);
+      return;
+    }
+    const files = [pdfFile];
+    if(navigator.share && navigator.canShare && navigator.canShare({ files: files })){
+      navigator.share({ title:objet, text:formatText(data, { note:'📎 Fiche PDF jointe, photos incluses.' }), files:files })
+        .then(()=>{ histAdd(data, 'mail'); showMsg('Partage envoyé.'); })
+        .catch(e=>{
+          if(e && e.name === 'AbortError') return;
+          showMsg('Le partage a échoué (' + ((e && e.message) || 'erreur') + ') — utilise "Télécharger le PDF" puis joins-le manuellement.', false);
+        });
+    } else {
+      const text = formatText(data, { note:'📎 PDF téléchargé séparément, à joindre au message.' });
+      try{
+        const a = document.createElement('a');
+        a.href = 'mailto:?subject=' + encodeURIComponent(objet) + '&body=' + encodeURIComponent(text);
+        a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(()=>{ try{ pdfDoc.save(pdfName); }catch(e2){} }, 1200);
+        histAdd(data, 'mail');
+        showMsg('Mail ouvert — choisis le destinataire ; le PDF vient d\'être téléchargé, joins-le au message.');
+      }catch(e){
+        showMsg('Partage indisponible sur cet appareil — utilise "Télécharger le PDF".', false);
+      }
+    }
+  });
+
+  $('btn-pdf').addEventListener('click', ()=>{
+    const data = readForm();
+    const err = validate(data);
+    if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
+    try{
+      const pdfDoc = generateFichePDF(data);
+      pdfDoc.save(pdfFileName('PN', data.tech, data.cpville));
+      histAdd(data, 'PDF');
+      showMsg('PDF téléchargé — tu peux le joindre manuellement à ton mail.');
+    }catch(e){
+      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ').', false);
+    }
+  });
+
+
+  $('fd-force-refresh') && $('fd-force-refresh').addEventListener('click', async ()=>{
+    const btn = $('fd-force-refresh');
+    btn.disabled = true; btn.textContent = 'Mise à jour...';
+    try{
+      if('serviceWorker' in navigator){
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for(const r of regs){ await r.unregister(); }
+      }
+      if(window.caches){
+        const keys = await caches.keys();
+        for(const k of keys){ await caches.delete(k); }
+      }
+    }catch(e){}
+    location.reload(true);
+  });
+})();
+</script>
+</body>
+</html>

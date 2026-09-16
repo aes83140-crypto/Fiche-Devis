@@ -449,6 +449,15 @@ if('serviceWorker' in navigator){
       <div class="fd-card-arrow">›</div>
     </a>
 
+    <a class="fd-card" href="porte-neuve.html">
+      <div class="fd-card-icon">🆕</div>
+      <div>
+        <div class="fd-card-title">Relevé Porte Neuve</div>
+        <div class="fd-card-desc">Identification, client, configuration — transmission au commercial.</div>
+      </div>
+      <div class="fd-card-arrow">›</div>
+    </a>
+
     <a class="fd-card" href="rideaux-metalliques.html">
       <div class="fd-card-icon"><svg viewBox="0 0 24 24" style="width:27px;height:27px;display:block" fill="none" stroke="#1E3448" stroke-width="1.7" stroke-linecap="round"><rect x="3.2" y="3.4" width="17.6" height="3.2" rx="1"></rect><path d="M4.6 9.4h14.8M4.6 12.4h14.8M4.6 15.4h14.8"></path><rect x="3.2" y="17.9" width="17.6" height="2.7" rx="1"></rect></svg></div>
       <div class="fd-card-main">
@@ -464,7 +473,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.17</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.20</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -477,7 +486,7 @@ if('serviceWorker' in navigator){
       <h3>Administration</h3>
       <button type="button" class="fd-modal-close" id="admin-close">✕</button>
     </div>
-    <div class="fd-hint">Les techniciens enregistrés ici sont proposés automatiquement dans toutes les fiches : devis, Relevé Vantaux SAV, rideaux métalliques et contrat de maintenance.</div>
+    <div class="fd-hint">Les techniciens enregistrés ici sont proposés automatiquement dans toutes les fiches : devis, Relevé Vantaux SAV, rideaux métalliques, contrat de maintenance et relevé porte neuve.</div>
 
     <div class="fd-modal-section">
       <h4>Statistiques d'utilisation</h4>
@@ -726,7 +735,7 @@ if('serviceWorker' in navigator){
 
   /* ---------- Statistiques d'utilisation ---------- */
   const STAT_KEY = 'record-stats-usage';
-  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', FC:'Contrat maintenance' };
+  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', FC:'Contrat maintenance', PN:'Porte neuve' };
   function sbReady(){ return !!(window.RECORD_SUPABASE_URL && window.RECORD_SUPABASE_KEY); }
   function sbHeaders(extra){
     return Object.assign({ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY, 'Content-Type':'application/json' }, extra || {});
@@ -755,7 +764,7 @@ if('serviceWorker' in navigator){
     }
     const byTech = {}, byFiche = {}, byMonth = {};
     rows.forEach(r=>{
-      byTech[r.t] = byTech[r.t] || { total:0, FD:0, RV:0, RM:0, FC:0, last:'' };
+      byTech[r.t] = byTech[r.t] || { total:0, FD:0, RV:0, RM:0, FC:0, PN:0, last:'' };
       const b = byTech[r.t];
       b.total++; if(b[r.f] !== undefined) b[r.f]++;
       if(!b.last || r.d > b.last) b.last = r.d;
@@ -782,7 +791,7 @@ if('serviceWorker' in navigator){
     html += '<div style="overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px;">'
       + '<table style="width:100%;border-collapse:collapse;">'
       + '<thead><tr style="background:var(--surface);">'
-      + ['Technicien','Devis','Vantaux','Rideaux','Contrat','Total','Dernière']
+      + ['Technicien','Devis','Vantaux','Rideaux','Contrat','Porte neuve','Total','Dernière']
         .map((t,ix)=>'<th style="' + cell + 'text-align:' + (ix ? 'center' : 'left') + ';font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);font-weight:700;">' + t + '</th>').join('')
       + '</tr></thead><tbody>';
     techs.forEach(t=>{
@@ -792,6 +801,7 @@ if('serviceWorker' in navigator){
         + '<td style="' + num + '">' + (b.RV || '·') + '</td>'
         + '<td style="' + num + '">' + (b.RM || '·') + '</td>'
         + '<td style="' + num + '">' + (b.FC || '·') + '</td>'
+        + '<td style="' + num + '">' + (b.PN || '·') + '</td>'
         + '<td style="' + num + 'font-weight:700;">' + b.total + '</td>'
         + '<td style="' + num + 'color:var(--ink-mute);">' + fdate(b.last) + '</td></tr>';
     });
