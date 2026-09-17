@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<template id="__bundler_thumbnail"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#1E3448"/><text x="100" y="115" font-size="70" font-family="sans-serif" fill="#C8811A" text-anchor="middle">T</text></svg></template>
+<meta name="ext-resource-dependency" content="./vetement-photos/v0.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v1.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v2.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v3.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v4.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v5.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v6.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v7.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v8.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v9.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v10.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v11.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v12.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v13.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v14.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v15.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v16.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v17.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v18.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v19.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v20.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v21.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v22.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v23.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v24.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v25.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v26.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v27.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v28.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v29.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v30.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v31.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v32.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v33.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v34.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v35.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v36.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v37.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v38.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v39.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v40.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v41.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v42.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v43.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v44.png">
+<meta name="ext-resource-dependency" content="./vetement-photos/v45.png">
+<style>
+  body{margin:0;-webkit-font-smoothing:antialiased;}
+</style>
+<script src="./image-slot.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="./config.js"></script>
+</helmet>
+<div style="min-height:100vh;background:#EDEFF3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12171C;padding:18px 14px 60px;">
+
+  <sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:400px;margin:60px auto 0;display:flex;flex-direction:column;gap:16px;">
+    <div style="background:#1E3448;color:#fff;padding:22px 22px 20px;border-radius:16px;position:relative;overflow:hidden;box-shadow:0 18px 40px -26px rgba(18,23,28,.75);">
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);margin-bottom:10px;">RECORD · EN CONSTRUCTION</div>
+      <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-.015em;line-height:1.2;">Fiche tailles vêtements</h1>
+      <div style="font-size:13.5px;color:rgba(255,255,255,.68);margin-top:6px;">Page en construction — accès réservé à l'administrateur.</div>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(18,23,28,.05);display:flex;flex-direction:column;gap:10px;">
+      <label style="font-size:12px;font-weight:600;color:#5A646E;text-transform:uppercase;letter-spacing:.05em;">Code administrateur</label>
+      <input type="password" placeholder="Code" value="{{ pwInput }}" onChange="{{ onPwChange }}" onKeyDown="{{ onPwKeyDown }}" style="border:1px solid #CCD3DB;border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;color:#12171C;"></input>
+      <sc-if value="{{ pwError }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:12.5px;color:#B3403A;">{{ pwError }}</div>
+      </sc-if>
+      <button onClick="{{ checkPassword }}" style="padding:13px;border-radius:10px;border:none;background:#1E3448;color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;">Déverrouiller</button>
+      <a href="index.html" style="text-align:center;color:#5A646E;font-size:13px;text-decoration:none;">← Retour au menu</a>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ unlocked }}" hint-placeholder-val="{{ true }}">
+  <div style="max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px;">
+
+    <div style="background:#1E3448;color:#fff;padding:22px 22px 20px;border-radius:16px;position:relative;overflow:hidden;box-shadow:0 18px 40px -26px rgba(18,23,28,.75);">
+      <div style="content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:#C8811A;"></div>
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);margin-bottom:10px;">RECORD · VÊTEMENTS DE TRAVAIL</div>
+      <h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.015em;line-height:1.2;">Fiche tailles vêtements</h1>
+      <div style="font-size:14px;color:rgba(255,255,255,.68);margin-top:6px;">Choisissez votre genre, puis sélectionnez une taille pour chaque article souhaité.</div>
+    </div>
+
+    <a href="index.html" style="align-self:flex-start;color:#5A646E;font-size:13px;text-decoration:none;">← Retour au menu</a>
+
+    <sc-if value="{{ showForm }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(18,23,28,.05),0 12px 30px -20px rgba(18,23,28,.45);display:flex;flex-direction:column;gap:10px;">
+        <label style="font-size:12px;font-weight:600;color:#5A646E;text-transform:uppercase;letter-spacing:.05em;">Nom du technicien</label>
+        <div style="position:relative;">
+          <div style="display:flex;align-items:stretch;">
+            <input type="text" placeholder="Chercher ou saisir un technicien" value="{{ tech }}" onChange="{{ onTechChange }}" onFocus="{{ openTechList }}" onBlur="{{ closeTechList }}" style="flex:1;min-width:0;border:1.5px solid #CCD3DB;border-right:none;border-radius:10px 0 0 10px;padding:10px 12px;font-size:15px;font-family:inherit;color:#12171C;"></input>
+            <button type="button" onClick="{{ toggleTechList }}" style="width:44px;flex-shrink:0;border:1.5px solid #CCD3DB;border-left:none;border-radius:0 10px 10px 0;background:#F6F8FA;color:#5A646E;cursor:pointer;font-size:12px;">▼</button>
+          </div>
+          <sc-if value="{{ techOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:60;background:#fff;border:1.5px solid #CCD3DB;border-radius:10px;box-shadow:0 20px 40px -22px rgba(18,23,28,.55);max-height:240px;overflow-y:auto;padding:6px;">
+              <sc-if value="{{ hasTechMatches }}" hint-placeholder-val="{{ true }}">
+                <sc-for list="{{ techFiltered }}" as="t" hint-placeholder-count="3">
+                  <div onMouseDown="{{ t.select }}" style="padding:12px 14px;border-radius:8px;font-size:15px;color:#12171C;cursor:pointer;min-height:40px;display:flex;align-items:center;" style-hover="background:#E9EEF3;color:#1E3448;font-weight:600;">{{ t.label }}</div>
+                </sc-for>
+              </sc-if>
+              <sc-if value="{{ noTechMatches }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:12px 14px;font-size:13px;color:#8A939C;">Aucune correspondance — la valeur saisie sera utilisée.</div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ noGenre }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(18,23,28,.05),0 12px 30px -20px rgba(18,23,28,.45);display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:14px;font-weight:600;color:#12171C;">Vous êtes ?</div>
+          <div style="display:flex;gap:10px;">
+            <button onClick="{{ setGenreHomme }}" style="flex:1;padding:16px;border-radius:12px;border:1px solid #CCD3DB;background:#F6F8FA;color:#12171C;font-size:15px;font-weight:600;cursor:pointer;">Homme</button>
+            <button onClick="{{ setGenreFemme }}" style="flex:1;padding:16px;border-radius:12px;border:1px solid #CCD3DB;background:#F6F8FA;color:#12171C;font-size:15px;font-weight:600;cursor:pointer;">Femme</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasGenre }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 1px 2px rgba(18,23,28,.05);">
+          <div style="font-size:14px;color:#5A646E;">Genre sélectionné : <strong style="color:#12171C;">{{ genreLabel }}</strong></div>
+          <button onClick="{{ resetGenre }}" style="border:none;background:none;color:#2F5674;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;">changer</button>
+        </div>
+
+        <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="4">
+          <sc-if value="{{ cat.hasItems }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="font-size:13px;font-weight:700;color:#5A646E;text-transform:uppercase;letter-spacing:.05em;padding-left:2px;">{{ cat.title }}</div>
+            <sc-for list="{{ cat.items }}" as="item" hint-placeholder-count="2">
+              <div style="background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(18,23,28,.05),0 12px 30px -20px rgba(18,23,28,.45);display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;gap:12px;align-items:flex-start;">
+                  <image-slot id="{{ item.key }}" src="{{ item.photo }}" style="width:64px;height:64px;flex-shrink:0;" shape="rounded" radius="10" fit="contain" placeholder="Photo"></image-slot>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:14.5px;font-weight:600;color:#12171C;line-height:1.3;">{{ item.name }}</div>
+                    <div style="font-size:12.5px;color:#8A939C;margin-top:2px;">{{ item.color }}</div>
+                    <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;color:#C8811A;font-weight:600;margin-top:4px;">{{ item.ref }}</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <sc-if value="{{ item.isUnique }}" hint-placeholder-val="{{ false }}">
+                    <div style="flex:1;min-width:0;border:1px solid #CCD3DB;border-radius:10px;padding:10px 12px;font-size:15px;color:#5A646E;background:#F6F8FA;">Taille unique</div>
+                  </sc-if>
+                  <sc-if value="{{ item.notUnique }}" hint-placeholder-val="{{ true }}">
+                    <select value="{{ item.value }}" onChange="{{ item.set }}" style="flex:1;min-width:0;border:1px solid #CCD3DB;border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;color:#12171C;background:#F6F8FA;">
+                      <option value="">— Sélectionner une taille —</option>
+                      <sc-for list="{{ item.sizes }}" as="sz" hint-placeholder-count="3">
+                        <option value="{{ sz }}">{{ sz }}</option>
+                      </sc-for>
+                    </select>
+                  </sc-if>
+                  <input type="number" min="1" placeholder="Qté" value="{{ item.qty }}" onChange="{{ item.setQty }}" style="width:64px;flex-shrink:0;border:1px solid #CCD3DB;border-radius:10px;padding:10px 8px;font-size:15px;font-family:inherit;color:#12171C;background:#F6F8FA;text-align:center;"></input>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+        </sc-for>
+
+        <div style="height:76px;"></div>
+        <button onClick="{{ submitAndMail }}" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:612px;padding:16px;border-radius:14px;border:none;background:#1E3448;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 12px 30px -14px rgba(18,23,28,.55);z-index:50;">Envoyer par mail</button>
+
+      </div>
+      </sc-if>
+
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showSummary }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(18,23,28,.05),0 12px 30px -20px rgba(18,23,28,.45);display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:12px;font-weight:600;color:#5A646E;text-transform:uppercase;letter-spacing:.05em;">Récapitulatif</div>
+        <div style="font-size:16px;font-weight:700;color:#12171C;">{{ techOrDefault }}</div>
+        <div style="font-size:13px;color:#8A939C;">{{ genreLabel }} · {{ dateLabel }}</div>
+      </div>
+
+      <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(18,23,28,.05),0 12px 30px -20px rgba(18,23,28,.45);">
+        <sc-if value="{{ hasChosen }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ chosenItems }}" as="c" hint-placeholder-count="3">
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #E3E6EB;">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+              <image-slot id="{{ c.key }}" src="{{ c.photo }}" style="width:40px;height:40px;flex-shrink:0;" shape="rounded" radius="8" fit="contain" placeholder="Photo"></image-slot>
+              <div style="min-width:0;">
+                <div style="font-size:14px;font-weight:600;color:#12171C;">{{ c.name }}</div>
+                <div style="font-size:12.5px;color:#8A939C;">{{ c.color }} · {{ c.ref }}</div>
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px;font-weight:700;color:#C8811A;white-space:nowrap;">{{ c.value }}</div>
+              <div style="font-size:12px;color:#8A939C;">Qté : {{ c.qtyLabel }}</div>
+            </div>
+          </div>
+        </sc-for>
+        </sc-if>
+        <sc-if value="{{ noChosen }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:20px 16px;font-size:14px;color:#8A939C;text-align:center;">Aucune taille sélectionnée.</div>
+        </sc-if>
+      </div>
+
+      <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(18,23,28,.05);display:flex;flex-direction:column;gap:8px;">
+        <label style="font-size:12px;font-weight:600;color:#5A646E;text-transform:uppercase;letter-spacing:.05em;">Texte à copier</label>
+        <textarea readonly="{{ true }}" value="{{ summaryText }}" style="border:1px solid #CCD3DB;border-radius:10px;padding:10px 12px;font-size:13.5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#12171C;min-height:120px;resize:vertical;"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button onClick="{{ backToForm }}" style="flex:1;padding:14px;border-radius:12px;border:1px solid #CCD3DB;background:#F6F8FA;color:#12171C;font-size:15px;font-weight:600;cursor:pointer;">Modifier</button>
+        <button onClick="{{ printNow }}" style="flex:1;padding:14px;border-radius:12px;border:1px solid #CCD3DB;background:#F6F8FA;color:#12171C;font-size:15px;font-weight:600;cursor:pointer;">Imprimer</button>
+      </div>
+      <button onClick="{{ sendMail }}" style="padding:15px;border-radius:12px;border:none;background:#1E3448;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">Envoyer le PDF par mail</button>
+      <sc-if value="{{ mailMsg }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:13px;color:#5A646E;background:#F6F8FA;border-radius:10px;padding:10px 12px;">{{ mailMsg }}</div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <div style="text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;padding:4px 0 0;">v2026-09.3</div>
+
+  </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const SHOE_SIZES = Array.from({length: 48-35+1}, (_, i) => String(35+i));
+const GARMENTS = [
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'VL175CA', color:'Orange fluo/Marine', name:'Polo tech M/L bicolore HV Coton/Poly', price:18.05, gender:'homme', sizes:['S','M','L','XL','XXL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'V550600', color:'Orange fluo/Marine', name:'T-shirt tech bicolore HV 100% Poly', price:15.93, gender:'homme', sizes:['S','M','L','XL','XXL','3XL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'SC2000A', color:'Heather grey', name:'T-shirt homme Iconic Premium 100% coton 195g', price:5.87, gender:'homme', sizes:['S','M','L','XL','XXL','3XL','4XL','5XL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'SC23300', color:'Sport grey', name:'T-shirt manche longue 100% coton 165g', price:7.45, gender:'homme', sizes:['S','M','L','XL','XXL','3XL','4XL','5XL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'BCU4270', color:'Sport grey', name:'Polo M/L My Polo 100% coton 210g', price:19.50, gender:'homme', sizes:['S','M','L','XL','XXL','3XL','4XL','5XL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'GN88000', color:'Black', name:'Polo Gildan 50/50 Jersey 190g', price:12.05, gender:'homme', sizes:['S','M','L','XL','XXL','3XL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'GN88000', color:'White', name:'Polo Gildan 50/50 Jersey 190g', price:12.05, gender:'homme', sizes:['S','M','L','XL','XXL','3XL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'JZ01200', color:'Light oxford', name:'Sweatshirt col polo Russell C/P 300g', price:27.98, gender:'homme', sizes:['S','M','L','XL','XXL','3XL','4XL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'SC200L0', color:'Heather grey', name:'T-shirt Ladies Iconic Premium 100% coton 195g', price:5.87, gender:'femme', sizes:['XS','S','M','L','XL','XXL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'BCW4610', color:'Sport grey', name:'Polo Women My Polo 100% coton 180g', price:17.13, gender:'femme', sizes:['XS','S','M','L','XL','XXL','3XL']},
+{cat:'Hauts (T-shirts, polos, sweats)', ref:'SC36600', color:'Heather grey', name:'Sweat molleton femme grand zip Coton/Poly', price:30.15, gender:'femme', sizes:['XS','S','M','L','XL','XXL']},
+
+{cat:'Chemises', ref:'JZ62F00', color:'Light blue', name:'Chemise femme M/L Chevrons C/P 125g', price:26.90, gender:'femme', sizes:['XS','S','M','L','XL','XXL']},
+{cat:'Chemises', ref:'JZ62F00', color:'White', name:'Chemise femme M/L Chevrons C/P 125g', price:26.90, gender:'femme', sizes:['XS','S','M','L','XL','XXL']},
+{cat:'Chemises', ref:'JZ96200', color:'Light blue', name:'Chemise homme M/L Chevrons C/P 125g', price:27.89, gender:'homme', sizes:['S','M','L','XL','XXL','3XL']},
+{cat:'Chemises', ref:'JZ96200', color:'White', name:'Chemise homme M/L Chevrons C/P 125g', price:27.89, gender:'homme', sizes:['S','M','L','XL','XXL','3XL']},
+
+{cat:'Pantalons', ref:'0011950', color:'Fumée', name:'Pantalon Worker Summer 100% coton Ripstop 210g', price:20.34, gender:'homme', sizes:['XXS(32-34)','XS(36-38)','S(40-42)','M(44-46)','L(48-50)','XL(52-54)','XXL(56-58)','3X(60-62)','4X(64-66)','5X(68-70)']},
+{cat:'Pantalons', ref:'1ALANCP', color:'Noir', name:'Pantalon Carrier Transport C/P 250g', price:29.08, gender:'homme', sizes:['T36','T38','T40','T42','T44','T46','T48','T50','T52','T54','T56','T58','T60']},
+{cat:'Pantalons', ref:'2120000', color:'Noir', name:'Pantalon Canvas 320', price:27.83, gender:'homme', sizes:['38','40','42','44','46','48','50','52','54','56','58','60']},
+{cat:'Pantalons', ref:'6400PH0', color:'Noir', name:'Pantalon homme Norit (entrejambe long)', price:54.55, gender:'homme', sizes:['40L','42L','44L','46L','48L','50L']},
+{cat:'Pantalons', ref:'2320000', color:'Noir', name:'Pantalon Highline 285g', price:34.21, gender:'homme', sizes:['34','36','62','64','66']},
+{cat:'Pantalons', ref:'23PAHIF', color:'Noir', name:'Pantalon Highline femme', price:24.04, gender:'femme', sizes:['36','38','40','42','44','46','48','50','52','54']},
+
+{cat:'Vestes & polaires', ref:'K907000', color:'Noir', name:'Veste polaire femme Maureen Kariban 300g', price:23.03, gender:'femme', sizes:['S','M','L','XL','XXL','3XL','4XL']},
+{cat:'Vestes & polaires', ref:'6445000', color:'Noir', name:'Veste softshell femme Norit', price:48.77, gender:'femme', sizes:['XS=34','S=36','M=38','L=40','XL=42','XXL=44','3XL=46','4XL=48']},
+{cat:'Vestes & polaires', ref:'BM70000', color:'Black/Royal', name:'Polaire Grizzly homme', price:23.46, gender:'homme', sizes:['S','M','L','XL','XXL','3XL','4XL']},
+{cat:'Vestes & polaires', ref:'BM70100', color:'Black/Royal', name:'Veste polaire femme zip 100% poly 300g', price:23.46, gender:'femme', sizes:['S','M','L','XL','XXL']},
+{cat:'Vestes & polaires', ref:'PK35500', color:'Black', name:'Gilet Crafty Pen Duick 100% poly', price:31.57, gender:'homme', sizes:['S','M','L','XL','XXL','3XL','4XL']},
+{cat:'Vestes & polaires', ref:'K911000', color:'Black', name:'Veste polaire Falco Kariban 300g', price:23.97, gender:'homme', sizes:['S','M','L','XL','XXL','3XL','4XL']},
+{cat:'Vestes & polaires', ref:'3450000', color:'Noir', name:'Veste Twilight softshell', price:42.02, gender:'homme', sizes:['XS=36/38','S=40/42','M=44/46','L=48/50','XL=52/54','XXL=56/58','3XL=60/62']},
+{cat:'Vestes & polaires', ref:'313TWIS', color:'Bleu/Noir', name:'Parka Twister hiver 3 en 1', price:69.20, gender:'homme', sizes:['S=40/42','M=44/46','L=48/50','XL=52/54','XXL=56/58']},
+{cat:'Vestes & polaires', ref:'EASYVIE', color:'Jaune fluo/Marine', name:'Parka Easyview HV', price:47.12, gender:'unisexe', sizes:['S=TP94-98','M=TP98-102','L=TP102-106','XL=TP106-110','XXL=TP110-114','3XL=TP114-118']},
+
+{cat:'Accessoires', ref:'BF90000', color:'Black', name:'Tour de cou Morf Original Beechfield 50x25cm', price:2.59, gender:'unisexe', sizes:['TU']},
+{cat:'Accessoires', ref:'JURA000', color:'Noir', name:'Bonnet Jura', price:6.29, gender:'unisexe', sizes:['TU']},
+{cat:'Accessoires', ref:'CLASDPC', color:'Gris', name:'Combinaison Plein Air 2Gliss', price:42.21, gender:'unisexe', sizes:['T0 (entrej.76)','T0 (entrej.82)','T1 (entrej.76)','T1 (entrej.82)','T2 (entrej.76)','T2 (entrej.82)','T3 (entrej.76)','T3 (entrej.82)','T4 (entrej.76)','T4 (entrej.82)','T5 (entrej.76)','T5 (entrej.82)','T6 (entrej.76)','T6 (entrej.82)']},
+{cat:'Accessoires', ref:'SL10000', color:'Silver', name:'Poncho PVC fermeture bouton pression', price:6.70, gender:'unisexe', sizes:['UNIQUE']},
+{cat:'Accessoires', ref:'TRSGN10', color:'Orange', name:'Triangle de présignalisation', price:7.76, gender:'unisexe', sizes:['UNIQUE']},
+{cat:'Accessoires', ref:'S111200', color:'Blanc', name:'Casque Vertex A010AAXX', price:64.57, gender:'unisexe', sizes:['UNIQUE']},
+{cat:'Accessoires', ref:'Z113293', color:'Marine', name:'Casquette Air Tech Record', price:13.95, gender:'unisexe', sizes:['UNIQUE']},
+
+{cat:'Chaussures de sécurité', ref:'S411718', color:'Marron/Orange', name:'Chaussure Infiny Flex S3', gender:'homme', sizes:SHOE_SIZES},
+{cat:'Chaussures de sécurité', ref:'S411760', color:'Noir', name:'Chaussure Maccrossroad 3.0 S3 High', gender:'homme', sizes:SHOE_SIZES},
+{cat:'Chaussures de sécurité', ref:'S412220', color:'Noir', name:'Chaussure Stego S3 ESD', gender:'homme', sizes:SHOE_SIZES},
+{cat:'Chaussures de sécurité', ref:'S412232', color:'Noir', name:'Chaussure Stoccolma S3 ESD', gender:'homme', sizes:SHOE_SIZES},
+{cat:'Chaussures de sécurité', ref:'S412273', color:'Noir/Doré', name:'Chaussure Jalopal Haute S3S', gender:'homme', sizes:SHOE_SIZES},
+{cat:'Chaussures de sécurité', ref:'S421649', color:'Noir/Orange', name:'Chaussure Bionic Flex S1P', gender:'homme', sizes:SHOE_SIZES},
+{cat:'Chaussures de sécurité', ref:'S422121', color:'Gris', name:'Tennis Laguna S1P', gender:'femme', sizes:SHOE_SIZES},
+{cat:'Chaussures de sécurité', ref:'S431410', color:'Noir/Violet', name:'Chaussure Lucie Flex S3', gender:'femme', sizes:SHOE_SIZES},
+{cat:'Chaussures de sécurité', ref:'S431481', color:'Gris/Menthe', name:'Chaussure Slalum Femme S1PS', gender:'femme', sizes:SHOE_SIZES},
+];
+
+class Component extends DCLogic {
+  state = { tech:'', genre:null, selections:{}, step:'form', techniciens:[], mailMsg:'', techOpen:false,
+    isUnlocked: (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('recordFicheVetUnlocked') === '1'),
+    pwInput:'', pwError:'' };
+
+  onPwChange = (e) => this.setState({ pwInput: e.target.value, pwError:'' });
+  onPwKeyDown = (e) => { if (e.key === 'Enter') this.checkPassword(); };
+  checkPassword = () => {
+    const code = (window.RECORD_ADMIN_CODE || '').toString();
+    if (code && this.state.pwInput === code) {
+      try { sessionStorage.setItem('recordFicheVetUnlocked', '1'); } catch(e) {}
+      this.setState({ isUnlocked: true, pwError:'' });
+    } else {
+      this.setState({ pwError: 'Code incorrect.' });
+    }
+  };
+
+  componentDidMount() {
+    fetch('listes.json?v=' + Date.now(), { cache:'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && Array.isArray(d.techniciens)) this.setState({ techniciens: d.techniciens }); })
+      .catch(() => {});
+  }
+
+  onTechChange = (e) => this.setState({ tech: e.target.value });
+  openTechList = () => this.setState({ techOpen: true });
+  closeTechList = () => setTimeout(() => this.setState({ techOpen: false }), 150);
+  toggleTechList = () => this.setState(s => ({ techOpen: !s.techOpen }));
+  selectTech(t) { this.setState({ tech: t, techOpen: false }); }
+  setGenreHomme = () => this.setState({ genre:'homme' });
+  setGenreFemme = () => this.setState({ genre:'femme' });
+  resetGenre = () => this.setState({ genre:null, selections:{} });
+  submit = () => this.setState({ step:'summary' });
+  submitAndMail = () => { this.setState({ step:'summary' }, () => this.sendMail()); };
+  backToForm = () => this.setState({ step:'form' });
+  printNow = () => window.print();
+
+  loadImageDataUrl(url) {
+    return fetch(url).then(r => r.blob()).then(blob => new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    })).catch(() => null);
+  }
+
+  async buildPdf(techLabel, genreLabel, dateLabel, chosenItems) {
+    if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('Bibliothèque PDF non disponible (hors-ligne ?)');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginX = 15, cardW = pageW - marginX * 2, rowH = 24, gap = 4;
+
+    const uniquePhotos = [...new Set(chosenItems.map(c => c.photo))];
+    const imgCache = {};
+    for (const p of uniquePhotos) imgCache[p] = await this.loadImageDataUrl(p);
+
+    const paintBg = () => { doc.setFillColor(237,239,243); doc.rect(0,0,pageW,pageH,'F'); };
+    paintBg();
+    let y = 20;
+    doc.setTextColor(18,23,28);
+    doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text('Fiche tailles vêtements — RECORD', marginX, y); y += 9;
+    doc.setFont('helvetica','normal'); doc.setFontSize(11);
+    doc.setTextColor(90,100,110);
+    doc.text('Technicien : ' + techLabel + '   ·   Genre : ' + genreLabel + '   ·   Date : ' + dateLabel, marginX, y);
+    y += 10;
+
+    chosenItems.forEach(c => {
+      if (y + rowH > pageH - 15) { doc.addPage(); paintBg(); y = 20; }
+      doc.setFillColor(255,255,255);
+      doc.roundedRect(marginX, y, cardW, rowH, 3, 3, 'F');
+      const img = imgCache[c.photo];
+      if (img) { try { doc.addImage(img, 'PNG', marginX + 4, y + 4, 16, 16); } catch (e) {} }
+      const textX = marginX + 26;
+      doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(18,23,28);
+      doc.text(c.name, textX, y + 9, { maxWidth: cardW - 60 });
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(138,147,156);
+      doc.text(c.color + ' · ' + c.ref, textX, y + 15);
+      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(200,129,26);
+      doc.text(String(c.value), pageW - marginX - 4, y + 9, { align:'right' });
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(138,147,156);
+      doc.text('Qté : ' + c.qtyLabel, pageW - marginX - 4, y + 15, { align:'right' });
+      y += rowH + gap;
+    });
+    return doc;
+  }
+
+  async downloadFillablePdf() {
+    if (!window.jspdf || !window.jspdf.jsPDF) { this.setState({ mailMsg:"Bibliothèque PDF non disponible (hors-ligne ?)." }); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginX = 15, cardW = pageW - marginX * 2, rowH = 22, gap = 3;
+
+    const imgCache = {};
+    for (let i = 0; i < GARMENTS.length; i++) {
+      imgCache[i] = await this.loadImageDataUrl('./vetement-photos/v' + i + '.png');
+    }
+
+    const paintBg = () => { doc.setFillColor(237,239,243); doc.rect(0,0,pageW,pageH,'F'); };
+    paintBg();
+    let y = 18;
+    doc.setTextColor(18,23,28);
+    doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text('Fiche tailles vêtements — RECORD (PDF modifiable)', marginX, y); y += 6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(90,100,110);
+    doc.text('Remplis « Technicien », puis la taille et la quantité de chaque article souhaité.', marginX, y); y += 8;
+
+    const techField = new doc.AcroFormTextField();
+    techField.fieldName = 'technicien'; techField.Rect = [marginX, y - 5, 80, 7]; techField.fontSize = 10;
+    doc.addField(techField); y += 4;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(90,100,110);
+    doc.text('Technicien', marginX, y - 8);
+    y += 6;
+    doc.setDrawColor(220); doc.line(marginX, y, pageW - marginX, y); y += 6;
+
+    let catOrder = [...new Set(GARMENTS.map(g => g.cat))];
+    let fieldIdx = 0;
+    catOrder.forEach(cat => {
+      const items = GARMENTS.map((g,i)=>({g,i})).filter(o => o.g.cat === cat);
+      if (!items.length) return;
+      if (y + 12 > pageH - 15) { doc.addPage(); paintBg(); y = 18; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(18,23,28);
+      doc.text(cat, marginX, y); y += 6;
+      items.forEach(({g,i}) => {
+        if (y + rowH > pageH - 15) { doc.addPage(); paintBg(); y = 18; }
+        doc.setFillColor(255,255,255);
+        doc.roundedRect(marginX, y, cardW, rowH, 3, 3, 'F');
+        const img = imgCache[i];
+        if (img) { try { doc.addImage(img, 'PNG', marginX + 3, y + 3, 15, 15); } catch(e) {} }
+        const textX = marginX + 22;
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(18,23,28);
+        doc.text(g.name, textX, y + 8, { maxWidth: cardW - 105 });
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(138,147,156);
+        doc.text(g.color + ' · ' + g.ref, textX, y + 14);
+
+        const sizeField = new doc.AcroFormTextField();
+        sizeField.fieldName = 'taille_' + fieldIdx; sizeField.fontSize = 9;
+        sizeField.Rect = [pageW - marginX - 62, y + 4, 32, 7];
+        doc.addField(sizeField);
+        doc.setFontSize(7); doc.setTextColor(138,147,156);
+        doc.text('Taille', pageW - marginX - 62, y + 3);
+
+        const qtyField = new doc.AcroFormTextField();
+        qtyField.fieldName = 'qte_' + fieldIdx; qtyField.fontSize = 9;
+        qtyField.Rect = [pageW - marginX - 26, y + 4, 22, 7];
+        doc.addField(qtyField);
+        doc.text('Qté', pageW - marginX - 26, y + 3);
+
+        fieldIdx++;
+        y += rowH + gap;
+      });
+      y += 3;
+    });
+
+    doc.save('Fiche-tailles-vetements-modifiable.pdf');
+    this.setState({ mailMsg: 'PDF modifiable téléchargé — ouvre-le dans un lecteur PDF pour le remplir puis l\'envoyer par mail.' });
+  }
+
+  async sendMail() {
+    const v = this.renderVals();
+    const techLabel = v.techOrDefault, genreLabel = v.genreLabel, dateLabel = v.dateLabel;
+    let doc;
+    try { doc = await this.buildPdf(techLabel, genreLabel, dateLabel, v.chosenItems); }
+    catch (e) { this.setState({ mailMsg: "Le PDF n'a pas pu être généré (" + (e.message || 'erreur') + ")." }); return; }
+    const fileName = 'Fiche-tailles-' + techLabel.replace(/[^a-z0-9]+/gi,'-') + '.pdf';
+    const subject = 'Fiche tailles vêtements - ' + techLabel;
+    const blob = doc.output('blob');
+    const file = new File([blob], fileName, { type:'application/pdf' });
+    const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files:[file] }));
+    if (canAttach) {
+      navigator.share({ title: subject, text: subject, files:[file] })
+        .then(() => this.setState({ mailMsg:'Partage envoyé.' }))
+        .catch(e => { if (e && e.name === 'AbortError') return; this.setState({ mailMsg:'Le partage a échoué — télécharge le PDF et joins-le manuellement.' }); });
+    } else {
+      try {
+        const url = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(v.summaryText);
+        const a = document.createElement('a'); a.href = url; a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => { try { doc.save(fileName); } catch (e2) {} }, 1000);
+        this.setState({ mailMsg: 'Mail ouvert — le PDF (' + fileName + ') a été téléchargé, joins-le au message.' });
+      } catch (e) {
+        this.setState({ mailMsg: 'Partage indisponible — télécharge le PDF manuellement.' });
+      }
+    }
+  }
+
+  setSize(key, val) {
+    this.setState(s => ({ selections: { ...s.selections, [key]: { ...s.selections[key], size: val } } }));
+  }
+  setQty(key, val) {
+    this.setState(s => ({ selections: { ...s.selections, [key]: { ...s.selections[key], qty: val } } }));
+  }
+
+  renderVals() {
+    const genre = this.state.genre;
+    const sel = this.state.selections;
+
+    const allItems = GARMENTS.map((g, i) => {
+      const key = g.ref + '-' + g.color + '-' + i;
+      const entry = sel[key] || {};
+      const isUnique = g.sizes.length === 1;
+      const value = isUnique ? g.sizes[0] : (entry.size || '');
+      const qty = entry.qty || '';
+      return {
+        key, ref: g.ref, color: g.color, name: g.name,
+        gender: g.gender, cat: g.cat, sizes: g.sizes, value, qty, qtyLabel: qty || 1, isUnique, notUnique: !isUnique,
+        photo: './vetement-photos/v' + i + '.png',
+        set: (e) => this.setSize(key, e.target.value),
+        setQty: (e) => this.setQty(key, e.target.value)
+      };
+    });
+
+    const visible = genre ? allItems.filter(it => it.gender === genre || it.gender === 'unisexe') : [];
+    const catOrder = ['Hauts (T-shirts, polos, sweats)', 'Chemises', 'Pantalons', 'Vestes & polaires', 'Chaussures de sécurité', 'Accessoires'];
+    const categories = catOrder.map(title => {
+      const items = visible.filter(it => it.cat === title);
+      return { title, items, hasItems: items.length > 0 };
+    });
+
+    const q = (this.state.tech || '').toLowerCase();
+    const techFiltered = (this.state.techniciens || [])
+      .filter(t => !q || t.toLowerCase().indexOf(q) >= 0)
+      .map(t => ({ label: t, select: () => this.selectTech(t) }));
+
+    const chosenItems = allItems.filter(it => it.isUnique ? !!it.qty : !!it.value);
+    const dateLabel = new Date().toLocaleDateString('fr-FR');
+    const genreLabel = genre === 'homme' ? 'Homme' : genre === 'femme' ? 'Femme' : '';
+    const techOrDefault = this.state.tech || 'Technicien';
+
+    const summaryText = 'FICHE TAILLES — ' + techOrDefault + ' (' + genreLabel + ') — ' + dateLabel + '\n' +
+      chosenItems.map(c => '- ' + c.name + ' (' + c.color + ', ' + c.ref + ') : ' + c.value + ' — Qté ' + (c.qty || 1)).join('\n');
+
+    return {
+      tech: this.state.tech, onTechChange: this.onTechChange,
+      noGenre: !genre, hasGenre: !!genre,
+      setGenreHomme: this.setGenreHomme, setGenreFemme: this.setGenreFemme, resetGenre: this.resetGenre,
+      genreLabel, categories, submit: this.submit, submitAndMail: this.submitAndMail,
+      showForm: this.state.step === 'form',
+      showSummary: this.state.step === 'summary',
+      chosenItems, hasChosen: chosenItems.length > 0, noChosen: chosenItems.length === 0,
+      techOrDefault, dateLabel, summaryText,
+      backToForm: this.backToForm, printNow: this.printNow,
+      sendMail: () => this.sendMail(), mailMsg: this.state.mailMsg,
+      openTechList: this.openTechList, closeTechList: this.closeTechList, toggleTechList: this.toggleTechList,
+      locked: !this.state.isUnlocked, unlocked: this.state.isUnlocked,
+      pwInput: this.state.pwInput, pwError: this.state.pwError,
+      onPwChange: this.onPwChange, onPwKeyDown: this.onPwKeyDown, checkPassword: this.checkPassword,
+      techOpen: this.state.techOpen, techFiltered, hasTechMatches: techFiltered.length > 0, noTechMatches: techFiltered.length === 0
+    };
+  }
+}
+
+</script>
+</body>
+</html>
