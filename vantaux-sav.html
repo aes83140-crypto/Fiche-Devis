@@ -692,7 +692,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.04</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.05</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -1688,6 +1688,8 @@ if('serviceWorker' in navigator){
     } else {
       data.brokenPanel = '';
     }
+    data.superficieTxt = $('schema-superficie').textContent;
+    data.refVantailTxt = $('schema-ref').textContent;
     return data;
   }
 
@@ -1784,6 +1786,7 @@ if('serviceWorker' in navigator){
     bloc('Vantail — cotes', [
       kv('Hauteur', (data.hauteur ? data.hauteur + ' mm' : '')),
       kv('Largeur', (data.largeur ? data.largeur + ' mm' : '')),
+      kv('Superficie', data.superficieTxt ? data.superficieTxt.replace('Superficie du vantail : ', '') : ''),
       kv('Finition', data.finition),
       kv('Type de vitrage', data.vitrage),
       kv('★ Méca impératif', data.meca),
@@ -1792,6 +1795,7 @@ if('serviceWorker' in navigator){
     bloc('Profilé alu', [
       kv('Type de profilé', data.profil),
       'Cotes : AV ' + (data['mes-av'] || '\u2014') + '  \u00B7  AR ' + (data['mes-ar'] || '\u2014') + '  \u00B7  CI ' + (data['mes-ci'] || '\u2014') + '  \u00B7  PL ' + (data['mes-pl'] || '\u2014') + '   (mm)',
+      kv('Réf. vantail', data.refVantailTxt ? data.refVantailTxt.replace('R\u00e9f. VANTAIL : ', '') : ''),
     ]);
 
     bloc('Infos complémentaires', [
@@ -2062,6 +2066,12 @@ if('serviceWorker' in navigator){
       if(superficieTxt){
         doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(90,100,110);
         doc.text(superficieTxt, margin + contentW/2, y, { align:'center' });
+        y += 6;
+      }
+      const refVantailTxt = $('schema-ref').textContent;
+      if(refVantailTxt){
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(30,52,72);
+        doc.text(refVantailTxt, margin + contentW/2, y, { align:'center' });
         y += 6;
       }
     }
