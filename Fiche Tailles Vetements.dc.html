@@ -62,6 +62,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="./config.js"></script>
 </helmet>
+<meta name="ext-resource-dependency" content="./config.js">
 <div style="min-height:100vh;background:#EDEFF3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12171C;padding:18px 14px 60px;">
 
   <sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
@@ -228,7 +229,7 @@
     </div>
     </sc-if>
 
-    <div style="text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;padding:4px 0 0;">v2026-09.3</div>
+    <div style="text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;padding:4px 0 0;">v2026-09.4</div>
 
   </div>
   </sc-if>
@@ -314,6 +315,18 @@ class Component extends DCLogic {
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d && Array.isArray(d.techniciens)) this.setState({ techniciens: d.techniciens }); })
       .catch(() => {});
+    if (window.RECORD_SUPABASE_URL && window.RECORD_SUPABASE_KEY) {
+      fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1&select=techniciens', {
+        headers: { apikey: window.RECORD_SUPABASE_KEY, Authorization: 'Bearer ' + window.RECORD_SUPABASE_KEY },
+        cache: 'no-store'
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          const t = d && d[0] && Array.isArray(d[0].techniciens) ? d[0].techniciens : null;
+          if (t && t.length) this.setState({ techniciens: t });
+        })
+        .catch(() => {});
+    }
   }
 
   onTechChange = (e) => this.setState({ tech: e.target.value });
