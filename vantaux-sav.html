@@ -643,7 +643,7 @@ if('serviceWorker' in navigator){
       </div>
       <div class="fd-hint" id="cimaise-rule-hint" style="margin-top:10px;"></div>
       <div class="fd-hint" id="profile-match-hint" style="margin-top:6px;"></div>
-      <div class="fd-schema-box" style="margin-top:16px;"><div id="schema-numero-porte" style="text-align:center;font-family:var(--mono);font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--amber-dark);margin-bottom:6px;"></div><div id="schema-config-code" style="text-align:center;font-family:var(--mono);font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--ink-mute);margin-bottom:8px;"></div><div id="schema-svg"></div><div id="schema-superficie" style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink-mute);margin-top:8px;"></div><div id="schema-ref" style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--steel);margin-top:4px;"></div></div>
+      <div class="fd-schema-box" style="margin-top:16px;"><div id="schema-config-code" style="text-align:center;font-family:var(--mono);font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--ink-mute);margin-bottom:8px;"></div><div id="schema-svg"></div><div id="schema-superficie" style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink-mute);margin-top:8px;"></div></div>
       <div class="fd-hint" style="text-align:center;">Le schéma se met à jour avec tes saisies et les options choisies — vérifie qu'il correspond bien à la porte.</div>
     </div>
 
@@ -691,7 +691,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.03</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.01</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -852,7 +852,6 @@ if('serviceWorker' in navigator){
   }
   $('f-client').addEventListener('input', updateTicketRef);
   $('f-numero-porte').addEventListener('input', updateTicketRef);
-  $('f-numero-porte').addEventListener('input', renderSchema);
 
   // --- Configurations (d'après la fiche SAV papier) ---
   const CONFIG_TYPES = [
@@ -1043,7 +1042,6 @@ if('serviceWorker' in navigator){
         renderProfileTable(profilSelected ? PROFILE_TYPES.find(p=>p.code===profilSelected) : null);
         renderFullProfileTable();
         applyProfileLocks();
-        renderSchema();
       };
       wrapper.addEventListener('click', doSelect);
       wrapper.appendChild(card);
@@ -1177,33 +1175,9 @@ if('serviceWorker' in navigator){
     const meca = val('f-meca') || '\u2014';
     const av = val('f-mes-av'), ar = val('f-mes-ar'), ci = val('f-mes-ci'), pl = val('f-mes-pl');
     const spec = configSelected ? CONFIG_TYPES.find(c=>c.id===configSelected) : null;
-    const numPorte = val('f-numero-porte');
-    $('schema-numero-porte').textContent = numPorte ? ('Équipement n° ' + numPorte) : '';
     $('schema-config-code').textContent = spec ? (spec.label + (spec.code ? ' \u2014 ' + spec.code : '')) : '';
     const hN = parseFloat(val('f-hauteur')), lN = parseFloat(val('f-largeur'));
-    const surfM2 = (hN && lN) ? (hN * lN) / 1000000 : null;
-    $('schema-superficie').textContent = surfM2 ? ('Superficie du vantail : ' + surfM2.toFixed(2).replace('.', ',') + ' m\u00B2') : '';
-    $('schema-ref').textContent = '';
-    if(surfM2 && profilSelected){
-      const gamme20 = ['22R','20VR','20R','20V'], gamme30 = ['32R','30VI'];
-      const tiers20 = [
-        { max:1.50, ref:'100-999331', prix:'1138,93' }, { max:2.00, ref:'100-999332', prix:'1368,36' },
-        { max:2.50, ref:'100-999333', prix:'1399,76' }, { max:3.00, ref:'100-999334', prix:'1556,77' },
-        { max:3.99, ref:'100-999335', prix:'1655,80' }
-      ];
-      const tiers30 = [
-        { max:1.50, ref:'100-999336', prix:'1894,93' }, { max:2.00, ref:'100-999337', prix:'2114,74' },
-        { max:2.50, ref:'100-999338', prix:'2388,88' }, { max:3.00, ref:'100-999339', prix:'2462,56' },
-        { max:3.99, ref:'100-999340', prix:'3150,98' }
-      ];
-      let tiers = null;
-      if(gamme20.indexOf(profilSelected) >= 0) tiers = tiers20;
-      else if(gamme30.indexOf(profilSelected) >= 0) tiers = tiers30;
-      if(tiers){
-        const t = tiers.find(t => surfM2 <= t.max) || tiers[tiers.length - 1];
-        $('schema-ref').textContent = 'R\u00e9f. VANTAIL : ' + t.ref;
-      }
-    }
+    $('schema-superficie').textContent = (hN && lN) ? ('Superficie du vantail : ' + ((hN * lN) / 1000000).toFixed(2).replace('.', ',') + ' m\u00B2') : '';
     const panel = (spec && brokenPanelIndex !== null) ? panelsForConfig(spec)[brokenPanelIndex] : null;
     const rails = toggles.rails_sol === 'oui';
     const isCapot = toggles.capot_ou_joint === 'capot_din';
@@ -2057,12 +2031,6 @@ if('serviceWorker' in navigator){
       checkBreak(sh + 6);
       try{ doc.addImage(schemaImg.dataUrl, 'JPEG', margin + (contentW - sw)/2, y, sw, sh); }catch(e){}
       y += sh + 6;
-      const superficieTxt = $('schema-superficie').textContent;
-      if(superficieTxt){
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(90,100,110);
-        doc.text(superficieTxt, margin + contentW/2, y, { align:'center' });
-        y += 6;
-      }
     }
 
     photosPages(data.photos);
