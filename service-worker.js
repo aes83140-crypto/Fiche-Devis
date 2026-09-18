@@ -1,7 +1,7 @@
 /* Cache applicatif : la page s'ouvre même sans réseau.
    Les pages et les données passent par le réseau en priorité (toujours à jour),
    le cache ne sert qu'en secours hors connexion. */
-const CACHE = 'record-outils-v11';
+const CACHE = 'record-outils-v15';
 const ASSETS = ['./', './index.html', './fiche-devis.html', './vantaux-sav.html', './rideaux-metalliques.html', './contrat-maintenance.html',
   './listes.json', './config.js', './lame-p116.jpg', './manifest.webmanifest', './icone-192.png', './icone-512.png'];
 
