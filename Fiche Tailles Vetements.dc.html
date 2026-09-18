@@ -229,7 +229,7 @@
     </div>
     </sc-if>
 
-    <div style="text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;padding:4px 0 0;">v2026-09.4</div>
+    <div style="text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;padding:4px 0 0;">v2026-09.5</div>
 
   </div>
   </sc-if>
@@ -295,7 +295,7 @@ const GARMENTS = [
 
 class Component extends DCLogic {
   state = { tech:'', genre:null, selections:{}, step:'form', techniciens:[], mailMsg:'', techOpen:false,
-    isUnlocked: (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('recordFicheVetUnlocked') === '1'),
+    isUnlocked: true,
     pwInput:'', pwError:'' };
 
   onPwChange = (e) => this.setState({ pwInput: e.target.value, pwError:'' });
