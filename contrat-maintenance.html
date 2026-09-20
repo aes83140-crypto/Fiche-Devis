@@ -668,7 +668,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">R&eacute;alisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.28</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.30</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -776,58 +776,35 @@ if('serviceWorker' in navigator){
   function setupCombo(inputId, key, placeholder){
     const input = $(inputId);
     if(!input) return;
-    const wrap = document.createElement('div');
-    wrap.className = 'fd-combo';
-    const field = document.createElement('div');
-    field.className = 'fd-combo-field';
-    input.parentNode.insertBefore(wrap, input);
-    field.appendChild(input);
-    const arrow = document.createElement('button');
-    arrow.type = 'button';
-    arrow.className = 'fd-combo-arrow';
-    arrow.setAttribute('aria-label', 'Afficher la liste');
-    arrow.innerHTML = '\u25BC';
-    field.appendChild(arrow);
-    const list = document.createElement('div');
-    list.className = 'fd-combo-list';
-    wrap.appendChild(field);
-    wrap.appendChild(list);
-    input.placeholder = placeholder;
+    const sel = document.createElement('select');
+    sel.id = inputId + '-select';
+    input.parentNode.insertBefore(sel, input);
+    input.placeholder = 'Nom Prénom';
     input.setAttribute('autocomplete', 'off');
-
-    function items(){ return lsGet(key) || []; }
-    function fold(s){
-      return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    input.style.display = 'none';
+    input.style.marginTop = '8px';
+    function noms(){
+      return (lsGet(key) || []).slice().sort((a,b)=>String(a).localeCompare(String(b),'fr'));
     }
-    function render(filter){
-      const f = fold(filter).trim();
-      const found = items().filter(v => !f || fold(v).indexOf(f) >= 0);
-      list.innerHTML = found.length
-        ? found.map(v => '<div class="fd-combo-opt" data-v="' + v.replace(/"/g,'&quot;') + '">' + v.replace(/</g,'&lt;') + '</div>').join('')
-        : '<div class="fd-combo-none">Aucune correspondance \u2014 tape la valeur, elle sera utilisée telle quelle.</div>';
+    function fill(){
+      const list = noms(), cur = sel.value;
+      sel.innerHTML = '<option value="">\u2014 Choisir dans la liste \u2014</option><option value="__autre__">Autre \u2014 saisir mon nom</option>';
+      list.forEach(t=>{ const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
+      if(cur === '__autre__' || (cur && list.indexOf(cur) >= 0)) sel.value = cur;
+      else if(input.value && list.indexOf(input.value) >= 0) sel.value = input.value;
+      else if(input.value){ sel.value = '__autre__'; input.style.display = ''; }
+      else sel.value = '';
     }
-    function open(filter){ render(filter); wrap.classList.add('open'); }
-    function close(){ wrap.classList.remove('open'); }
-
-    arrow.addEventListener('click', ()=>{
-      if(wrap.classList.contains('open')) close();
-      else { open(''); input.focus(); }
-    });
-    input.addEventListener('input', ()=>{ open(input.value); });
-    input.addEventListener('keydown', e=>{
-      if(e.key === 'Escape') close();
-      if(e.key === 'Enter' && wrap.classList.contains('open')){ e.preventDefault(); close(); }
-    });
-    list.addEventListener('mousedown', e=>{
-      const opt = e.target.closest('.fd-combo-opt');
-      if(!opt) return;
-      e.preventDefault();
-      input.value = opt.dataset.v;
-      close();
+    sel.addEventListener('change', ()=>{
+      const libre = sel.value === '__autre__';
+      input.style.display = libre ? '' : 'none';
+      if(libre){ input.value = ''; input.focus(); }
+      else input.value = sel.value;
       input.dispatchEvent(new Event('change', { bubbles:true }));
     });
-    document.addEventListener('click', e=>{ if(!wrap.contains(e.target)) close(); });
-    return { refresh: ()=>{ if(wrap.classList.contains('open')) render(input.value); } };
+    input.addEventListener('input', ()=>{ if(sel.value !== '__autre__') sel.value = '__autre__'; });
+    fill();
+    return { refresh: fill };
   }
 
   const comboTech = setupCombo('f-tech', TECH_KEY, 'Chercher ou saisir un technicien');
@@ -1546,8 +1523,13 @@ if('serviceWorker' in navigator){
   function highlight(sel){
     clearFlags();
     if(!sel) return;
-    const el = document.querySelector(sel);
+    let el = document.querySelector(sel);
     if(!el) return;
+    // Champ masqué (ex. saisie libre du technicien) : cibler le menu déroulant visible
+    if(el.offsetParent === null && el.id){
+      const alt = document.getElementById(el.id + '-select');
+      if(alt) el = alt;
+    }
     const isInput = /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
     const box = isInput ? el : (el.closest('.fd-toggle-row, .fd-chip-row, .fd-photo-actions') || el);
     box.classList.add(isInput ? 'fd-invalid' : 'fd-flag');
