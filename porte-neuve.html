@@ -85,6 +85,13 @@
   .fd-ticket::before{
     content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--amber);
   }
+  .fd-refresh-btn{
+    position:absolute;bottom:20px;right:20px;width:42px;height:42px;border-radius:13px;
+    border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#fff;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .fd-refresh-btn:active{background:rgba(255,255,255,.18);}
+  .fd-refresh-btn[disabled]{opacity:.5;}
   .fd-logo{position:absolute;top:50%;right:88px;transform:translateY(-50%);height:62px;width:auto;filter:brightness(0) invert(1);}
   @media (max-width:760px){ .fd-logo{position:static;transform:none;display:block;height:38px;margin:0 0 14px;} }
   .fd-eyebrow{
@@ -535,6 +542,9 @@ if('serviceWorker' in navigator){
 
 <div class="fd-wrap">
   <div class="fd-ticket">
+    <button type="button" id="fd-force-refresh" class="fd-refresh-btn" title="Actualiser la version" aria-label="Actualiser la version">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
+    </button>
     <img class="fd-logo" src="./record-logo.webp" alt="RECORD">
     <div class="fd-eyebrow"><span>RECORD &middot; PORTE NEUVE</span><span id="fd-ticket-no">PN &mdash;</span></div>
     <div class="fd-title">Relev&eacute; Porte Neuve</div>
@@ -672,11 +682,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">R&eacute;alisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.35</div>
-  <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
-    Actualiser la version
-  </button>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.40</div>
 </div>
 
 <script>
@@ -857,15 +863,31 @@ if('serviceWorker' in navigator){
     input.setAttribute('autocomplete', 'off');
     input.style.display = 'none';
     input.style.marginTop = '8px';
-    function noms(){
+    const search = document.createElement('input');
+    search.type = 'text';
+    search.placeholder = 'Rechercher un technicien...';
+    search.setAttribute('autocomplete', 'off');
+    search.style.cssText = 'width:100%;box-sizing:border-box;min-height:44px;border:1.5px solid #CCD3DB;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#12171C;margin-bottom:8px;';
+    sel.parentNode.insertBefore(search, sel);
+    function fold(s){
+      return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    function tous(){
       return (lsGet(key) || []).slice().sort((a,b)=>String(a).localeCompare(String(b),'fr'));
     }
+    function noms(){
+      const q = fold(search.value).trim();
+      const all = tous();
+      return q ? all.filter(t=> fold(t).indexOf(q) >= 0) : all;
+    }
+    // On filtre seulement l'affichage : le nom déjà choisi est conservé.
+    search.addEventListener('input', ()=> fill());
     function fill(){
       const list = noms(), cur = sel.value;
       sel.innerHTML = '<option value="">\u2014 Choisir dans la liste \u2014</option><option value="__autre__">Autre \u2014 saisir mon nom</option>';
       list.forEach(t=>{ const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
-      if(cur === '__autre__' || (cur && list.indexOf(cur) >= 0)) sel.value = cur;
-      else if(input.value && list.indexOf(input.value) >= 0) sel.value = input.value;
+      if(input.value && list.indexOf(input.value) >= 0){ sel.value = input.value; input.style.display = 'none'; }
+      else if(cur === '__autre__' || (cur && list.indexOf(cur) >= 0)) sel.value = cur;
       else if(input.value){ sel.value = '__autre__'; input.style.display = ''; }
       else sel.value = '';
     }
@@ -1982,7 +2004,7 @@ if('serviceWorker' in navigator){
 
   $('fd-force-refresh') && $('fd-force-refresh').addEventListener('click', async ()=>{
     const btn = $('fd-force-refresh');
-    btn.disabled = true; btn.textContent = 'Mise à jour...';
+    btn.disabled = true; btn.title = 'Mise à jour...';
     try{
       if('serviceWorker' in navigator){
         const regs = await navigator.serviceWorker.getRegistrations();

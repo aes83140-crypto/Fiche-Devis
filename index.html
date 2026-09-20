@@ -91,6 +91,13 @@
     font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;
   }
   .fd-help-btn:active{background:rgba(255,255,255,.18);}
+  .fd-refresh-btn{
+    position:absolute;top:50%;right:20px;transform:translateY(-50%);width:42px;height:42px;border-radius:13px;
+    border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#fff;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .fd-refresh-btn:active{background:rgba(255,255,255,.18);}
+  .fd-refresh-btn[disabled]{opacity:.5;}
 
   /* ---------- Corps : sections en cartes ---------- */
   .fd-body{background:transparent;padding:18px 0 0;border:none;border-radius:0;}
@@ -315,6 +322,11 @@
 
   /* ---------- Administration ---------- */
   .fd-modal{position:fixed;inset:0;background:rgba(12,17,22,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9000;}
+  /* Sur ordinateur, le panneau s'affiche en haut de l'écran. */
+  @media (min-width:760px){
+    .fd-modal{align-items:flex-start;padding:24px 0;overflow-y:auto;}
+    .fd-modal .fd-modal-box{border-radius:20px;max-height:none;padding-bottom:26px;}
+  }
   .fd-modal.hidden{display:none;}
   .fd-modal-box{
     background:var(--bg);width:100%;max-width:640px;max-height:88vh;overflow-y:auto;
@@ -420,6 +432,9 @@ if('serviceWorker' in navigator){
     <div class="fd-sub">Choisis la fiche à remplir</div>
     <a href="Fiche Tailles Vetements.dc.html" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;">👕 Dotations vêtements</a>
     <button type="button" id="btn-admin" class="fd-admin-btn" title="Administration">⚙️</button>
+    <button type="button" id="fd-force-refresh" class="fd-refresh-btn" title="Actualiser la version" aria-label="Actualiser la version">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
+    </button>
     <button type="button" id="btn-help" class="fd-help-btn" title="Aide et suggestions">💬</button>
   </div>
 
@@ -484,11 +499,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.46</div>
-  <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
-    Actualiser la version
-  </button>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.51</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -503,6 +514,7 @@ if('serviceWorker' in navigator){
       <h4>Ton message</h4>
       <div class="fd-field" style="margin-bottom:14px;">
         <label for="help-tech">Ton nom</label>
+        <input type="text" id="help-search" placeholder="Rechercher un technicien..." autocomplete="off" style="width:100%;box-sizing:border-box;min-height:44px;margin-bottom:8px;">
         <select id="help-tech">
           <option value="">— Choisir dans la liste —</option>
           <option value="__autre__">Autre — saisir mon nom</option>
@@ -982,14 +994,12 @@ if('serviceWorker' in navigator){
     $('admin-groups-arrow').textContent = open ? '▾' : '▸';
   });
 
-  /* Chaque section d'administration se replie d'un clic sur son titre (état mémorisé). */
+  /* Sections d'administration repliables : toutes repliées à chaque ouverture du panneau. */
+  const adminCollapsers = [];
   (function(){
     const modal = $('admin-modal');
     if(!modal) return;
-    const OPEN_KEY = 'record-admin-sections';
-    let st = {};
-    try{ st = JSON.parse(localStorage.getItem(OPEN_KEY)) || {}; }catch(e){}
-    Array.prototype.slice.call(modal.querySelectorAll('.fd-modal-section')).forEach((sec, i)=>{
+    Array.prototype.slice.call(modal.querySelectorAll('.fd-modal-section')).forEach(sec=>{
       const h = sec.querySelector('h4');
       if(!h || h.id === 'admin-groups-toggle') return;
       const body = document.createElement('div');
@@ -1002,21 +1012,21 @@ if('serviceWorker' in navigator){
       h.style.gap = '6px';
       const arrow = document.createElement('span');
       h.insertBefore(arrow, h.firstChild);
-      const key = 'sec' + i;
       function apply(open){
         body.style.display = open ? '' : 'none';
         arrow.textContent = open ? '▾' : '▸';
         h.style.marginBottom = open ? '14px' : '0';
       }
-      apply(st[key] !== false);
-      h.addEventListener('click', ()=>{
-        const open = body.style.display === 'none';
-        apply(open);
-        st[key] = open;
-        try{ localStorage.setItem(OPEN_KEY, JSON.stringify(st)); }catch(e){}
-      });
+      apply(false);
+      adminCollapsers.push(()=> apply(false));
+      h.addEventListener('click', ()=> apply(body.style.display === 'none'));
     });
   })();
+  function collapseAdminSections(){
+    adminCollapsers.forEach(f=> f());
+    const gb = $('admin-groups-body');
+    if(gb){ gb.style.display = 'none'; $('admin-groups-arrow').textContent = '▸'; }
+  }
 
   $('admin-group-add').addEventListener('click', ()=>{
     const input = $('admin-group-new');
@@ -1051,6 +1061,7 @@ if('serviceWorker' in navigator){
       return;
     }
     renderAdminPanel();
+    collapseAdminSections();
     $('admin-modal').classList.remove('hidden');
   });
   $('help-tech').addEventListener('change', ()=>{
@@ -1059,20 +1070,31 @@ if('serviceWorker' in navigator){
     if(libre) $('help-nom').focus();
   });
 
-  $('btn-help').addEventListener('click', ()=>{
+  function fillHelpTech(keep){
     const sel = $('help-tech');
-    const noms = (lsGet(TECH_KEY) || []).slice().sort((a,b)=>a.localeCompare(b,'fr'));
-    const garde = sel.value;
-    sel.innerHTML = '<option value="">— Choisir dans la liste —</option>';
+    const q = String(($('help-search') || {}).value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+    const tous = (lsGet(TECH_KEY) || []).slice().sort((a,b)=>a.localeCompare(b,'fr'));
+    const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const noms = q ? tous.filter(t=> fold(t).indexOf(q) >= 0) : tous;
+    const garde = keep !== undefined ? keep : sel.value;
+    sel.innerHTML = '<option value="">\u2014 Choisir dans la liste \u2014</option>';
     const autre = document.createElement('option');
-    autre.value = '__autre__'; autre.textContent = 'Autre — saisir mon nom';
+    autre.value = '__autre__'; autre.textContent = 'Autre \u2014 saisir mon nom';
     sel.appendChild(autre);
     noms.forEach(t=>{
       const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o);
     });
-    sel.value = noms.indexOf(garde) >= 0 || garde === '__autre__' ? garde : '';
+    sel.value = garde === '__autre__' || noms.indexOf(garde) >= 0 ? garde : (garde ? '__autre__' : '');
+    if(sel.value === '__autre__' && garde && garde !== '__autre__') $('help-nom').value = garde;
     $('help-nom').style.display = sel.value === '__autre__' ? '' : 'none';
+  }
+  $('help-search') && $('help-search').addEventListener('input', ()=> fillHelpTech());
+
+  $('btn-help').addEventListener('click', ()=>{
+    if($('help-search')) $('help-search').value = '';
+    fillHelpTech('');
     $('help-status').textContent = '';
+    $('help-status').style.color = ''; $('help-status').style.fontWeight = '';
     $('help-modal').classList.remove('hidden');
   });
   $('help-close').addEventListener('click', ()=> $('help-modal').classList.add('hidden'));
@@ -1344,7 +1366,7 @@ if('serviceWorker' in navigator){
   $('admin-close').addEventListener('click', ()=>{ $('admin-modal').classList.add('hidden'); });
   $('fd-force-refresh').addEventListener('click', async ()=>{
     const btn = $('fd-force-refresh');
-    btn.disabled = true; btn.textContent = 'Mise à jour...';
+    btn.disabled = true; btn.title = 'Mise à jour...';
     try{
       if('serviceWorker' in navigator){
         const regs = await navigator.serviceWorker.getRegistrations();
