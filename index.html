@@ -499,7 +499,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.56</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.57</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -1240,7 +1240,17 @@ if('serviceWorker' in navigator){
     // le lien mailto seulement si le partage n'existe pas sur l'appareil.
     if(navigator.share){
       ev.preventDefault();
-      navigator.share({ title: d.sujet, text: partage }).catch(()=>{});
+      // Comme les fiches : on partage un fichier (Outlook reçoit une pièce jointe),
+      // avec repli sur un partage texte si l'appareil n'accepte pas les fichiers.
+      const txt = 'Destinataire : christophe.bataille@record.fr\r\nObjet : ' + d.sujet + '\r\n\r\n' + d.corps.replace(/\n/g, '\r\n');
+      const file = new File(['\ufeff' + txt], 'Aide-et-Suggestions-' + d.nom.replace(/[^a-z0-9]+/gi,'-') + '.txt', { type:'text/plain' });
+      const avecFichier = !!(navigator.canShare && navigator.canShare({ files:[file] }));
+      const data = avecFichier
+        ? { title: d.sujet, text: partage, files: [file] }
+        : { title: d.sujet, text: partage };
+      navigator.share(data).catch(()=>{
+        if(avecFichier) navigator.share({ title: d.sujet, text: partage }).catch(()=>{});
+      });
       st.innerHTML = 'Choisis <strong>Outlook</strong> dans la fenêtre de partage, puis envoie à christophe.bataille@record.fr. Sinon : « Télécharger la demande » ou <a href="' + url.replace(/"/g,'&quot;') + '" style="color:var(--navy);font-weight:600;">ouvrir la messagerie</a>.';
     } else {
       $('help-send').setAttribute('href', url);
