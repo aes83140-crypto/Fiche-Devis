@@ -499,7 +499,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.54</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.56</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -1174,7 +1174,7 @@ if('serviceWorker' in navigator){
       avisStatus('\u2713 Avis à jour.', 'ok');
     }catch(e){
       renderAvis();
-      avisStatus('\u26A0 Avis partagés indisponibles (table « avis » absente ou réseau) — affichage des avis de cette tablette.', 'err');
+      avisStatus('Avis de cette tablette uniquement — la table « avis » n\'existe pas encore dans Supabase (SQL ci-dessus).', null);
     }
   }
   $('avis-refresh') && $('avis-refresh').addEventListener('click', avisPull);
@@ -1234,16 +1234,18 @@ if('serviceWorker' in navigator){
     const d = helpBuild();
     if(!d){ ev.preventDefault(); return; }
     const url = 'mailto:christophe.bataille@record.fr?subject=' + encodeURIComponent(d.sujet) + '&body=' + encodeURIComponent(d.corps);
-    // Le bouton EST le lien : href renseigné avant la navigation native (aucun clic simulé).
-    $('help-send').setAttribute('href', url);
     const st = $('help-status');
-    st.innerHTML = 'Ta messagerie s\u2019ouvre avec la demande pré-remplie. Si rien ne se passe, utilise « Télécharger la demande »'
-      + (navigator.share ? ' ou <button type="button" id="help-share" style="border:none;background:none;padding:0;color:var(--navy);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;">partager</button>' : '')
-      + '.';
-    const sh = document.getElementById('help-share');
-    if(sh) sh.addEventListener('click', ()=>{
-      navigator.share({ title: d.sujet, text: 'Destinataire : christophe.bataille@record.fr\n\nObjet : ' + d.sujet + '\n\n' + d.corps }).catch(()=>{});
-    });
+    const partage = 'Destinataire : christophe.bataille@record.fr\n\nObjet : ' + d.sujet + '\n\n' + d.corps;
+    // Même méthode que les fiches : la feuille de partage d'abord (Outlook, WhatsApp...),
+    // le lien mailto seulement si le partage n'existe pas sur l'appareil.
+    if(navigator.share){
+      ev.preventDefault();
+      navigator.share({ title: d.sujet, text: partage }).catch(()=>{});
+      st.innerHTML = 'Choisis <strong>Outlook</strong> dans la fenêtre de partage, puis envoie à christophe.bataille@record.fr. Sinon : « Télécharger la demande » ou <a href="' + url.replace(/"/g,'&quot;') + '" style="color:var(--navy);font-weight:600;">ouvrir la messagerie</a>.';
+    } else {
+      $('help-send').setAttribute('href', url);
+      st.innerHTML = 'Ta messagerie s\u2019ouvre avec la demande pré-remplie. Si rien ne se passe, utilise « Télécharger la demande ».';
+    }
     helpDone(d);
   });
 
