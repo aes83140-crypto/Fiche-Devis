@@ -484,7 +484,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.43</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.46</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -982,6 +982,42 @@ if('serviceWorker' in navigator){
     $('admin-groups-arrow').textContent = open ? '▾' : '▸';
   });
 
+  /* Chaque section d'administration se replie d'un clic sur son titre (état mémorisé). */
+  (function(){
+    const modal = $('admin-modal');
+    if(!modal) return;
+    const OPEN_KEY = 'record-admin-sections';
+    let st = {};
+    try{ st = JSON.parse(localStorage.getItem(OPEN_KEY)) || {}; }catch(e){}
+    Array.prototype.slice.call(modal.querySelectorAll('.fd-modal-section')).forEach((sec, i)=>{
+      const h = sec.querySelector('h4');
+      if(!h || h.id === 'admin-groups-toggle') return;
+      const body = document.createElement('div');
+      while(h.nextSibling) body.appendChild(h.nextSibling);
+      sec.appendChild(body);
+      h.style.cursor = 'pointer';
+      h.style.userSelect = 'none';
+      h.style.display = 'flex';
+      h.style.alignItems = 'center';
+      h.style.gap = '6px';
+      const arrow = document.createElement('span');
+      h.insertBefore(arrow, h.firstChild);
+      const key = 'sec' + i;
+      function apply(open){
+        body.style.display = open ? '' : 'none';
+        arrow.textContent = open ? '▾' : '▸';
+        h.style.marginBottom = open ? '14px' : '0';
+      }
+      apply(st[key] !== false);
+      h.addEventListener('click', ()=>{
+        const open = body.style.display === 'none';
+        apply(open);
+        st[key] = open;
+        try{ localStorage.setItem(OPEN_KEY, JSON.stringify(st)); }catch(e){}
+      });
+    });
+  })();
+
   $('admin-group-add').addEventListener('click', ()=>{
     const input = $('admin-group-new');
     const v = input.value.trim();
@@ -1136,8 +1172,17 @@ if('serviceWorker' in navigator){
     const sel = $('help-tech').value;
     const nom = sel === '__autre__' || !sel ? $('help-nom').value.trim() : sel;
     const msg = $('help-msg').value.trim();
-    if(!nom){ ev.preventDefault(); $('help-status').textContent = 'Merci d\u2019indiquer ton nom (liste ou saisie libre).'; return; }
-    if(!msg){ ev.preventDefault(); $('help-status').textContent = 'Merci de détailler ta demande avant d\u2019envoyer.'; return; }
+    const st0 = $('help-status');
+    function stop(m, el){
+      ev.preventDefault();
+      st0.innerHTML = '⚠ ' + m;
+      st0.style.color = 'var(--red)';
+      st0.style.fontWeight = '600';
+      if(el){ el.style.borderColor = 'var(--red)'; el.focus(); setTimeout(()=>{ el.style.borderColor = ''; }, 2500); }
+    }
+    st0.style.color = ''; st0.style.fontWeight = '';
+    if(!nom) return stop('Merci d\u2019indiquer ton nom (liste ou saisie libre).', sel === '__autre__' ? $('help-nom') : $('help-tech'));
+    if(!msg) return stop('Merci de détailler ta demande avant d\u2019envoyer.', $('help-msg'));
     const type = $('help-type').value, fiche = $('help-fiche').value;
     const sujet = 'Aide et Suggestions \u2014 ' + type + (fiche !== 'Aucune / général' ? ' (' + fiche + ')' : '');
     const corps = [
@@ -1158,8 +1203,14 @@ if('serviceWorker' in navigator){
     $('help-send').setAttribute('href', url);
     const st = $('help-status');
     st.innerHTML = 'Ton logiciel de messagerie s\u2019ouvre avec la demande pré-remplie. Si rien ne se passe : '
-      + '<a href="' + url.replace(/"/g,'&quot;') + '" style="color:var(--navy);font-weight:600;">ouvrir ma messagerie</a> '
-      + 'ou <button type="button" id="help-copy" style="border:none;background:none;padding:0;color:var(--navy);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;">copier la demande</button>.';
+      + '<a href="' + url.replace(/"/g,'&quot;') + '" style="color:var(--navy);font-weight:600;">ouvrir ma messagerie</a>'
+      + (navigator.share ? ', <button type="button" id="help-share" style="border:none;background:none;padding:0;color:var(--navy);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;">partager</button>' : '')
+      + ' ou <button type="button" id="help-copy" style="border:none;background:none;padding:0;color:var(--navy);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;">copier la demande</button>.';
+    const sh = document.getElementById('help-share');
+    if(sh) sh.addEventListener('click', ()=>{
+      navigator.share({ title: sujet, text: 'Destinataire : christophe.bataille@record.fr\n\nObjet : ' + sujet + '\n\n' + corps })
+        .catch(()=>{});
+    });
     const cp = document.getElementById('help-copy');
     if(cp) cp.addEventListener('click', ()=>{
       const txt = 'Objet : ' + sujet + '\n\n' + corps;
