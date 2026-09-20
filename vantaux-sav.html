@@ -4,19 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Relevé Vantaux SAV — RECORD</title>
-<div class="fd-anno hidden" id="anno-modal">
-    <div class="fd-anno-bar">
-      <button type="button" id="anno-arrow" class="on">↗ Flèche</button>
-      <button type="button" id="anno-circle">◯ Cercle</button>
-      <button type="button" id="anno-move">✥ Déplacer</button>
-      <button type="button" id="anno-undo">↶ Annuler</button>
-      <span class="sp"></span>
-      <button type="button" id="anno-cancel">Fermer</button>
-      <button type="button" class="ok" id="anno-save">Valider</button>
-    </div>
-    <div class="fd-anno-stage"><canvas id="anno-canvas"></canvas></div>
-    <div class="fd-anno-hint">Facultatif — trace une flèche ou un cercle, puis « Déplacer » pour l'ajuster (glisse le repère au centre pour tout bouger, un repère d'extrémité pour l'étirer).</div>
-  </div>
 
 <script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -594,6 +581,20 @@ if('serviceWorker' in navigator){
 </head>
 <body>
 
+<div class="fd-anno hidden" id="anno-modal">
+    <div class="fd-anno-bar">
+      <button type="button" id="anno-arrow" class="on">↗ Flèche</button>
+      <button type="button" id="anno-circle">◯ Cercle</button>
+      <button type="button" id="anno-move">✥ Déplacer</button>
+      <button type="button" id="anno-undo">↶ Annuler</button>
+      <span class="sp"></span>
+      <button type="button" id="anno-cancel">Fermer</button>
+      <button type="button" class="ok" id="anno-save">Valider</button>
+    </div>
+    <div class="fd-anno-stage"><canvas id="anno-canvas"></canvas></div>
+    <div class="fd-anno-hint">Facultatif — trace une flèche ou un cercle, puis « Déplacer » pour l'ajuster (glisse le repère au centre pour tout bouger, un repère d'extrémité pour l'étirer).</div>
+  </div>
+
 <div class="fd-wrap">
   <div class="fd-ticket">
     <button type="button" id="fd-force-refresh" class="fd-refresh-btn" title="Actualiser la version" aria-label="Actualiser la version">
@@ -733,7 +734,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.19</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.22</div>
 </div>
 
 <script>
@@ -748,54 +749,47 @@ if('serviceWorker' in navigator){
   function setupCombo(inputId, key, placeholder){
     const input = $(inputId);
     if(!input) return;
-    const sel = document.createElement('select');
-    sel.id = inputId + '-select';
-    input.parentNode.insertBefore(sel, input);
-    input.placeholder = 'Nom Prénom';
+    // Un seul encart : le technicien tape son nom, des propositions apparaissent ;
+    // il peut en choisir une ou continuer à écrire s'il n'est pas enregistré.
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    input.placeholder = placeholder;
     input.setAttribute('autocomplete', 'off');
-    input.style.display = 'none';
-    input.style.marginTop = '8px';
-    const search = document.createElement('input');
-    search.type = 'text';
-    search.placeholder = 'Rechercher un technicien...';
-    search.setAttribute('autocomplete', 'off');
-    search.style.cssText = 'width:100%;box-sizing:border-box;min-height:44px;border:1.5px solid #CCD3DB;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#12171C;margin-bottom:8px;';
-    sel.parentNode.insertBefore(search, sel);
+    input.style.minHeight = '44px';
+    const list = document.createElement('div');
+    list.style.cssText = 'display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:70;background:#fff;border:1.5px solid #CCD3DB;border-radius:12px;box-shadow:0 20px 40px -22px rgba(18,23,28,.45);max-height:240px;overflow-y:auto;padding:6px;';
+    wrap.appendChild(list);
     function fold(s){
       return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
-    function tous(){
-      return (lsGet(key) || []).slice().sort((a,b)=>String(a).localeCompare(String(b),'fr'));
+    function render(){
+      const q = fold(input.value).trim();
+      const found = (lsGet(key) || []).slice()
+        .sort((a,b)=>String(a).localeCompare(String(b),'fr'))
+        .filter(t=> !q || fold(t).indexOf(q) >= 0)
+        .slice(0, 40);
+      if(!found.length || (found.length === 1 && fold(found[0]) === q)){ list.style.display = 'none'; return; }
+      list.innerHTML = found.map(v=> '<div data-v="' + String(v).replace(/"/g,'&quot;') + '" style="padding:11px 12px;border-radius:8px;font-size:15px;color:#12171C;cursor:pointer;min-height:44px;display:flex;align-items:center;">' + String(v).replace(/</g,'&lt;') + '</div>').join('');
+      list.style.display = '';
     }
-    function noms(){
-      const q = fold(search.value).trim();
-      const all = tous();
-      return q ? all.filter(t=> fold(t).indexOf(q) >= 0) : all;
-    }
-    // On filtre seulement l'affichage : le nom déjà choisi est conservé.
-    search.addEventListener('input', ()=> fill());
-    function fill(){
-      const list = noms(), cur = sel.value;
-      sel.innerHTML = '<option value="">\u2014 Choisir dans la liste \u2014</option><option value="__autre__">Autre \u2014 saisir mon nom</option>';
-      list.forEach(t=>{ const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
-      if(input.value && list.indexOf(input.value) >= 0){ sel.value = input.value; input.style.display = 'none'; }
-      else if(cur === '__autre__' || (cur && list.indexOf(cur) >= 0)) sel.value = cur;
-      else if(input.value){ sel.value = '__autre__'; input.style.display = ''; }
-      else sel.value = '';
-    }
-    sel.addEventListener('change', ()=>{
-      const libre = sel.value === '__autre__';
-      input.style.display = libre ? '' : 'none';
-      if(libre){ input.value = ''; input.focus(); }
-      else input.value = sel.value;
+    input.addEventListener('focus', render);
+    input.addEventListener('input', render);
+    input.addEventListener('keydown', e=>{ if(e.key === 'Escape' || e.key === 'Enter') list.style.display = 'none'; });
+    list.addEventListener('mousedown', e=>{
+      const opt = e.target.closest('[data-v]');
+      if(!opt) return;
+      e.preventDefault();
+      input.value = opt.getAttribute('data-v');
+      list.style.display = 'none';
       input.dispatchEvent(new Event('change', { bubbles:true }));
     });
-    input.addEventListener('input', ()=>{ if(sel.value !== '__autre__') sel.value = '__autre__'; });
-    fill();
-    return { refresh: fill };
+    document.addEventListener('click', e=>{ if(!wrap.contains(e.target)) list.style.display = 'none'; });
+    return { refresh: ()=>{ if(list.style.display !== 'none') render(); } };
   }
 
-  const comboTech = setupCombo('f-tech', TECH_KEY, 'Chercher ou saisir un technicien');
+  const comboTech = setupCombo('f-tech', TECH_KEY, 'Saisir le nom du technicien');
   function refreshAllDatalists(){
     if(comboTech) comboTech.refresh();
   }

@@ -499,7 +499,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.51</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.54</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -513,13 +513,11 @@ if('serviceWorker' in navigator){
     <div class="fd-modal-section">
       <h4>Ton message</h4>
       <div class="fd-field" style="margin-bottom:14px;">
-        <label for="help-tech">Ton nom</label>
-        <input type="text" id="help-search" placeholder="Rechercher un technicien..." autocomplete="off" style="width:100%;box-sizing:border-box;min-height:44px;margin-bottom:8px;">
-        <select id="help-tech">
-          <option value="">— Choisir dans la liste —</option>
-          <option value="__autre__">Autre — saisir mon nom</option>
-        </select>
-        <input type="text" id="help-nom" placeholder="Nom Prénom" autocomplete="off" style="display:none;margin-top:8px;">
+        <label for="help-nom">Ton nom</label>
+        <div id="help-nom-wrap" style="position:relative;">
+          <input type="text" id="help-nom" placeholder="Saisir le nom du technicien" autocomplete="off" style="width:100%;box-sizing:border-box;min-height:44px;">
+          <div id="help-nom-list" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:70;background:#fff;border:1.5px solid var(--line);border-radius:12px;box-shadow:0 20px 40px -22px rgba(18,23,28,.45);max-height:240px;overflow-y:auto;padding:6px;"></div>
+        </div>
       </div>
       <div class="fd-field" style="margin-bottom:14px;">
         <label for="help-type">Type de demande</label>
@@ -557,8 +555,9 @@ if('serviceWorker' in navigator){
           <span class="fd-hint" id="help-note-label" style="margin-left:8px;">Pas encore noté</span>
         </div>
       </div>
-      <a id="help-send" class="fd-add-btn" href="mailto:christophe.bataille@record.fr" style="width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box;">Envoyer ma demande</a>
-      <div class="fd-hint" style="margin-top:8px;">Destinataire : <strong>christophe.bataille@record.fr</strong> · objet « Aide et Suggestions »</div>
+      <a id="help-send" class="fd-add-btn" href="mailto:christophe.bataille@record.fr" style="width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box;min-height:46px;">Envoyer par mail</a>
+      <button type="button" id="help-download" class="fd-add-btn" style="width:100%;margin-top:8px;min-height:46px;">Télécharger la demande</button>
+      <div class="fd-hint" style="margin-top:8px;">Destinataire : <strong>christophe.bataille@record.fr</strong> · objet « Aide et Suggestions ». Si la messagerie ne s'ouvre pas, télécharge la demande et joins le fichier à un mail.</div>
       <div class="fd-hint" id="help-status" style="margin-top:8px;"></div>
     </div>
   </div>
@@ -1064,35 +1063,39 @@ if('serviceWorker' in navigator){
     collapseAdminSections();
     $('admin-modal').classList.remove('hidden');
   });
-  $('help-tech').addEventListener('change', ()=>{
-    const libre = $('help-tech').value === '__autre__';
-    $('help-nom').style.display = libre ? '' : 'none';
-    if(libre) $('help-nom').focus();
-  });
 
-  function fillHelpTech(keep){
-    const sel = $('help-tech');
-    const q = String(($('help-search') || {}).value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-    const tous = (lsGet(TECH_KEY) || []).slice().sort((a,b)=>a.localeCompare(b,'fr'));
+
+  /* Un seul encart : le technicien tape son nom, des propositions apparaissent ;
+     il peut en choisir une ou continuer à écrire s'il n'est pas enregistré. */
+  (function(){
+    const input = $('help-nom'), list = $('help-nom-list'), wrap = $('help-nom-wrap');
+    if(!input || !list) return;
     const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const noms = q ? tous.filter(t=> fold(t).indexOf(q) >= 0) : tous;
-    const garde = keep !== undefined ? keep : sel.value;
-    sel.innerHTML = '<option value="">\u2014 Choisir dans la liste \u2014</option>';
-    const autre = document.createElement('option');
-    autre.value = '__autre__'; autre.textContent = 'Autre \u2014 saisir mon nom';
-    sel.appendChild(autre);
-    noms.forEach(t=>{
-      const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o);
+    function render(){
+      const q = fold(input.value).trim();
+      const found = (lsGet(TECH_KEY) || []).slice()
+        .sort((a,b)=>a.localeCompare(b,'fr'))
+        .filter(t=> !q || fold(t).indexOf(q) >= 0)
+        .slice(0, 40);
+      if(!found.length || (found.length === 1 && fold(found[0]) === q)){ list.style.display = 'none'; return; }
+      list.innerHTML = found.map(v=> '<div data-v="' + v.replace(/"/g,'&quot;') + '" style="padding:11px 12px;border-radius:8px;font-size:15px;color:var(--ink);cursor:pointer;min-height:44px;display:flex;align-items:center;">' + v.replace(/</g,'&lt;') + '</div>').join('');
+      list.style.display = '';
+    }
+    input.addEventListener('focus', render);
+    input.addEventListener('input', render);
+    input.addEventListener('keydown', e=>{ if(e.key === 'Escape' || e.key === 'Enter') list.style.display = 'none'; });
+    list.addEventListener('mousedown', e=>{
+      const opt = e.target.closest('[data-v]');
+      if(!opt) return;
+      e.preventDefault();
+      input.value = opt.getAttribute('data-v');
+      list.style.display = 'none';
     });
-    sel.value = garde === '__autre__' || noms.indexOf(garde) >= 0 ? garde : (garde ? '__autre__' : '');
-    if(sel.value === '__autre__' && garde && garde !== '__autre__') $('help-nom').value = garde;
-    $('help-nom').style.display = sel.value === '__autre__' ? '' : 'none';
-  }
-  $('help-search') && $('help-search').addEventListener('input', ()=> fillHelpTech());
+    document.addEventListener('click', e=>{ if(wrap && !wrap.contains(e.target)) list.style.display = 'none'; });
+  })();
 
   $('btn-help').addEventListener('click', ()=>{
-    if($('help-search')) $('help-search').value = '';
-    fillHelpTech('');
+    $('help-nom-list').style.display = 'none';
     $('help-status').textContent = '';
     $('help-status').style.color = ''; $('help-status').style.fontWeight = '';
     $('help-modal').classList.remove('hidden');
@@ -1190,27 +1193,27 @@ if('serviceWorker' in navigator){
     } else avisStatus('Avis effacés sur cet appareil.', 'ok');
   });
 
-  $('help-send').addEventListener('click', (ev)=>{
-    const sel = $('help-tech').value;
-    const nom = sel === '__autre__' || !sel ? $('help-nom').value.trim() : sel;
+  /* Construit la demande ; renvoie null si un champ obligatoire manque. */
+  function helpBuild(){
+    const nom = $('help-nom').value.trim();
     const msg = $('help-msg').value.trim();
-    const st0 = $('help-status');
+    const st = $('help-status');
+    st.style.color = ''; st.style.fontWeight = '';
     function stop(m, el){
-      ev.preventDefault();
-      st0.innerHTML = '⚠ ' + m;
-      st0.style.color = 'var(--red)';
-      st0.style.fontWeight = '600';
+      st.innerHTML = '\u26a0 ' + m;
+      st.style.color = 'var(--red)';
+      st.style.fontWeight = '600';
       if(el){ el.style.borderColor = 'var(--red)'; el.focus(); setTimeout(()=>{ el.style.borderColor = ''; }, 2500); }
+      return null;
     }
-    st0.style.color = ''; st0.style.fontWeight = '';
-    if(!nom) return stop('Merci d\u2019indiquer ton nom (liste ou saisie libre).', sel === '__autre__' ? $('help-nom') : $('help-tech'));
+    if(!nom) return stop('Merci d\u2019indiquer ton nom.', $('help-nom'));
     if(!msg) return stop('Merci de détailler ta demande avant d\u2019envoyer.', $('help-msg'));
     const type = $('help-type').value, fiche = $('help-fiche').value;
     const sujet = 'Aide et Suggestions \u2014 ' + type + (fiche !== 'Aucune / général' ? ' (' + fiche + ')' : '');
     const corps = [
       'Demande envoyée depuis les Outils techniciens.',
       '',
-      'Technicien : ' + (nom || 'non renseigné'),
+      'Technicien : ' + nom,
       'Type : ' + type,
       'Fiche concernée : ' + fiche,
       'Satisfaction : ' + (helpNote ? '★'.repeat(helpNote) + '☆'.repeat(5 - helpNote) + ' (' + helpNote + '/5)' : 'non renseignée'),
@@ -1219,33 +1222,45 @@ if('serviceWorker' in navigator){
       'Message :',
       msg
     ].join('\n');
-    const url = 'mailto:christophe.bataille@record.fr?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
-    // Le bouton EST le lien : on renseigne son href, la navigation mailto est native
-    // (pas de clic simulé, qui est bloqué dans l'appli installée).
-    $('help-send').setAttribute('href', url);
-    const st = $('help-status');
-    st.innerHTML = 'Ton logiciel de messagerie s\u2019ouvre avec la demande pré-remplie. Si rien ne se passe : '
-      + '<a href="' + url.replace(/"/g,'&quot;') + '" style="color:var(--navy);font-weight:600;">ouvrir ma messagerie</a>'
-      + (navigator.share ? ', <button type="button" id="help-share" style="border:none;background:none;padding:0;color:var(--navy);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;">partager</button>' : '')
-      + ' ou <button type="button" id="help-copy" style="border:none;background:none;padding:0;color:var(--navy);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;">copier la demande</button>.';
-    const sh = document.getElementById('help-share');
-    if(sh) sh.addEventListener('click', ()=>{
-      navigator.share({ title: sujet, text: 'Destinataire : christophe.bataille@record.fr\n\nObjet : ' + sujet + '\n\n' + corps })
-        .catch(()=>{});
-    });
-    const cp = document.getElementById('help-copy');
-    if(cp) cp.addEventListener('click', ()=>{
-      const txt = 'Objet : ' + sujet + '\n\n' + corps;
-      const done = ()=>{ cp.textContent = 'demande copiée ✓'; };
-      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, done);
-      else {
-        const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
-        ta.select(); try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(ta); done();
-      }
-    });
-    avisAdd(helpNote, nom, msg);
+    return { nom, msg, sujet, corps };
+  }
+  function helpDone(d){
+    avisAdd(helpNote, d.nom, d.msg);
     $('help-msg').value = '';
     helpNote = 0; paintStars();
+  }
+
+  $('help-send').addEventListener('click', (ev)=>{
+    const d = helpBuild();
+    if(!d){ ev.preventDefault(); return; }
+    const url = 'mailto:christophe.bataille@record.fr?subject=' + encodeURIComponent(d.sujet) + '&body=' + encodeURIComponent(d.corps);
+    // Le bouton EST le lien : href renseigné avant la navigation native (aucun clic simulé).
+    $('help-send').setAttribute('href', url);
+    const st = $('help-status');
+    st.innerHTML = 'Ta messagerie s\u2019ouvre avec la demande pré-remplie. Si rien ne se passe, utilise « Télécharger la demande »'
+      + (navigator.share ? ' ou <button type="button" id="help-share" style="border:none;background:none;padding:0;color:var(--navy);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;">partager</button>' : '')
+      + '.';
+    const sh = document.getElementById('help-share');
+    if(sh) sh.addEventListener('click', ()=>{
+      navigator.share({ title: d.sujet, text: 'Destinataire : christophe.bataille@record.fr\n\nObjet : ' + d.sujet + '\n\n' + d.corps }).catch(()=>{});
+    });
+    helpDone(d);
+  });
+
+  $('help-download').addEventListener('click', ()=>{
+    const d = helpBuild();
+    if(!d) return;
+    const txt = 'Destinataire : christophe.bataille@record.fr\r\nObjet : ' + d.sujet + '\r\n\r\n' + d.corps.replace(/\n/g, '\r\n');
+    const blob = new Blob(['\ufeff' + txt], { type:'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Aide-et-Suggestions-' + d.nom.replace(/[^a-z0-9]+/gi,'-') + '.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
+    const st = $('help-status');
+    st.style.color = ''; st.style.fontWeight = '';
+    st.textContent = '\u2713 Demande téléchargée — joins le fichier à un mail vers christophe.bataille@record.fr.';
+    helpDone(d);
   });
 
   loadSharedLists();
