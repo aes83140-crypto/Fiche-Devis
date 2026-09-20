@@ -484,7 +484,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.40</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.43</div>
   <button type="button" id="fd-force-refresh" title="Forcer la mise à jour" style="display:flex;align-items:center;gap:5px;margin:8px auto 0;background:none;border:none;color:var(--ink-mute);opacity:.6;font-size:11.5px;font-family:var(--sans);cursor:pointer;padding:4px 8px;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     Actualiser la version
@@ -534,7 +534,18 @@ if('serviceWorker' in navigator){
         <label for="help-msg">Détaille ta demande</label>
         <textarea id="help-msg" rows="5" placeholder="Ce qui ne marche pas, ou ce que tu aimerais voir ajouté…"></textarea>
       </div>
-      <button type="button" class="fd-add-btn" id="help-send" style="width:100%;margin-top:14px;">Envoyer ma demande</button>
+      <div class="fd-field" style="margin-top:14px;">
+        <label>Ta satisfaction de l’application</label>
+        <div id="help-stars" style="display:flex;align-items:center;gap:4px;">
+          <button type="button" data-n="1" aria-label="1 sur 5" style="border:none;background:none;padding:0;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;line-height:1;cursor:pointer;color:#CCD3DB;">★</button>
+          <button type="button" data-n="2" aria-label="2 sur 5" style="border:none;background:none;padding:0;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;line-height:1;cursor:pointer;color:#CCD3DB;">★</button>
+          <button type="button" data-n="3" aria-label="3 sur 5" style="border:none;background:none;padding:0;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;line-height:1;cursor:pointer;color:#CCD3DB;">★</button>
+          <button type="button" data-n="4" aria-label="4 sur 5" style="border:none;background:none;padding:0;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;line-height:1;cursor:pointer;color:#CCD3DB;">★</button>
+          <button type="button" data-n="5" aria-label="5 sur 5" style="border:none;background:none;padding:0;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;line-height:1;cursor:pointer;color:#CCD3DB;">★</button>
+          <span class="fd-hint" id="help-note-label" style="margin-left:8px;">Pas encore noté</span>
+        </div>
+      </div>
+      <a id="help-send" class="fd-add-btn" href="mailto:christophe.bataille@record.fr" style="width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box;">Envoyer ma demande</a>
       <div class="fd-hint" style="margin-top:8px;">Destinataire : <strong>christophe.bataille@record.fr</strong> · objet « Aide et Suggestions »</div>
       <div class="fd-hint" id="help-status" style="margin-top:8px;"></div>
     </div>
@@ -548,6 +559,18 @@ if('serviceWorker' in navigator){
       <button type="button" class="fd-modal-close" id="admin-close">✕</button>
     </div>
     <div class="fd-hint">Les techniciens enregistrés ici sont proposés automatiquement dans toutes les fiches : devis, Relevé Vantaux SAV, rideaux métalliques, contrat de maintenance et relevé porte neuve.</div>
+
+    <div class="fd-modal-section">
+      <h4>Satisfaction de l'application</h4>
+      <div class="fd-hint" style="margin:-4px 0 12px;">Notes en étoiles envoyées par les techniciens depuis « Aide et suggestions ».</div>
+      <div id="avis-body"></div>
+      <div class="fd-admin-row" style="margin-top:12px;">
+        <button class="fd-add-btn" id="avis-refresh" style="flex:1;">Actualiser</button>
+        <button class="fd-add-btn" id="avis-reset" style="flex:1;background:var(--red-bg);color:var(--red);border-color:#E9BEB9;">Effacer les avis</button>
+      </div>
+      <div class="fd-hint" style="margin-top:12px;">Pour voir ici les avis de <strong>toutes</strong> les tablettes, créer une fois dans Supabase (SQL Editor) :<br><code>create table avis (id bigserial primary key, d text, n int, t text, c text);<br>alter table avis enable row level security;<br>create policy avis_all on avis for all using (true) with check (true);</code></div>
+      <div class="fd-hint" id="avis-status" style="margin-top:8px;"></div>
+    </div>
 
     <div class="fd-modal-section">
       <h4>Statistiques d'utilisation</h4>
@@ -786,7 +809,8 @@ if('serviceWorker' in navigator){
     renderGroupsChips();
     renderTechList();
     renderStats();
-    if(sbReady()) statsPull();
+    renderAvis();
+    if(sbReady()){ statsPull(); avisPull(); }
     if(isDirty()) shareStatus('\u26A0 Diffusion en cours ou en attente de réseau...', null);
   }
 
@@ -1018,12 +1042,102 @@ if('serviceWorker' in navigator){
   $('help-close').addEventListener('click', ()=> $('help-modal').classList.add('hidden'));
   $('help-modal').addEventListener('click', e=>{ if(e.target === $('help-modal')) $('help-modal').classList.add('hidden'); });
 
-  $('help-send').addEventListener('click', ()=>{
+  /* ---------- Satisfaction (étoiles) ---------- */
+  const AVIS_KEY = 'record-avis-satisfaction';
+  let helpNote = 0;
+  const starBtns = Array.prototype.slice.call(document.querySelectorAll('#help-stars button'));
+  function paintStars(){
+    starBtns.forEach(b=>{ b.style.color = Number(b.dataset.n) <= helpNote ? '#C8811A' : '#CCD3DB'; });
+    const lb = $('help-note-label');
+    if(lb) lb.textContent = helpNote ? helpNote + '/5' : 'Pas encore noté';
+  }
+  starBtns.forEach(b=> b.addEventListener('click', ()=>{ helpNote = Number(b.dataset.n); paintStars(); }));
+  paintStars();
+
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function avisLoad(){ try{ const v = localStorage.getItem(AVIS_KEY); return v ? JSON.parse(v) : []; }catch(e){ return []; } }
+  function avisSave(a){ try{ localStorage.setItem(AVIS_KEY, JSON.stringify(a.slice(-2000))); }catch(e){} }
+  function avisStatus(msg, tone){
+    const el = $('avis-status');
+    if(!el) return;
+    el.textContent = msg || '';
+    el.style.color = tone === 'ok' ? 'var(--green, #2E7D5B)' : tone === 'err' ? 'var(--red)' : '';
+  }
+  function avisAdd(n, t, c){
+    if(!n) return;
+    const row = { d: new Date().toISOString(), n: Number(n), t: t || '', c: String(c || '').slice(0, 300) };
+    const a = avisLoad(); a.push(row); avisSave(a);
+    renderAvis();
+    // Partage entre tablettes : best-effort (nécessite la table "avis" dans Supabase).
+    if(sbReady()){
+      fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis', {
+        method:'POST', headers: sbHeaders({ Prefer:'return=minimal' }), body: JSON.stringify(row)
+      }).catch(()=>{});
+    }
+  }
+  function renderAvis(){
+    const box = $('avis-body');
+    if(!box) return;
+    const rows = avisLoad().filter(r=> r && Number(r.n) >= 1 && Number(r.n) <= 5);
+    if(!rows.length){ box.innerHTML = '<div class="fd-hint">Aucune note pour le moment.</div>'; return; }
+    const avg = rows.reduce((s,r)=> s + Number(r.n), 0) / rows.length;
+    const full = Math.round(avg);
+    let h = '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;">'
+      + '<div style="font-size:26px;font-weight:700;font-family:var(--mono);">' + avg.toFixed(1) + '/5</div>'
+      + '<div style="font-size:18px;color:#C8811A;letter-spacing:1px;">' + '★'.repeat(full) + '<span style="color:#CCD3DB;">' + '★'.repeat(5 - full) + '</span></div>'
+      + '<div class="fd-hint">' + rows.length + ' avis</div></div>';
+    [5,4,3,2,1].forEach(n=>{
+      const c = rows.filter(r=> Number(r.n) === n).length;
+      const pct = Math.round(c / rows.length * 100);
+      h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;">'
+        + '<span style="width:32px;color:#C8811A;">' + n + '★</span>'
+        + '<span style="flex:1;height:8px;background:#E9EEF3;border-radius:999px;overflow:hidden;"><span style="display:block;height:100%;width:' + pct + '%;background:var(--navy);"></span></span>'
+        + '<span style="width:28px;text-align:right;font-family:var(--mono);">' + c + '</span></div>';
+    });
+    const last = rows.slice(-6).reverse();
+    h += '<div class="fd-hint" style="margin-top:12px;">Derniers retours</div>';
+    h += last.map(r=> '<div style="font-size:12.5px;padding:7px 0;border-top:1px solid #E9EEF3;">'
+      + '<strong>' + esc(r.t || 'Anonyme') + '</strong> · ' + Number(r.n) + '/5 · '
+      + '<span style="color:var(--ink-mute);">' + esc(String(r.d || '').slice(0,10)) + '</span>'
+      + (r.c ? '<div style="color:var(--ink-mute);margin-top:2px;">' + esc(r.c) + '</div>' : '') + '</div>').join('');
+    box.innerHTML = h;
+  }
+  async function avisPull(){
+    if(!sbReady()){ renderAvis(); return; }
+    avisStatus('Lecture des avis en ligne...');
+    try{
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis?select=d,n,t,c&order=d.asc', { headers: sbHeaders(), cache:'no-store' });
+      if(!r.ok) throw new Error('http ' + r.status);
+      avisSave(await r.json());
+      renderAvis();
+      avisStatus('\u2713 Avis à jour.', 'ok');
+    }catch(e){
+      renderAvis();
+      avisStatus('\u26A0 Avis partagés indisponibles (table « avis » absente ou réseau) — affichage des avis de cette tablette.', 'err');
+    }
+  }
+  $('avis-refresh') && $('avis-refresh').addEventListener('click', avisPull);
+  $('avis-reset') && $('avis-reset').addEventListener('click', async ()=>{
+    const code = prompt('Code administrateur pour effacer les avis :');
+    if(code === null) return;
+    if(code !== ADMIN_CODE){ avisStatus('\u26A0 Code administrateur incorrect — rien n\'a été effacé.', 'err'); return; }
+    if(!confirm('Effacer définitivement tous les avis (cet appareil + espace partagé) ?')) return;
+    avisSave([]); renderAvis();
+    if(sbReady()){
+      try{
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis?id=gt.0', { method:'DELETE', headers: sbHeaders() });
+        if(!r.ok) throw new Error('http ' + r.status);
+        avisStatus('\u2713 Avis effacés (appareil + espace partagé).', 'ok');
+      }catch(e){ avisStatus('\u26A0 Effacé sur cet appareil ; l\'espace partagé n\'a pas pu être vidé.', 'err'); }
+    } else avisStatus('Avis effacés sur cet appareil.', 'ok');
+  });
+
+  $('help-send').addEventListener('click', (ev)=>{
     const sel = $('help-tech').value;
     const nom = sel === '__autre__' || !sel ? $('help-nom').value.trim() : sel;
     const msg = $('help-msg').value.trim();
-    if(!nom){ $('help-status').textContent = 'Merci d\u2019indiquer ton nom (liste ou saisie libre).'; return; }
-    if(!msg){ $('help-status').textContent = 'Merci de détailler ta demande avant d\u2019envoyer.'; return; }
+    if(!nom){ ev.preventDefault(); $('help-status').textContent = 'Merci d\u2019indiquer ton nom (liste ou saisie libre).'; return; }
+    if(!msg){ ev.preventDefault(); $('help-status').textContent = 'Merci de détailler ta demande avant d\u2019envoyer.'; return; }
     const type = $('help-type').value, fiche = $('help-fiche').value;
     const sujet = 'Aide et Suggestions \u2014 ' + type + (fiche !== 'Aucune / général' ? ' (' + fiche + ')' : '');
     const corps = [
@@ -1032,18 +1146,16 @@ if('serviceWorker' in navigator){
       'Technicien : ' + (nom || 'non renseigné'),
       'Type : ' + type,
       'Fiche concernée : ' + fiche,
+      'Satisfaction : ' + (helpNote ? '★'.repeat(helpNote) + '☆'.repeat(5 - helpNote) + ' (' + helpNote + '/5)' : 'non renseignée'),
       'Date : ' + new Date().toLocaleString('fr-FR'),
       '',
       'Message :',
       msg
     ].join('\n');
     const url = 'mailto:christophe.bataille@record.fr?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
-    // Même méthode d'envoi que les fiches : lien mailto cliqué par le script.
-    try{
-      const a = document.createElement('a');
-      a.href = url; a.rel = 'noopener';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }catch(e){}
+    // Le bouton EST le lien : on renseigne son href, la navigation mailto est native
+    // (pas de clic simulé, qui est bloqué dans l'appli installée).
+    $('help-send').setAttribute('href', url);
     const st = $('help-status');
     st.innerHTML = 'Ton logiciel de messagerie s\u2019ouvre avec la demande pré-remplie. Si rien ne se passe : '
       + '<a href="' + url.replace(/"/g,'&quot;') + '" style="color:var(--navy);font-weight:600;">ouvrir ma messagerie</a> '
@@ -1058,7 +1170,9 @@ if('serviceWorker' in navigator){
         ta.select(); try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(ta); done();
       }
     });
+    avisAdd(helpNote, nom, msg);
     $('help-msg').value = '';
+    helpNote = 0; paintStars();
   });
 
   loadSharedLists();
