@@ -811,7 +811,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.46</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.47</div>
 </div>
 
 <script>
@@ -2320,7 +2320,7 @@ if('serviceWorker' in navigator){
         const ratio = (ph.w || 4) / (ph.h || 3);
         let iw = cellW - 5, ih = iw / ratio;
         if(ih > cellH - 5){ ih = cellH - 5; iw = ih * ratio; }
-        try{ doc.addImage(ph.dataUrl, 'JPEG', x + (cellW - iw, undefined, 'FAST')/2, y + (cellH - ih)/2, iw, ih); }catch(err){}
+        try{ doc.addImage(ph.dataUrl, 'JPEG', x + (cellW - iw)/2, y + (cellH - ih)/2, iw, ih); }catch(err){}
         doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
         doc.text('PHOTO ' + (i+1), x, y + cellH + 5.2, { charSpace:0.4 });
         col++;
