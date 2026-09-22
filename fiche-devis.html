@@ -644,7 +644,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.37</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.39</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -656,20 +656,89 @@ if('serviceWorker' in navigator){
   let chips = { arret:false, urgent:false, preventif:false };
   let photos = []; // dataURLs (jpeg compressés)
 
+  /* Réduction des photos. Les appareils photo de tablette sortent des images de
+     10 à 50 Mpx : dessinées d'un coup dans un canvas, elles dépassent la limite
+     mémoire du navigateur et le résultat ressort blanc. On passe donc par
+     createImageBitmap (qui red imensionne au décodage), avec repli en deux étapes
+     et contrôle final que l'image n'est pas vide. */
   function resizeImage(file){
-    return new Promise((resolve)=>{
+    const maxDim = 1024;
+    const QUAL = 0.55;
+
+    function dessine(src, sw, sh){
+      let w = sw, h = sh;
+      if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+      else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const x = c.getContext('2d');
+      x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, w, h);
+      x.drawImage(src, 0, 0, w, h);
+      return { canvas:c, w, h };
+    }
+    function estVide(canvas){
+      try{
+        const x = canvas.getContext('2d');
+        const pts = [[2,2],[canvas.width>>1,canvas.height>>1],[canvas.width-3,canvas.height-3],
+                     [canvas.width>>2,canvas.height>>2],[canvas.width-(canvas.width>>2),canvas.height-(canvas.height>>2)]];
+        return pts.every(p=>{
+          const d = x.getImageData(p[0], p[1], 1, 1).data;
+          return d[0] > 250 && d[1] > 250 && d[2] > 250;
+        });
+      }catch(e){ return false; }
+    }
+
+    return new Promise(async (resolve)=>{
+      // 1. createImageBitmap : red imensionnement pendant le décodage, sans charger
+      //    l'image entière en mémoire graphique.
+      if(window.createImageBitmap){
+        try{
+          const probe = await createImageBitmap(file);
+          const sw = probe.width, sh = probe.height;
+          let bmp = probe;
+          if(Math.max(sw, sh) > maxDim){
+            const r = maxDim / Math.max(sw, sh);
+            try{
+              bmp = await createImageBitmap(file, {
+                resizeWidth: Math.round(sw * r),
+                resizeHeight: Math.round(sh * r),
+                resizeQuality: 'high'
+              });
+              probe.close && probe.close();
+            }catch(e){ bmp = probe; }
+          }
+          const out = dessine(bmp, bmp.width, bmp.height);
+          bmp.close && bmp.close();
+          if(!estVide(out.canvas)){
+            resolve({ dataUrl: out.canvas.toDataURL('image/jpeg', QUAL), w: out.w, h: out.h });
+            return;
+          }
+        }catch(e){}
+      }
+
+      // 2. Repli : <img> classique, avec réduction en paliers successifs pour
+      //    rester sous la limite mémoire des tablettes.
       const reader = new FileReader();
       reader.onload = function(e){
         const img = new Image();
-        img.onload = function(){
-          const maxDim = 1024;
-          let w = img.width, h = img.height;
-          if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
-          else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.55), w, h });
+        img.onload = async function(){
+          try{ if(img.decode) await img.decode(); }catch(err){}
+          let out = dessine(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
+          if(estVide(out.canvas)){
+            // paliers : on divise par deux jusqu'à la taille cible
+            let src = img, sw = img.naturalWidth || img.width, sh = img.naturalHeight || img.height;
+            while(Math.max(sw, sh) > maxDim * 2){
+              sw = Math.round(sw / 2); sh = Math.round(sh / 2);
+              const step = document.createElement('canvas');
+              step.width = sw; step.height = sh;
+              const sx = step.getContext('2d');
+              sx.fillStyle = '#FFFFFF'; sx.fillRect(0, 0, sw, sh);
+              sx.drawImage(src, 0, 0, sw, sh);
+              src = step;
+            }
+            out = dessine(src, sw, sh);
+          }
+          resolve({ dataUrl: out.canvas.toDataURL('image/jpeg', QUAL), w: out.w, h: out.h });
         };
         img.onerror = function(){ resolve(null); };
         img.src = e.target.result;
@@ -678,7 +747,6 @@ if('serviceWorker' in navigator){
       reader.readAsDataURL(file);
     });
   }
-
   function photoOf(p){
     return (p && typeof p === 'object') ? p : { dataUrl: p, w: 4, h: 3 };
   }
@@ -1559,6 +1627,13 @@ if('serviceWorker' in navigator){
     }
   });
 
+  /* Poids cumulé des pièces jointes, en clair pour le technicien. */
+  let dernierPoids = 0;
+  function pdfPoids(){
+    const mo = dernierPoids / 1048576;
+    return mo < 1 ? Math.round(dernierPoids / 1024) + ' Ko joints' : mo.toFixed(1).replace('.', ',') + ' Mo joints';
+  }
+
   $('btn-mail').addEventListener('click', ()=>{
     const data = readForm();
     const err = validate(data);
@@ -1570,9 +1645,12 @@ if('serviceWorker' in navigator){
     const fourName = pdfFileName('FD-FOURNISSEUR', data.site, data.equip);
     try{
       pdfDoc = generateFichePDF(data);
-      pdfFile = new File([pdfDoc.output('blob')], pdfName, { type:'application/pdf' });
+      const pdfBlob = pdfDoc.output('blob');
+      pdfFile = new File([pdfBlob], pdfName, { type:'application/pdf' });
       fourDoc = generateFichePDF(data, 'fournisseur');
-      fourFile = new File([fourDoc.output('blob')], fourName, { type:'application/pdf' });
+      const fourBlob = fourDoc.output('blob');
+      fourFile = new File([fourBlob], fourName, { type:'application/pdf' });
+      dernierPoids = pdfBlob.size + fourBlob.size;
     }catch(e){
       showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ") — utilise \"Copier le texte\" en secours.", false);
       return;
@@ -1590,7 +1668,7 @@ if('serviceWorker' in navigator){
       }
       navigator.share(shareData).then(()=>{
         histAdd(data, 'mail');
-        showMsg('Partage envoyé.');
+        showMsg('Partage envoyé — ' + pdfPoids() + '.');
       }).catch(e=>{
         if(e && e.name === 'AbortError') return; // annulé par l'utilisateur
         const detail = (e && e.message) ? e.message : (e && e.name) ? e.name : 'erreur inconnue';
