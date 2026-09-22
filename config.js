@@ -7,6 +7,11 @@ window.RECORD_ADMIN_CODE = 'Chris04';
    de la logique utilisée pour le retrouver (ex. « demander à Christophe »). */
 window.RECORD_ADMIN_HINT = 'Demander le code à Christophe BATAILLE.';
 
+/* Code séparé, demandé uniquement pour REMETTRE À ZÉRO les statistiques ou les avis.
+   À ne pas communiquer avec le code administrateur : un responsable peut consulter
+   et gérer les listes, mais pas effacer l'historique. */
+window.RECORD_RESET_CODE = 'Reset04';
+
 /* Espace partagé Supabase (statistiques + liste des techniciens) — collé une fois
    pour toutes ici : toutes les pages et tablettes le connaissent dès qu'elles
    chargent ce fichier, sans jeton GitHub. */
@@ -14,4 +19,4 @@ window.RECORD_SUPABASE_URL = 'https://aviixriaxyoumhxndzdw.supabase.co';
 window.RECORD_SUPABASE_KEY = 'sb_publishable_3q4W4qZgUiNjhQrP2DPWQw_BKjNxp06';
 
 /* Version de ce fichier — sert uniquement de repère visuel dans la Console (F12). */
-window.RECORD_CONFIG_VERSION = 'v2026-09.4';
+window.RECORD_CONFIG_VERSION = 'v2026-09.6';

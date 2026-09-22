@@ -62,6 +62,7 @@
     content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--amber);
   }
   .fd-logo{position:absolute;bottom:20px;right:78px;height:62px;width:auto;filter:brightness(0) invert(1);}
+  .fd-logo img{height:100%;width:auto;display:block;}
   @media (max-width:760px){ .fd-logo{position:static;display:block;height:38px;margin:0 0 14px;} }
   .fd-eyebrow{
     font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
@@ -426,7 +427,7 @@ if('serviceWorker' in navigator){
 
 <div class="fd-wrap">
   <div class="fd-ticket">
-    <img class="fd-logo" src="./record-logo.webp" alt="RECORD">
+    <a class="fd-logo" href="https://www.record.fr" target="_blank" rel="noopener" title="Ouvrir record.fr"><img src="./record-logo.webp" alt="RECORD"></a>
     <div class="fd-eyebrow">RECORD · MAINTENANCE TRAVAUX</div>
     <div class="fd-title">Outils techniciens</div>
     <div class="fd-sub">Choisis la fiche à remplir</div>
@@ -499,7 +500,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.57</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.63</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -535,7 +536,6 @@ if('serviceWorker' in navigator){
           <option value="Demande de devis">Demande de devis</option>
           <option value="Relevé Vantaux SAV">Relevé Vantaux SAV</option>
           <option value="Rideaux métalliques">Rideaux métalliques</option>
-          <option value="Contrat de maintenance">Contrat de maintenance</option>
           <option value="Relevé porte neuve">Relevé porte neuve</option>
           <option value="Dotations vêtements">Dotations vêtements</option>
         </select>
@@ -569,7 +569,7 @@ if('serviceWorker' in navigator){
       <h3>Administration</h3>
       <button type="button" class="fd-modal-close" id="admin-close">✕</button>
     </div>
-    <div class="fd-hint">Les techniciens enregistrés ici sont proposés automatiquement dans toutes les fiches : devis, Relevé Vantaux SAV, rideaux métalliques, contrat de maintenance et relevé porte neuve.</div>
+    <div class="fd-hint">Les techniciens enregistrés ici sont proposés automatiquement dans toutes les fiches : devis, Relevé Vantaux SAV, rideaux métalliques et relevé porte neuve.</div>
 
     <div class="fd-modal-section">
       <h4>Satisfaction de l'application</h4>
@@ -599,20 +599,17 @@ if('serviceWorker' in navigator){
     </div>
 
     <div class="fd-modal-section">
-      <h4>Listes communes à tous les appareils</h4>
-      <div class="fd-hint" style="margin:-4px 0 12px;"><strong>Les autres responsables n'ont besoin que du code d'accès</strong> : chaque ajout ou suppression de technicien est diffusé automatiquement à toutes les tablettes, sans jeton.</div>
-      <div class="fd-admin-row">
-        <button class="fd-add-btn" id="lists-reload" style="flex:1;background:#fff;color:var(--steel);">Recharger</button>
-      </div>
-      <div class="fd-hint" id="share-status" style="margin-top:4px;"></div>
-    </div>
-    <div class="fd-modal-section">
       <h4>Techniciens enregistrés</h4>
+      <div class="fd-hint" style="margin:-4px 0 12px;">Chaque ajout ou suppression est diffusé automatiquement à toutes les tablettes.</div>
       <div id="admin-tech-list"></div>
       <div class="fd-admin-row">
         <input type="text" id="admin-tech-new" placeholder="Nouveau technicien">
         <button type="button" class="fd-add-btn" id="admin-tech-add">Ajouter</button>
       </div>
+      <div class="fd-admin-row" style="margin-top:8px;">
+        <button class="fd-add-btn" id="lists-reload" style="flex:1;background:#fff;color:var(--steel);">Recharger les listes</button>
+      </div>
+      <div class="fd-hint" id="share-status" style="margin-top:4px;"></div>
     </div>
     <div class="fd-modal-section">
       <h4 id="admin-groups-toggle" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;">
@@ -636,6 +633,8 @@ if('serviceWorker' in navigator){
   const $ = id => document.getElementById(id);
   // Le code d'accès est défini dans config.js (seul endroit à modifier)
   const ADMIN_CODE = window.RECORD_ADMIN_CODE || 'Chris04';
+  // Code distinct, réservé aux remises à zéro (statistiques et avis).
+  const RESET_CODE = window.RECORD_RESET_CODE || 'Reset04';
   const TECH_KEY = 'techniciens-preenregistres';
   const GROUPS_KEY = 'techniciens-groupes';
   function loadGroups(){
@@ -827,7 +826,7 @@ if('serviceWorker' in navigator){
 
   /* ---------- Statistiques d'utilisation ---------- */
   const STAT_KEY = 'record-stats-usage';
-  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', FC:'Contrat maintenance', PN:'Porte neuve' };
+  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', PN:'Porte neuve', FC:'Contrat (archivé)' };
   function sbReady(){ return !!(window.RECORD_SUPABASE_URL && window.RECORD_SUPABASE_KEY); }
   function sbHeaders(extra){
     return Object.assign({ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY, 'Content-Type':'application/json' }, extra || {});
@@ -883,7 +882,7 @@ if('serviceWorker' in navigator){
     html += '<div style="overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px;">'
       + '<table style="width:100%;border-collapse:collapse;">'
       + '<thead><tr style="background:var(--surface);">'
-      + ['Technicien','Devis','Vantaux','Rideaux','Contrat','Porte neuve','Total','Dernière']
+      + ['Technicien','Devis','Vantaux','Rideaux','Porte neuve','Contrat (arch.)','Total','Dernière']
         .map((t,ix)=>'<th style="' + cell + 'text-align:' + (ix ? 'center' : 'left') + ';font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);font-weight:700;">' + t + '</th>').join('')
       + '</tr></thead><tbody>';
     techs.forEach(t=>{
@@ -892,8 +891,8 @@ if('serviceWorker' in navigator){
         + '<td style="' + num + '">' + (b.FD || '·') + '</td>'
         + '<td style="' + num + '">' + (b.RV || '·') + '</td>'
         + '<td style="' + num + '">' + (b.RM || '·') + '</td>'
-        + '<td style="' + num + '">' + (b.FC || '·') + '</td>'
         + '<td style="' + num + '">' + (b.PN || '·') + '</td>'
+        + '<td style="' + num + '">' + (b.FC || '·') + '</td>'
         + '<td style="' + num + 'font-weight:700;">' + b.total + '</td>'
         + '<td style="' + num + 'color:var(--ink-mute);">' + fdate(b.last) + '</td></tr>';
     });
@@ -1179,9 +1178,9 @@ if('serviceWorker' in navigator){
   }
   $('avis-refresh') && $('avis-refresh').addEventListener('click', avisPull);
   $('avis-reset') && $('avis-reset').addEventListener('click', async ()=>{
-    const code = prompt('Code administrateur pour effacer les avis :');
+    const code = prompt('Code de réinitialisation (distinct du code administrateur) :');
     if(code === null) return;
-    if(code !== ADMIN_CODE){ avisStatus('\u26A0 Code administrateur incorrect — rien n\'a été effacé.', 'err'); return; }
+    if(code !== RESET_CODE){ avisStatus('\u26A0 Code de réinitialisation incorrect — rien n\'a été effacé.', 'err'); return; }
     if(!confirm('Effacer définitivement tous les avis (cet appareil + espace partagé) ?')) return;
     avisSave([]); renderAvis();
     if(sbReady()){
@@ -1370,9 +1369,9 @@ if('serviceWorker' in navigator){
   });
 
   $('stats-reset') && $('stats-reset').addEventListener('click', async ()=>{
-    const code = prompt('Code administrateur pour réinitialiser la feuille partagée :');
+    const code = prompt('Code de réinitialisation (distinct du code administrateur) :');
     if(code === null) return;
-    if(code !== ADMIN_CODE){ statStatus('\u26A0 Code administrateur incorrect \u2014 rien n\'a été effacé.', 'err'); return; }
+    if(code !== RESET_CODE){ statStatus('\u26A0 Code de réinitialisation incorrect \u2014 rien n\'a été effacé.', 'err'); return; }
     if(!confirm('Effacer définitivement tout le journal (cet appareil + l\'espace partagé) ?')) return;
     statSave([]);
     renderStats();
