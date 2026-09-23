@@ -600,7 +600,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.14</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.15</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -1525,10 +1525,7 @@ if('serviceWorker' in navigator){
       return;
     }
     const files = [pdfFile];
-    /* PC Windows : la fenêtre de partage ne s'ouvre pas pour cette fiche (constaté sur Edge).
-       On ouvre donc directement la messagerie, adressée à Christophe, et le PDF est téléchargé. */
-    const windowsPC = /Windows/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
-    const canAttach = !windowsPC && !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
+    const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
     if(canAttach){
       const text = formatText(data, { note: data.photos.length ? '📎 PDF joint avec la capture.' : '📎 PDF joint.' });
       navigator.share({ title: subject, text: text, files: files }).then(()=>{
