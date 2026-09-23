@@ -587,6 +587,12 @@ if('serviceWorker' in navigator){
       </div>
     </div>
 
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">↺</span><span class="fd-section-title">Remontées envoyées depuis cet appareil</span></div>
+      <div class="fd-hist-list" id="hist-list"></div>
+      <div class="fd-photo-hint">« Reprendre » recharge la remontée pour un nouvel envoi (les captures ne sont pas conservées).</div>
+    </div>
+
     <div class="fd-actions">
       <button class="fd-btn" id="btn-mail">Envoyer par mail</button>
       <div class="fd-photo-hint" style="grid-column:1/-1;text-align:center;margin:-4px 0 0;">Envoi à christophe.bataille@record.fr</div>
@@ -600,7 +606,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.15</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.16</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -1194,7 +1200,7 @@ if('serviceWorker' in navigator){
     if(!wrap) return;
     const list = histLoad();
     if(!list.length){
-      wrap.innerHTML = '<div class="fd-empty">Aucune fiche envoyée depuis cet appareil.</div>';
+      wrap.innerHTML = '<div class="fd-empty">Aucune remontée envoyée depuis cet appareil.</div>';
       return;
     }
     wrap.innerHTML = list.map(e=>{
@@ -1203,7 +1209,7 @@ if('serviceWorker' in navigator){
         d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) +
         (e.how ? '  ·  ' + e.how : '') + (e.nbPhotos ? '  ·  ' + e.nbPhotos + ' photo(s)' : '');
       return '<div class="fd-hist-item">' +
-        '<div class="fd-hist-main"><div class="fd-hist-title">' + String(e.label || 'Fiche devis').replace(/</g,'&lt;') + '</div>' +
+        '<div class="fd-hist-main"><div class="fd-hist-title">' + String(e.label || 'Remontée FO').replace(/</g,'&lt;') + '</div>' +
         '<div class="fd-hist-meta">' + meta + '</div></div>' +
         '<button type="button" class="fd-hist-btn" data-load="' + e.id + '">Reprendre</button>' +
         '<button type="button" class="fd-hist-del" data-del="' + e.id + '">✕</button>' +
@@ -1214,7 +1220,7 @@ if('serviceWorker' in navigator){
         const e = histLoad().find(x => String(x.id) === b.dataset.load);
         if(!e) return;
         applyForm(e.data);
-        showMsg('Fiche reprise \u2014 les photos ne sont pas conservées, pense à les reprendre.');
+        showMsg('Remontée reprise \u2014 les captures ne sont pas conservées, pense à les remettre.');
         window.scrollTo({ top:0, behavior:'smooth' });
       });
     });
