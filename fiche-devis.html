@@ -9,6 +9,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
   window.addEventListener('error', function(e){
+    // Avertissements bénins du navigateur (ResizeObserver, erreurs de scripts externes
+    // sans détail) : ne concernent pas la fiche, on ne les affiche pas.
+    var m = String((e && e.message) || '');
+    if(/ResizeObserver/i.test(m) || m === 'Script error.' || !e.lineno) return;
     var b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#B3403A;color:#fff;padding:10px 14px;font-size:13px;z-index:99999;font-family:sans-serif;line-height:1.4;';
     b.textContent = 'Erreur technique : ' + e.message + ' (ligne ' + e.lineno + ')';
@@ -542,7 +546,7 @@ if('serviceWorker' in navigator){
     <button type="button" id="fd-force-refresh" class="fd-refresh-btn" title="Actualiser la version" aria-label="Actualiser la version">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     </button>
-    <a class="fd-logo" href="https://www.record.fr" target="_blank" rel="noopener" title="Ouvrir record.fr"><img src="./record-logo.webp" alt="RECORD"></a>
+    <span class="fd-logo"><img src="./record-logo.webp" alt="RECORD"></span>
     <div class="fd-eyebrow"><span>RECORD · MAINTENANCE TRAVAUX</span><span id="fd-ticket-no">FD —</span></div>
     <div class="fd-title">Demande de devis</div>
     <div class="fd-sub">Relevé technicien à compléter sur site</div>
@@ -607,8 +611,17 @@ if('serviceWorker' in navigator){
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Pièces & photos</span></div>
       <div class="fd-field full">
-        <label>Descriptif des pièces (référence si possible) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
-        <textarea id="f-pieces" placeholder="Ex. Moteur tri 0.75kW réf. XXXX, courroie crantée réf. XXXX..."></textarea>
+        <label>Détail des pièces (transmis au fournisseur) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+        <textarea id="f-pieces" placeholder="Ex. palpeur bas complet, bâche complète, armoire de commande"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px;">
+          <button type="button" id="btn-remarque" style="display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;min-height:36px;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;">
+            <span id="remarque-label">+ Ajouter une remarque</span>
+          </button>
+        </div>
+        <div id="remarque-box" style="display:none;margin-top:8px;">
+          <label for="f-remarque">Remarque interne (non transmise au fournisseur)</label>
+          <textarea id="f-remarque" placeholder="Ex. pièce à commander avant le 15, accès par le quai n°3…"></textarea>
+        </div>
       </div>
       <div class="fd-field full">
         <label>Photos <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span> (au moins 1 obligatoire)</label>
@@ -644,14 +657,14 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.39</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.45</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  const fields = ['tech','site','mail','equip','fq','loc','marque','modele','temps','nbtech','pieces'];
+  const fields = ['tech','site','mail','equip','fq','loc','marque','modele','temps','nbtech','pieces','remarque'];
   let toggles = { nacelle:null, pirl:null };
   let chips = { arret:false, urgent:false, preventif:false };
   let photos = []; // dataURLs (jpeg compressés)
@@ -1063,6 +1076,7 @@ if('serviceWorker' in navigator){
 
       section('Pièces à devis');
       block('Descriptif', data.pieces);
+      if(data.remarque) block('Remarque interne', data.remarque);
     }
 
     photosPages(data.photos);
@@ -1449,8 +1463,22 @@ if('serviceWorker' in navigator){
       .filter(Boolean).join('  ·  ');
   }
 
+  function syncRemarque(ouvrir){
+    const box = $('remarque-box'), lab = $('remarque-label');
+    if(!box) return;
+    const open = ouvrir !== undefined ? ouvrir : !!($('f-remarque').value.trim());
+    box.style.display = open ? '' : 'none';
+    lab.textContent = open ? '\u2212 Masquer la remarque' : '+ Ajouter une remarque';
+  }
+  $('btn-remarque') && $('btn-remarque').addEventListener('click', ()=>{
+    const open = $('remarque-box').style.display === 'none';
+    syncRemarque(open);
+    if(open) $('f-remarque').focus();
+  });
+
   function applyForm(data){
     fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = data[f] || ''; });
+    syncRemarque();
     toggles = { nacelle:(data.toggles||{}).nacelle || null, pirl:(data.toggles||{}).pirl || null };
     chips = { arret:!!(data.chips||{}).arret, urgent:!!(data.chips||{}).urgent, preventif:!!(data.chips||{}).preventif };
     document.querySelectorAll('.fd-toggle').forEach(t=>{
@@ -1469,7 +1497,8 @@ if('serviceWorker' in navigator){
   }
 
   function resetForm(){
-    fields.forEach(f => $('f-'+f).value = '');
+    fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = ''; });
+    syncRemarque(false);
     photos = [];
     renderPhotoGrid();
     toggles = { nacelle:null, pirl:null };
@@ -1539,6 +1568,7 @@ if('serviceWorker' in navigator){
     ]);
 
     bloc('Pièces à devis', [ (data.pieces || '\u2014') ]);
+    if(data.remarque) bloc('Remarque interne', [ data.remarque ]);
 
     if(opts.notePhotos || opts.note){
       const lignes = [];
@@ -1609,7 +1639,7 @@ if('serviceWorker' in navigator){
     if(!toggles.nacelle) return { msg:'Merci de préciser si une nacelle est nécessaire.', target:'.fd-toggle[data-field="nacelle"]' };
     if(!toggles.pirl) return { msg:'Merci de préciser si un PIRL est nécessaire.', target:'.fd-toggle[data-field="pirl"]' };
     if(!data.chips.arret && !data.chips.urgent && !data.chips.preventif) return { msg:"Le statut de l'intervention est obligatoire.", target:'.fd-chip-row' };
-    if(!data.pieces) return { msg:'Le descriptif des pièces est obligatoire.', target:'#f-pieces' };
+    if(!data.pieces) return { msg:'Le détail des pièces est obligatoire.', target:'#f-pieces' };
     if(!data.photos || !data.photos.length) return { msg:'Au moins une photo est obligatoire.', target:'.fd-photo-btn' };
     return null;
   }

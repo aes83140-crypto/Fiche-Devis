@@ -9,6 +9,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
   window.addEventListener('error', function(e){
+    // Avertissements bénins du navigateur (ResizeObserver, erreurs de scripts externes
+    // sans détail) : ne concernent pas la fiche, on ne les affiche pas.
+    var m = String((e && e.message) || '');
+    if(/ResizeObserver/i.test(m) || m === 'Script error.' || !e.lineno) return;
     var b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#B3403A;color:#fff;padding:10px 14px;font-size:13px;z-index:99999;font-family:sans-serif;line-height:1.4;';
     b.textContent = 'Erreur technique : ' + e.message + ' (ligne ' + e.lineno + ')';
@@ -616,7 +620,7 @@ if('serviceWorker' in navigator){
     <button type="button" id="fd-force-refresh" class="fd-refresh-btn" title="Actualiser la version" aria-label="Actualiser la version">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     </button>
-    <a class="fd-logo" href="https://www.record.fr" target="_blank" rel="noopener" title="Ouvrir record.fr"><img src="./record-logo.webp" alt="RECORD"></a>
+    <span class="fd-logo"><img src="./record-logo.webp" alt="RECORD"></span>
     <div class="fd-eyebrow"><span>RECORD Portes Automatiques</span><span id="fd-ticket-no">Client —</span></div>
     <div class="fd-title">Relevé de cotes<br>Travaux sur rideaux métalliques</div>
     <div class="fd-sub">Relevé technicien avant travaux ou remplacement</div>
@@ -811,7 +815,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.49</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.52</div>
 </div>
 
 <script>
@@ -2589,9 +2593,12 @@ if('serviceWorker' in navigator){
     const fourName = pdfFileName('FR-FOURNISSEUR', data.client, data.equip);
     try{
       pdfDoc = generateRideauPDF(data);
-      pdfFile = new File([pdfDoc.output('blob')], pdfName, { type:'application/pdf' });
+      const pdfBlob = pdfDoc.output('blob');
+      pdfFile = new File([pdfBlob], pdfName, { type:'application/pdf' });
       fourDoc = generateRideauPDF(data, 'fournisseur');
-      fourFile = new File([fourDoc.output('blob')], fourName, { type:'application/pdf' });
+      const fourBlob = fourDoc.output('blob');
+      fourFile = new File([fourBlob], fourName, { type:'application/pdf' });
+      dernierPoids = pdfBlob.size + fourBlob.size;
     }catch(e){
       showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ") — utilise \"Copier le texte\" en secours.", false);
       return;

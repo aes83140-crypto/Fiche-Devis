@@ -9,6 +9,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
   window.addEventListener('error', function(e){
+    // Avertissements bénins du navigateur (ResizeObserver, erreurs de scripts externes
+    // sans détail) : ne concernent pas la fiche, on ne les affiche pas.
+    var m = String((e && e.message) || '');
+    if(/ResizeObserver/i.test(m) || m === 'Script error.' || !e.lineno) return;
     var b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#B3403A;color:#fff;padding:10px 14px;font-size:13px;z-index:99999;font-family:sans-serif;line-height:1.4;';
     b.textContent = 'Erreur technique : ' + e.message + ' (ligne ' + e.lineno + ')';
@@ -137,6 +141,12 @@
     background:var(--steel-soft);width:30px;height:30px;border-radius:10px;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;
   }
+  .fd-mode-btn{
+    flex:1;min-width:160px;min-height:48px;display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;
+    background:#fff;color:var(--ink-soft);font-weight:700;font-size:14px;cursor:pointer;
+  }
+  .fd-mode-btn.on{background:var(--steel);border-color:var(--steel);color:#fff;}
   .fd-section-title{
     font-family:var(--disp);font-weight:700;font-size:16px;letter-spacing:-.01em;
     text-transform:none;color:var(--ink);
@@ -171,6 +181,7 @@
   .fd-add-row input{flex:1;}
   .fd-add-row.hidden{display:none;}
   input.hidden,select.hidden{display:none;}
+  .fd-section.hidden{display:none;}
 
   .fd-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .fd-photo-btn.cam{border-style:solid;background:var(--steel);color:#fff;border-color:var(--steel);}
@@ -606,13 +617,22 @@ if('serviceWorker' in navigator){
     <button type="button" id="fd-force-refresh" class="fd-refresh-btn" title="Actualiser la version" aria-label="Actualiser la version">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     </button>
-    <a class="fd-logo" href="https://www.record.fr" target="_blank" rel="noopener" title="Ouvrir record.fr"><img src="./record-logo.webp" alt="RECORD"></a>
+    <span class="fd-logo"><img src="./record-logo.webp" alt="RECORD"></span>
     <div class="fd-eyebrow"><span>RECORD Portes Automatiques</span><span id="fd-ticket-no">RV —</span></div>
     <div class="fd-title">Relevé Vantaux SAV</div>
     <div class="fd-sub">Relevé technicien pour vantail ou fixe cassé</div>
   </div>
 
   <div class="fd-body">
+
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">0</span><span class="fd-section-title">Type d'intervention</span></div>
+      <div class="fd-toggle-row" id="mode-row">
+        <div class="fd-mode-btn on" data-mode="record">Vantail RECORD</div>
+        <div class="fd-mode-btn" data-mode="vitrage">Vitrage seul (autre marque)</div>
+      </div>
+      <div class="fd-hint" id="mode-hint">Relevé complet : profilé, mécanisme et configuration de la porte.</div>
+    </div>
 
     <div class="fd-section">
       <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Identification</span></div>
@@ -624,7 +644,58 @@ if('serviceWorker' in navigator){
       </div>
     </div>
 
-    <div class="fd-section">
+    <div class="fd-section hidden" id="sec-vitrage">
+      <div class="fd-section-head"><span class="fd-num">V</span><span class="fd-section-title">Vitrage seul — marque et cotes</span></div>
+      <div class="fd-grid">
+        <div class="fd-field full"><label>Marque du vantail <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+          <select id="f-marque-sel" data-libre="f-marque">
+            <option value="">— Choisir —</option>
+            <option value="Dorma">Dorma</option>
+            <option value="Geze">Geze</option>
+            <option value="Besam / Assa Abloy">Besam / Assa Abloy</option>
+            <option value="Tormax">Tormax</option>
+            <option value="Portalp">Portalp</option>
+            <option value="Manusa">Manusa</option>
+            <option value="Horton">Horton</option>
+            <option value="Stanley">Stanley</option>
+            <option value="KABA">KABA</option>
+            <option value="__autre__">Autre — saisir la marque</option>
+          </select>
+          <input type="text" id="f-marque" placeholder="Saisir la marque" autocomplete="off" style="display:none;margin-top:8px;">
+        </div>
+      </div>
+
+      <label style="margin-top:14px;display:block;">Clair de vitrage — partie visible, mesurée d'alu à alu <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+      <div class="fd-grid">
+        <div class="fd-field"><label>Largeur du clair (mm)</label><input type="number" step="1" id="f-clair-l" placeholder="0"></div>
+        <div class="fd-field"><label>Hauteur du clair (mm)</label><input type="number" step="1" id="f-clair-h" placeholder="0"></div>
+        <div class="fd-field"><label>Prise de feuillure par côté (mm)</label><input type="number" step="1" id="f-feuillure" value="10"></div>
+      </div>
+      <div class="fd-hint">Le verre entre dans la feuillure de l'alu : la cote de commande vaut le clair + deux fois la prise de feuillure. 10 mm par défaut — à corriger si la feuillure de cette marque est différente.</div>
+
+      <div id="vitrage-cote" class="fd-callout" style="margin-top:12px;"></div>
+
+      <div class="fd-grid" style="margin-top:14px;">
+        <div class="fd-field full"><label>Type de vitrage <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+          <select id="f-verre-type-sel" data-libre="f-verre-type">
+            <option value="">— Choisir —</option>
+            <option value="Stadip 44/2">Stadip 44/2</option>
+            <option value="Stadip 55/2">Stadip 55/2</option>
+            <option value="Stadip 66/2">Stadip 66/2</option>
+            <option value="__autre__">Autre — saisir le type</option>
+          </select>
+          <input type="text" id="f-verre-type" placeholder="Saisir le type de vitrage" autocomplete="off" style="display:none;margin-top:8px;">
+        </div>
+      </div>
+
+      <label style="margin-top:14px;display:block;">Schéma — les deux cotes sur une seule image</label>
+      <div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;">
+        <canvas id="vitrage-canvas" width="900" height="760" style="width:100%;height:auto;display:block;max-width:520px;margin:0 auto;"></canvas>
+      </div>
+      <div class="fd-hint">Ce schéma est repris tel quel dans le PDF envoyé.</div>
+    </div>
+
+    <div class="fd-section" id="sec-config">
       <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Configuration &amp; vantail cassé</span></div>
       <label>Configuration de la porte <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
       <div class="fd-visual-grid" id="grid-config"></div>
@@ -632,7 +703,7 @@ if('serviceWorker' in navigator){
       <div id="panel-box-wrap"></div>
     </div>
 
-    <div class="fd-section">
+    <div class="fd-section" id="sec-dimensions">
       <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Vantail — dimensions</span></div>
       <div class="fd-grid">
         <div class="fd-field"><label>Hauteur (mm) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" id="f-hauteur" placeholder="0"></div>
@@ -650,7 +721,7 @@ if('serviceWorker' in navigator){
       </div>
     </div>
 
-    <div class="fd-section">
+    <div class="fd-section" id="sec-infos">
       <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Infos complémentaires</span></div>
       <div class="fd-grid">
         <div class="fd-field"><label>Rails au sol <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
@@ -668,7 +739,7 @@ if('serviceWorker' in navigator){
       </div>
     </div>
 
-    <div class="fd-section">
+    <div class="fd-section" id="sec-profil">
       <div class="fd-section-head"><span class="fd-num">5</span><span class="fd-section-title">Type de profilé alu</span></div>
       <label>Type de profilé alu <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
       <div class="fd-hint" style="margin-bottom:10px;margin-top:0;">22R et 32R = gammes actuelles. Choisis la photo correspondante — ou identifie le profil à partir de tes mesures dans la rubrique suivante.</div>
@@ -681,7 +752,7 @@ if('serviceWorker' in navigator){
       </div>
     </div>
 
-    <div class="fd-section">
+    <div class="fd-section" id="sec-recap">
       <div class="fd-section-head"><span class="fd-num">6</span><span class="fd-section-title">Récapitulatif — à vérifier avant photos</span></div>
       <div class="fd-hint" style="margin-bottom:10px;">Identifie le profil à partir des cotes mesurées si besoin (liste limitée aux valeurs existantes, pour éviter les erreurs) :</div>
       <div class="fd-grid">
@@ -740,14 +811,15 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.32</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.45</div>
 </div>
 
 <script>
 (function(){
   const $ = id => document.getElementById(id);
 
-  const fields = ['tech','client','numero-porte','mailclient','hauteur','largeur','finition','vitrage','meca','remarques','mes-av','mes-ar','mes-ci','mes-pl'];
+  const fields = ['tech','client','numero-porte','mailclient','hauteur','largeur','finition','vitrage','meca','remarques','mes-av','mes-ar','mes-ci','mes-pl',
+                  'marque','clair-l','clair-h','feuillure','verre-type'];
 
   // --- Listes préenregistrées (gérées depuis la page d'accueil > Administration) ---
   function lsGet(key){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
@@ -859,6 +931,191 @@ if('serviceWorker' in navigator){
   let brokenPanelIndex = null;
   let profilSelected = null;
   let schemaImg = null;
+
+  /* ===== Mode « Vitrage seul » =====
+     On ne remplace que le verre sur un vantail d'une autre marque : le profilé,
+     le mécanisme et la configuration RECORD ne sont pas relevés. */
+  let modeVitrage = false;
+  const SEC_RECORD = ['sec-config','sec-dimensions','sec-infos','sec-profil','sec-recap'];
+
+  function applyMode(){
+    SEC_RECORD.forEach(id=>{ const e = $(id); if(e) e.classList.toggle('hidden', modeVitrage); });
+    const sv = $('sec-vitrage');
+    if(sv) sv.classList.toggle('hidden', !modeVitrage);
+    document.querySelectorAll('.fd-mode-btn').forEach(b=>{
+      b.classList.toggle('on', (b.dataset.mode === 'vitrage') === modeVitrage);
+    });
+    const hint = $('mode-hint');
+    if(hint) hint.textContent = modeVitrage
+      ? "Remplacement du verre seul : marque du vantail, clair de vitrage et cote de commande."
+      : "Relevé complet : profilé, mécanisme et configuration de la porte.";
+    if(modeVitrage) drawVitrageSchema(); else schemaImg = null;
+  }
+
+  function coteVerre(){
+    const L = parseFloat(($('f-clair-l') || {}).value);
+    const H = parseFloat(($('f-clair-h') || {}).value);
+    let f = parseFloat(($('f-feuillure') || {}).value);
+    if(isNaN(f) || f < 0) f = 10;
+    return {
+      clairL: isNaN(L) ? 0 : L,
+      clairH: isNaN(H) ? 0 : H,
+      feu: f,
+      L: isNaN(L) ? 0 : Math.round(L + 2 * f),
+      H: isNaN(H) ? 0 : Math.round(H + 2 * f)
+    };
+  }
+
+  function drawVitrageSchema(){
+    const cvs = $('vitrage-canvas');
+    if(!cvs) return;
+    const c = coteVerre();
+    const x = cvs.getContext('2d');
+    const W = cvs.width, H = cvs.height;
+    x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, W, H);
+
+    // Un vantail est toujours plus haut que large : le schéma reste en portrait,
+    // proportionné aux cotes saisies (entre 0,35 et 0,85), 0,5 tant que rien n'est saisi.
+    let ratio = (c.L && c.H) ? c.L / c.H : 0.5;
+    if(ratio > 0.85) ratio = 0.85;
+    if(ratio < 0.35) ratio = 0.35;
+    // Cadre dans la zone 180..720 x 150..460 ; les quatre cotes sont à l'extérieur :
+    // VERRE en haut et à gauche, CLAIR en bas et à droite — aucune ne traverse le verre.
+    let fh = 400, fw = fh * ratio;
+    const fx = Math.round(W/2 - fw/2), fy = 150;
+    const band = Math.max(12, Math.min(24, Math.round(Math.min(fw, fh) * 0.08)));
+
+    // vantail (alu) puis verre visible
+    x.fillStyle = '#D5DBE1'; x.fillRect(fx, fy, fw, fh);
+    x.strokeStyle = '#1E3448'; x.lineWidth = 3; x.strokeRect(fx, fy, fw, fh);
+    x.fillStyle = '#E8F1F6'; x.fillRect(fx + band, fy + band, fw - 2*band, fh - 2*band);
+    x.strokeStyle = '#7C99AE'; x.lineWidth = 2;
+    x.strokeRect(fx + band, fy + band, fw - 2*band, fh - 2*band);
+
+    function txt(cx, cy, size, color, s, align, bold){
+      x.font = (bold === false ? '' : '700 ') + size + 'px Helvetica, Arial, sans-serif';
+      x.fillStyle = color; x.textAlign = align || 'center'; x.textBaseline = 'middle';
+      x.fillText(s, cx, cy);
+    }
+    function fleche(x1, y1, x2, y2, color){
+      x.strokeStyle = color; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(x1, y1); x.lineTo(x2, y2); x.stroke();
+      const a = Math.atan2(y2 - y1, x2 - x1), t = 9;
+      [[x1, y1, a], [x2, y2, a + Math.PI]].forEach(p=>{
+        x.beginPath(); x.moveTo(p[0], p[1]);
+        x.lineTo(p[0] + t * Math.cos(p[2] - 0.4), p[1] + t * Math.sin(p[2] - 0.4));
+        x.lineTo(p[0] + t * Math.cos(p[2] + 0.4), p[1] + t * Math.sin(p[2] + 0.4));
+        x.closePath(); x.fillStyle = color; x.fill();
+      });
+    }
+    function val(v){ return v ? String(v) + ' mm' : '—'; }
+
+    // titre
+    const marque = (($('f-marque') || {}).value || '').trim();
+    txt(W/2, 40, 30, '#1E3448', 'VITRAGE SEUL' + (marque ? '  ·  ' + marque.toUpperCase() : ''));
+    txt(W/2, 78, 19, '#8A939C', 'Cote de commande = clair + 2 × ' + c.feu + ' mm de feuillure', 'center', false);
+
+    function etiquette(cx, cy, s, color, rot){
+      x.save(); x.translate(cx, cy); if(rot) x.rotate(-Math.PI/2);
+      x.font = '700 22px Helvetica, Arial, sans-serif';
+      const w = x.measureText(s).width;
+      x.fillStyle = '#FFFFFF'; x.fillRect(-w/2 - 6, -15, w + 12, 30);
+      x.restore();
+      x.save(); x.translate(cx, cy); if(rot) x.rotate(-Math.PI/2);
+      txt(0, 0, 22, color, s);
+      x.restore();
+    }
+    function ligne(x1, y1, x2, y2, color){
+      x.strokeStyle = color; x.lineWidth = 1.2;
+      x.beginPath(); x.moveTo(x1, y1); x.lineTo(x2, y2); x.stroke();
+    }
+    const AMB = '#C8811A', NAV = '#1E3448';
+    const gL = fx + band, gR = fx + fw - band, gT = fy + band, gB = fy + fh - band;
+    // Bord du verre : il s'arrête à mi-largeur des montants (dans la feuillure), pas au bord du vantail.
+    const h2 = band / 2;
+    const vL = fx + h2, vR = fx + fw - h2, vT = fy + h2, vB = fy + fh - h2;
+    x.save();
+    x.setLineDash([8, 6]); x.strokeStyle = AMB; x.lineWidth = 1.6;
+    x.strokeRect(vL, vT, vR - vL, vB - vT);
+    x.restore();
+
+    // VERRE (cote de commande) : en haut et à gauche, sur le bord extérieur
+    const ty = fy - 40;
+    ligne(vL, vT, vL, ty - 10, AMB); ligne(vR, vT, vR, ty - 10, AMB);
+    fleche(vL, ty, vR, ty, AMB);
+    etiquette((vL + vR)/2, ty, 'VERRE  ' + val(c.L), AMB);
+    const lx = fx - 44;
+    ligne(vL, vT, lx - 10, vT, AMB); ligne(vL, vB, lx - 10, vB, AMB);
+    fleche(lx, vT, lx, vB, AMB);
+    etiquette(lx, (vT + vB)/2, 'VERRE  ' + val(c.H), AMB, true);
+
+    // CLAIR (partie visible) : en bas et à droite, rapporté depuis le bord intérieur de l'alu
+    const by = fy + fh + 40;
+    ligne(gL, gB, gL, by + 10, NAV); ligne(gR, gB, gR, by + 10, NAV);
+    fleche(gL, by, gR, by, NAV);
+    etiquette((gL + gR)/2, by, 'CLAIR  ' + val(c.clairL), NAV);
+    const rx = fx + fw + 44;
+    ligne(gR, gT, rx + 10, gT, NAV); ligne(gR, gB, rx + 10, gB, NAV);
+    fleche(rx, gT, rx, gB, NAV);
+    etiquette(rx, (gT + gB)/2, 'CLAIR  ' + val(c.clairH), NAV, true);
+
+    // caractéristiques du verre
+    const ty2 = (($('f-verre-type') || {}).value || '').trim();
+    txt(W/2, fy + fh + 100, 22, '#12171C', ty2 || 'Type de vitrage à renseigner');
+    txt(W/2, fy + fh + 130, 17, '#8A939C', 'Clair = partie visible, d\'alu à alu  ·  pointillé = bord du verre, dans la feuillure', 'center', false);
+
+    schemaImg = { dataUrl: cvs.toDataURL('image/jpeg', 0.9), w: W, h: H };
+  }
+
+  function refreshVitrage(){
+    const c = coteVerre();
+    const box = $('vitrage-cote');
+    if(box){
+      box.innerHTML = (c.clairL && c.clairH)
+        ? '<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:4px;">Cote de commande du verre</div>'
+          + '<div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--amber-dark);">'
+          + c.L + ' × ' + c.H + ' mm</div>'
+          + '<div class="fd-hint" style="margin-top:4px;">Clair ' + c.clairL + ' × ' + c.clairH + ' mm + 2 × ' + c.feu + ' mm de feuillure</div>'
+        : '<div class="fd-hint" style="margin:0;">Saisis le clair de vitrage : la cote de commande se calcule automatiquement.</div>';
+    }
+    if(modeVitrage) drawVitrageSchema();
+  }
+
+  /* Menus déroulants marque / type de vitrage : la valeur est recopiée dans le champ texte,
+     qui n'apparaît que pour « Autre ». */
+  function syncLibre(sel){
+    const inp = $(sel.dataset.libre);
+    if(!inp) return;
+    const libre = sel.value === '__autre__';
+    inp.style.display = libre ? '' : 'none';
+    if(libre){ if(Array.prototype.some.call(sel.options, o=> o.value === inp.value)) inp.value = ''; inp.focus(); }
+    else inp.value = sel.value;
+    refreshVitrage();
+  }
+  function selFromLibre(){
+    document.querySelectorAll('select[data-libre]').forEach(sel=>{
+      const inp = $(sel.dataset.libre);
+      if(!inp) return;
+      const v = inp.value;
+      const connu = v && Array.prototype.some.call(sel.options, o=> o.value === v && v !== '__autre__');
+      sel.value = !v ? '' : (connu ? v : '__autre__');
+      inp.style.display = sel.value === '__autre__' ? '' : 'none';
+    });
+  }
+  document.querySelectorAll('select[data-libre]').forEach(sel=> sel.addEventListener('change', ()=> syncLibre(sel)));
+
+  document.querySelectorAll('.fd-mode-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      modeVitrage = b.dataset.mode === 'vitrage';
+      applyMode();
+      refreshVitrage();
+    });
+  });
+  ['f-clair-l','f-clair-h','f-feuillure','f-marque','f-verre-type'].forEach(id=>{
+    const e = $(id);
+    if(e){ e.addEventListener('input', refreshVitrage); e.addEventListener('change', refreshVitrage); }
+  });
+  refreshVitrage();
 
 
 
@@ -1774,6 +2031,10 @@ if('serviceWorker' in navigator){
 
   function applyForm(data){
     fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = data[f] || ''; });
+    modeVitrage = data.mode === 'vitrage';
+    selFromLibre();
+    applyMode();
+    refreshVitrage();
     const t = data.toggles || {};
     toggles = { rails_sol:t.rails_sol || null, capot_ou_joint:t.capot_ou_joint || null, meca:t.meca || null };
     document.querySelectorAll('.fd-toggle').forEach(el=>{
@@ -1810,11 +2071,22 @@ if('serviceWorker' in navigator){
     }
     data.superficieTxt = $('schema-superficie').textContent;
     data.refVantailTxt = $('schema-ref').textContent;
+    data.mode = modeVitrage ? 'vitrage' : 'record';
+    if(modeVitrage){
+      const c = coteVerre();
+      data.commandeL = c.L; data.commandeH = c.H; data.feu = c.feu;
+    }
     return data;
   }
 
   function resetForm(){
-    fields.forEach(f => $('f-'+f).value = '');
+    fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = ''; });
+    if($('f-feuillure')) $('f-feuillure').value = '10';
+    modeVitrage = false;
+    Object.keys(PLAGES).forEach(alerteCote);
+    selFromLibre();
+    applyMode();
+    refreshVitrage();
     photos = [];
     renderPhotoGrid();
     toggles = { rails_sol:null, capot_ou_joint:null, meca:null };
@@ -1863,12 +2135,62 @@ if('serviceWorker' in navigator){
     if(e.target && e.target.closest && e.target.closest('.fd-flag')) clearFlags();
   }, true);
 
+  /* Alerte de cote inhabituelle (sans blocage) : champ en orange + message sous le champ.
+     Ex. 11140 au lieu de 1140 pour une largeur de vantail. */
+  const PLAGES = {
+    'f-largeur': { min:300,  max:2500, nom:'largeur de vantail' },
+    'f-hauteur': { min:1600, max:3200, nom:'hauteur de vantail' },
+    'f-clair-l': { min:300,  max:2500, nom:'largeur de clair' },
+    'f-clair-h': { min:1600, max:3200, nom:'hauteur de clair' }
+  };
+  function alerteCote(id){
+    const inp = $(id), p = PLAGES[id];
+    if(!inp || !p) return false;
+    let box = document.getElementById(id + '-alerte');
+    if(!box){
+      box = document.createElement('div');
+      box.id = id + '-alerte';
+      box.style.cssText = 'display:none;margin-top:6px;font-size:12.5px;font-weight:600;color:#9A5A0B;background:#FDF1DC;border-radius:8px;padding:6px 9px;';
+      inp.parentNode.insertBefore(box, inp.nextSibling);
+    }
+    const v = parseFloat(String(inp.value).replace(',', '.'));
+    const hors = !isNaN(v) && (v < p.min || v > p.max);
+    inp.style.borderColor = hors ? '#E0A030' : '';
+    inp.style.background = hors ? '#FFF8EC' : '';
+    box.style.display = hors ? '' : 'none';
+    if(hors) box.textContent = '\u26a0 ' + v.toLocaleString('fr-FR') + ' mm pour une ' + p.nom
+      + ' : cote inhabituelle (attendu ' + p.min.toLocaleString('fr-FR') + ' \u00e0 ' + p.max.toLocaleString('fr-FR') + ' mm). V\u00e9rifie la saisie.';
+    return hors;
+  }
+  Object.keys(PLAGES).forEach(id=>{
+    const e = $(id);
+    if(e){ e.addEventListener('input', ()=> alerteCote(id)); e.addEventListener('change', ()=> alerteCote(id)); }
+  });
+  // À l'envoi : une cote inhabituelle demande confirmation au technicien.
+  function confirmeCotes(){
+    const ids = modeVitrage ? ['f-clair-l','f-clair-h'] : ['f-largeur','f-hauteur'];
+    const hors = ids.filter(id=> alerteCote(id));
+    if(!hors.length) return true;
+    const liste = hors.map(id=> '\u2022 ' + PLAGES[id].nom + ' : ' + $(id).value + ' mm').join('\n');
+    const ok = confirm('Cote inhabituelle :\n' + liste + '\n\nConfirmer l\'envoi avec cette valeur ?');
+    if(!ok){ highlight('#' + hors[0]); }
+    return ok;
+  }
+
   function validate(data){
     if(!data.tech) return { msg:'Le technicien est obligatoire.', target:'#f-tech' };
     if(!data.client) return { msg:'Le client / chantier est obligatoire.', target:'#f-client' };
     if(!data['numero-porte']) return { msg:'Le numéro de porte est obligatoire.', target:'#f-numero-porte' };
     if(!data.mailclient) return { msg:'Le mail client est obligatoire.', target:'#f-mailclient' };
     if(!mailOk(data.mailclient)) return { msg:"L'adresse mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mailclient' };
+    if(data.mode === 'vitrage'){
+      if(!data.marque) return { msg:'La marque du vantail est obligatoire.', target: $('f-marque-sel').value === '__autre__' ? '#f-marque' : '#f-marque-sel' };
+      if(!data['clair-l']) return { msg:'La largeur du clair de vitrage est obligatoire.', target:'#f-clair-l' };
+      if(!data['clair-h']) return { msg:'La hauteur du clair de vitrage est obligatoire.', target:'#f-clair-h' };
+      if(!data['verre-type']) return { msg:'Le type de vitrage est obligatoire.', target: $('f-verre-type-sel').value === '__autre__' ? '#f-verre-type' : '#f-verre-type-sel' };
+      if(!data.photos || !data.photos.length) return { msg:'Au moins une photo est obligatoire.', target:'.fd-photo-btn' };
+      return null;
+    }
     if(!data.hauteur) return { msg:'La hauteur est obligatoire.', target:'#f-hauteur' };
     if(!data.largeur) return { msg:'La largeur est obligatoire.', target:'#f-largeur' };
     if(!data.finition) return { msg:'La finition est obligatoire.', target:'#f-finition' };
@@ -1900,6 +2222,24 @@ if('serviceWorker' in navigator){
     L.push(rule);
     L.push(data.client || 'Client non renseigné');
     L.push('Porte n° ' + (data['numero-porte'] || '\u2014') + '  \u00B7  ' + dateStr);
+
+    if(data.mode === 'vitrage'){
+      bloc('Remplacement de vitrage seul', [
+        kv('Marque du vantail', data.marque),
+      ]);
+      bloc('Identification', [ kv('Technicien', data.tech), kv('Mail client', data.mailclient) ]);
+      bloc('Cotes du vitrage', [
+        kv('Clair de vitrage', (data['clair-l'] || '\u2014') + ' × ' + (data['clair-h'] || '\u2014') + ' mm  (partie visible)'),
+        kv('Prise de feuillure', data.feu + ' mm par côté'),
+        'COTE DE COMMANDE DU VERRE : ' + (data.commandeL || '\u2014') + ' × ' + (data.commandeH || '\u2014') + ' mm',
+      ]);
+      bloc('Verre', [ kv('Type de vitrage', data['verre-type']) ]);
+      if(data.remarques){ bloc('Remarques', [ data.remarques ]); }
+      if(opts.note){ bloc('Pièces jointes', [ opts.note ]); }
+      L.push('');
+      L.push('\u2014 Relevé technicien RECORD');
+      return L.join('\n');
+    }
 
     bloc('Élément à remplacer', [
       kv('Vantail / fixe cassé', data.brokenPanel),
@@ -2143,6 +2483,44 @@ if('serviceWorker' in navigator){
 
     header();
 
+    if(data.mode === 'vitrage'){
+      section('Remplacement de vitrage seul');
+      callout('Marque du vantail', data.marque, 'red');
+
+      section('Identification');
+      row('Technicien', data.tech);
+      row('Client / Chantier', data.client);
+      row('Mail client', data.mailclient);
+      row('Numéro de porte', data['numero-porte']);
+
+      section('Cotes du vitrage');
+      tiles([
+        { k:'Clair largeur (mm)', v:data['clair-l'] },
+        { k:'Clair hauteur (mm)', v:data['clair-h'] },
+      ]);
+      row('Prise de feuillure', data.feu + ' mm par côté');
+      callout('★ Cote de commande du verre',
+        (data.commandeL || '\u2014') + ' × ' + (data.commandeH || '\u2014') + ' mm', 'green');
+
+      section('Verre');
+      row('Type de vitrage', data['verre-type']);
+
+      if(data.remarques){ section('Remarques'); row('', data.remarques); }
+
+      if(schemaImg && schemaImg.dataUrl){
+        section('Schéma du vitrage');
+        const sw2 = Math.min(contentW, 150);
+        const sh2 = sw2 * schemaImg.h / schemaImg.w;
+        checkBreak(sh2 + 6);
+        try{ doc.addImage(schemaImg.dataUrl, 'JPEG', margin + (contentW - sw2)/2, y, sw2, sh2); }catch(e){}
+        y += sh2 + 6;
+      }
+
+      photosPages(data.photos);
+      footers();
+      return doc;
+    }
+
     section('Élément à remplacer');
     callout('Vantail / fixe cassé', data.brokenPanel, 'red');
     row('Configuration de la porte', data.config);
@@ -2220,6 +2598,7 @@ if('serviceWorker' in navigator){
     const data = readForm();
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
+    if(!confirmeCotes()) return;
     try{
       const pdfDoc = generateSAVPDF(data);
       pdfDoc.save(pdfFileName('RV', data.client, data['numero-porte']));
@@ -2239,6 +2618,7 @@ if('serviceWorker' in navigator){
     const data = readForm();
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
+    if(!confirmeCotes()) return;
     const subject = 'Vantail SAV cassé - ' + (data.client||'Client') + (data['numero-porte'] ? ' - Porte '+data['numero-porte'] : '');
 
     let pdfFile = null, pdfDoc = null;
