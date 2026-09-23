@@ -600,7 +600,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.11</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.13</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -1505,11 +1505,10 @@ if('serviceWorker' in navigator){
   const DEST = 'christophe.bataille@record.fr';
   function pdfName(data){
     const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
-    return ['FO', clean(data.tech) || 'technicien', (data.date || todayIso())].join('-') + '.pdf';
+    const simple = s => clean(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    return ['FO', simple(data.site) || 'site', (data.date || todayIso())].join('-') + '.pdf';
   }
-  let partageEnCours = false;
   $('btn-mail').addEventListener('click', ()=>{
-    if(partageEnCours){ showMsg('La fenêtre de partage est déjà ouverte — termine ou ferme-la d\'abord.', false, true); return; }
     const data = readForm();
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
@@ -1528,15 +1527,13 @@ if('serviceWorker' in navigator){
     const files = [pdfFile];
     const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
     if(canAttach){
-      const text = 'À : ' + DEST + '\n\n' + formatText(data, { note: data.photos.length ? '📎 PDF joint avec la capture.' : '📎 PDF joint.' });
-      partageEnCours = true;
-      navigator.share({ title: subject, text: text, files: files }).finally(()=>{ partageEnCours = false; }).then(()=>{
+      const text = formatText(data, { note: data.photos.length ? '📎 PDF joint avec la capture.' : '📎 PDF joint.' });
+      navigator.share({ title: subject, text: text, files: files }).then(()=>{
         histAdd(data, 'mail');
         showMsg('Partage envoyé — ' + pdfPoids() + '. Destinataire : ' + DEST);
         resetForm();
       }).catch(e=>{
         if(e && e.name === 'AbortError') return;
-        if(e && e.name === 'InvalidStateError'){ showMsg('Une fenêtre de partage est déjà ouverte — ferme-la puis réessaie.', false); return; }
         const detail = (e && e.message) ? e.message : (e && e.name) ? e.name : 'erreur inconnue';
         showMsg('Le partage a échoué (' + detail + ') — utilise "Télécharger le PDF".', false);
       });
