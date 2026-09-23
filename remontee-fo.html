@@ -600,7 +600,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.10</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.11</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -1526,11 +1526,7 @@ if('serviceWorker' in navigator){
       return;
     }
     const files = [pdfFile];
-    /* Sur PC, le partage Windows reste parfois bloqué : on ouvre directement la messagerie
-       (destinataire + objet pré-remplis) et le PDF est téléchargé pour être joint.
-       Sur téléphone / tablette : partage avec le PDF en pièce jointe. */
-    const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const canAttach = mobile && !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
+    const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
     if(canAttach){
       const text = 'À : ' + DEST + '\n\n' + formatText(data, { note: data.photos.length ? '📎 PDF joint avec la capture.' : '📎 PDF joint.' });
       partageEnCours = true;
