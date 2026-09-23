@@ -600,7 +600,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.8</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.10</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -1507,7 +1507,9 @@ if('serviceWorker' in navigator){
     const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
     return ['FO', clean(data.tech) || 'technicien', (data.date || todayIso())].join('-') + '.pdf';
   }
+  let partageEnCours = false;
   $('btn-mail').addEventListener('click', ()=>{
+    if(partageEnCours){ showMsg('La fenêtre de partage est déjà ouverte — termine ou ferme-la d\'abord.', false, true); return; }
     const data = readForm();
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
@@ -1524,15 +1526,21 @@ if('serviceWorker' in navigator){
       return;
     }
     const files = [pdfFile];
-    const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
+    /* Sur PC, le partage Windows reste parfois bloqué : on ouvre directement la messagerie
+       (destinataire + objet pré-remplis) et le PDF est téléchargé pour être joint.
+       Sur téléphone / tablette : partage avec le PDF en pièce jointe. */
+    const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const canAttach = mobile && !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
     if(canAttach){
       const text = 'À : ' + DEST + '\n\n' + formatText(data, { note: data.photos.length ? '📎 PDF joint avec la capture.' : '📎 PDF joint.' });
-      navigator.share({ title: subject, text: text, files: files }).then(()=>{
+      partageEnCours = true;
+      navigator.share({ title: subject, text: text, files: files }).finally(()=>{ partageEnCours = false; }).then(()=>{
         histAdd(data, 'mail');
         showMsg('Partage envoyé — ' + pdfPoids() + '. Destinataire : ' + DEST);
         resetForm();
       }).catch(e=>{
         if(e && e.name === 'AbortError') return;
+        if(e && e.name === 'InvalidStateError'){ showMsg('Une fenêtre de partage est déjà ouverte — ferme-la puis réessaie.', false); return; }
         const detail = (e && e.message) ? e.message : (e && e.name) ? e.name : 'erreur inconnue';
         showMsg('Le partage a échoué (' + detail + ') — utilise "Télécharger le PDF".', false);
       });
@@ -1540,10 +1548,11 @@ if('serviceWorker' in navigator){
       const text = formatText(data, { note:'📎 PDF téléchargé : merci de le joindre à ce mail.' });
       try{
         const a = document.createElement('a');
+        a.target = '_top';
         a.href = 'mailto:' + DEST + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
         a.rel = 'noopener';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(()=>{ try{ pdfDoc.save(name); }catch(e2){} }, 1200);
+        setTimeout(()=>{ try{ pdfDoc.save(name); }catch(e2){} }, 900);
         histAdd(data, 'mail');
         showMsg('Mail ouvert vers ' + DEST + ' — le PDF vient d\'être téléchargé, joins-le au message.');
       }catch(e){
