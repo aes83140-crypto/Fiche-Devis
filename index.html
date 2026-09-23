@@ -500,7 +500,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.64</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.68</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -635,6 +635,42 @@ if('serviceWorker' in navigator){
   const ADMIN_CODE = window.RECORD_ADMIN_CODE || 'Chris04';
   // Code distinct, réservé aux remises à zéro (statistiques et avis).
   const RESET_CODE = window.RECORD_RESET_CODE || 'Reset04';
+  let statManage = false; // mode gestion : admin ouvert avec le code Reset04
+  /* Fenêtre interne (remplace prompt/confirm, bloqués dans certains navigateurs et aperçus).
+     askBox(message, {code:true}) -> Promise<string|null> ; askBox(message) -> Promise<boolean> */
+  function askBox(msg, opt){
+    opt = opt || {};
+    return new Promise(res=>{
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(12,17,22,.55);display:flex;align-items:center;justify-content:center;padding:20px;';
+      const box = document.createElement('div');
+      box.style.cssText = 'width:100%;max-width:380px;background:#fff;border-radius:18px;padding:22px;box-shadow:0 24px 60px -20px rgba(0,0,0,.5);font-family:inherit;';
+      const p = document.createElement('div');
+      p.style.cssText = 'font-size:15.5px;line-height:1.45;color:#12171C;font-weight:600;white-space:pre-line;';
+      p.textContent = msg;
+      box.appendChild(p);
+      let inp = null;
+      if(opt.code){
+        inp = document.createElement('input');
+        inp.type = 'password'; inp.autocomplete = 'off'; inp.setAttribute('autocapitalize','off');
+        inp.style.cssText = 'margin-top:14px;width:100%;box-sizing:border-box;height:48px;border:1.5px solid #CCD3DB;border-radius:12px;padding:0 14px;font-size:17px;font-family:inherit;';
+        box.appendChild(inp);
+      }
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:10px;margin-top:18px;';
+      const mk = (t, primary)=>{ const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+        b.style.cssText = 'flex:1;min-height:46px;border-radius:12px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;' + (primary ? 'background:#1E3448;color:#fff;border:1.5px solid #1E3448;' : 'background:#fff;color:#1E3448;border:1.5px solid #CCD3DB;'); return b; };
+      const no = mk(opt.cancel || 'Annuler', false), yes = mk(opt.ok || 'Valider', true);
+      row.appendChild(no); row.appendChild(yes); box.appendChild(row);
+      ov.appendChild(box); document.body.appendChild(ov);
+      const done = v=>{ ov.remove(); res(v); };
+      no.onclick = ()=> done(opt.code ? null : false);
+      yes.onclick = ()=> done(opt.code ? inp.value : true);
+      ov.addEventListener('click', e=>{ if(e.target === ov) done(opt.code ? null : false); });
+      if(inp){ inp.addEventListener('keydown', e=>{ if(e.key === 'Enter') yes.click(); if(e.key === 'Escape') no.click(); }); setTimeout(()=> inp.focus(), 30); }
+      else setTimeout(()=> yes.focus(), 30);
+    });
+  }
   const TECH_KEY = 'techniciens-preenregistres';
   const GROUPS_KEY = 'techniciens-groupes';
   function loadGroups(){
@@ -693,8 +729,8 @@ if('serviceWorker' in navigator){
       const chip = document.createElement('span');
       chip.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line-2);border-radius:20px;padding:6px 8px 6px 13px;font-size:13.5px;';
       chip.innerHTML = '<span>'+name.replace(/</g,'&lt;')+'</span><button type="button" style="border:none;background:transparent;border-radius:50%;width:18px;height:18px;line-height:1;cursor:pointer;color:var(--line-2);font-size:12px;">✕</button>';
-      chip.querySelector('button').addEventListener('click', ()=>{
-        if(!confirm('Supprimer l\'agence « ' + name + ' » ? Les techniciens qui y sont classés repassent sans agence.')) return;
+      chip.querySelector('button').addEventListener('click', async ()=>{
+        if(!(await askBox('Supprimer l\'agence « ' + name + ' » ? Les techniciens qui y sont classés repassent sans agence.', { ok:'Supprimer' }))) return;
         const gg = loadGroups();
         gg.groups = gg.groups.filter(x=>x!==name);
         Object.keys(gg.assign).forEach(t=>{ if(gg.assign[t]===name) delete gg.assign[t]; });
@@ -882,7 +918,7 @@ if('serviceWorker' in navigator){
     html += '<div style="overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px;">'
       + '<table style="width:100%;border-collapse:collapse;">'
       + '<thead><tr style="background:var(--surface);">'
-      + ['Technicien','Devis','Vantaux','Rideaux','Porte neuve','Contrat (arch.)','Total','Dernière']
+      + ['Technicien','Devis','Vantaux','Rideaux','Porte neuve','Contrat (arch.)','Total','Dernière'].concat(statManage ? [''] : [])
         .map((t,ix)=>'<th style="' + cell + 'text-align:' + (ix ? 'center' : 'left') + ';font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);font-weight:700;">' + t + '</th>').join('')
       + '</tr></thead><tbody>';
     techs.forEach(t=>{
@@ -894,7 +930,9 @@ if('serviceWorker' in navigator){
         + '<td style="' + num + '">' + (b.PN || '·') + '</td>'
         + '<td style="' + num + '">' + (b.FC || '·') + '</td>'
         + '<td style="' + num + 'font-weight:700;">' + b.total + '</td>'
-        + '<td style="' + num + 'color:var(--ink-mute);">' + fdate(b.last) + '</td></tr>';
+        + '<td style="' + num + 'color:var(--ink-mute);">' + fdate(b.last) + '</td>'
+        + (statManage ? '<td style="' + cell + 'text-align:center;width:44px;"><button type="button" class="stat-del" data-tech="' + encodeURIComponent(t) + '" title="Supprimer cette ligne" aria-label="Supprimer ' + t.replace(/"/g,'') + '" style="width:34px;height:34px;border-radius:9px;border:1px solid #E9BEB9;background:var(--red-bg);color:var(--red);font-size:18px;font-weight:700;line-height:1;cursor:pointer;">×</button></td>' : '')
+        + '</tr>';
     });
     html += '</tbody></table></div>';
     if(months.length > 1){
@@ -1050,15 +1088,27 @@ if('serviceWorker' in navigator){
     pushSilently();
   });
 
-  $('btn-admin').addEventListener('click', ()=>{
-    const code = prompt('Code administrateur :');
+  $('btn-admin').addEventListener('click', async ()=>{
+    const code = await askBox('Code administrateur :', { code:true });
     if(code === null) return;
-    if(code !== ADMIN_CODE){
-      const hint = window.RECORD_ADMIN_HINT || '';
-      if(hint && confirm('Code administrateur incorrect.\n\nVoir l\'indice ?')) alert('Indice : ' + hint);
+    if(code === RESET_CODE){
+      statManage = true;
+      renderAdminPanel();
+      collapseAdminSections();
+      renderStats();
+      renderAvis();
+      $('admin-modal').classList.remove('hidden');
       return;
     }
+    if(code !== ADMIN_CODE){
+      const hint = window.RECORD_ADMIN_HINT || '';
+      if(hint){ if(await askBox('Code administrateur incorrect.\n\nVoir l\'indice ?', { ok:'Voir l\'indice' })) await askBox('Indice : ' + hint, { ok:'OK', cancel:'Fermer' }); }
+      else await askBox('Code administrateur incorrect.', { ok:'OK', cancel:'Fermer' });
+      return;
+    }
+    statManage = false;
     renderAdminPanel();
+    renderAvis();
     collapseAdminSections();
     $('admin-modal').classList.remove('hidden');
   });
@@ -1154,12 +1204,14 @@ if('serviceWorker' in navigator){
         + '<span style="flex:1;height:8px;background:#E9EEF3;border-radius:999px;overflow:hidden;"><span style="display:block;height:100%;width:' + pct + '%;background:var(--navy);"></span></span>'
         + '<span style="width:28px;text-align:right;font-family:var(--mono);">' + c + '</span></div>';
     });
-    const last = rows.slice(-6).reverse();
-    h += '<div class="fd-hint" style="margin-top:12px;">Derniers retours</div>';
-    h += last.map(r=> '<div style="font-size:12.5px;padding:7px 0;border-top:1px solid #E9EEF3;">'
+    const last = statManage ? rows.slice().reverse() : rows.slice(-6).reverse();
+    h += '<div class="fd-hint" style="margin-top:12px;">' + (statManage ? 'Tous les retours' : 'Derniers retours') + '</div>';
+    h += last.map(r=> '<div style="display:flex;align-items:center;gap:10px;font-size:12.5px;padding:7px 0;border-top:1px solid #E9EEF3;"><div style="flex:1;min-width:0;">'
       + '<strong>' + esc(r.t || 'Anonyme') + '</strong> · ' + Number(r.n) + '/5 · '
       + '<span style="color:var(--ink-mute);">' + esc(String(r.d || '').slice(0,10)) + '</span>'
-      + (r.c ? '<div style="color:var(--ink-mute);margin-top:2px;">' + esc(r.c) + '</div>' : '') + '</div>').join('');
+      + (r.c ? '<div style="color:var(--ink-mute);margin-top:2px;">' + esc(r.c) + '</div>' : '') + '</div>'
+      + (statManage ? '<button type="button" class="avis-del" data-d="' + esc(String(r.d || '')) + '" title="Supprimer cet avis" aria-label="Supprimer cet avis" style="flex-shrink:0;width:34px;height:34px;border-radius:9px;border:1px solid #E9BEB9;background:var(--red-bg);color:var(--red);font-size:18px;font-weight:700;line-height:1;cursor:pointer;">×</button>' : '')
+      + '</div>').join('');
     box.innerHTML = h;
   }
   async function avisPull(){
@@ -1177,11 +1229,33 @@ if('serviceWorker' in navigator){
     }
   }
   $('avis-refresh') && $('avis-refresh').addEventListener('click', avisPull);
+  $('avis-body') && $('avis-body').addEventListener('click', async (e)=>{
+    const btn = e.target.closest && e.target.closest('.avis-del');
+    if(!btn || !statManage) return;
+    const d = btn.dataset.d || '';
+    const row = avisLoad().find(r=> String(r.d) === d);
+    if(!row) return;
+    if(!(await askBox('Supprimer définitivement l\'avis de « ' + (row.t || 'Anonyme') + ' » (' + row.n + '/5) ?', { ok:'Supprimer' }))) return;
+    avisSave(avisLoad().filter(r=> String(r.d) !== d));
+    renderAvis();
+    if(sbReady()){
+      avisStatus('Suppression en cours...');
+      try{
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis?d=eq.' + encodeURIComponent(d), { method:'DELETE', headers: sbHeaders() });
+        if(!r.ok) throw new Error('http ' + r.status);
+        avisStatus('\u2713 Avis supprimé (appareil + espace partagé).', 'ok');
+      }catch(err){
+        avisStatus('\u26A0 Supprimé sur cet appareil, mais pas dans l\'espace partagé (réseau ?).', 'err');
+      }
+    } else {
+      avisStatus('\u2713 Avis supprimé sur cet appareil.', 'ok');
+    }
+  });
   $('avis-reset') && $('avis-reset').addEventListener('click', async ()=>{
-    const code = prompt('Code de réinitialisation (distinct du code administrateur) :');
+    const code = await askBox('Code de réinitialisation (distinct du code administrateur) :', { code:true });
     if(code === null) return;
     if(code !== RESET_CODE){ avisStatus('\u26A0 Code de réinitialisation incorrect — rien n\'a été effacé.', 'err'); return; }
-    if(!confirm('Effacer définitivement tous les avis (cet appareil + espace partagé) ?')) return;
+    if(!(await askBox('Effacer définitivement tous les avis (cet appareil + espace partagé) ?', { ok:'Effacer' }))) return;
     avisSave([]); renderAvis();
     if(sbReady()){
       try{
@@ -1368,11 +1442,35 @@ if('serviceWorker' in navigator){
     statStatus('\u2713 ' + rows.length + ' ligne(s) exportée(s).', 'ok');
   });
 
+  /* Mode gestion (code Reset04) : suppression ligne par ligne d'un technicien dans les statistiques. */
+  // statManage est déclaré en haut du script : vrai uniquement quand l'admin a été ouvert avec le code Reset04.
+  $('stats-body') && $('stats-body').addEventListener('click', async (e)=>{
+    const btn = e.target.closest && e.target.closest('.stat-del');
+    if(!btn || !statManage) return;
+    const tech = decodeURIComponent(btn.dataset.tech || '');
+    const n = statLoad().filter(r=> r.t === tech).length;
+    if(!(await askBox('Supprimer définitivement la ligne « ' + tech + ' » (' + n + ' fiche(s)) ?', { ok:'Supprimer' }))) return;
+    statSave(statLoad().filter(r=> r.t !== tech));
+    renderStats();
+    if(sbReady()){
+      statStatus('Suppression en cours...');
+      try{
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/stats?t=eq.' + encodeURIComponent(tech), { method:'DELETE', headers: sbHeaders() });
+        if(!r.ok) throw new Error('http ' + r.status);
+        statStatus('\u2713 « ' + tech + ' » supprimé (appareil + espace partagé).', 'ok');
+      }catch(err){
+        statStatus('\u26A0 Supprimé sur cet appareil, mais pas dans l\'espace partagé (réseau ?).', 'err');
+      }
+    } else {
+      statStatus('\u2713 « ' + tech + ' » supprimé sur cet appareil.', 'ok');
+    }
+  });
+
   $('stats-reset') && $('stats-reset').addEventListener('click', async ()=>{
-    const code = prompt('Code de réinitialisation (distinct du code administrateur) :');
+    const code = await askBox('Code de réinitialisation (distinct du code administrateur) :', { code:true });
     if(code === null) return;
     if(code !== RESET_CODE){ statStatus('\u26A0 Code de réinitialisation incorrect \u2014 rien n\'a été effacé.', 'err'); return; }
-    if(!confirm('Effacer définitivement tout le journal (cet appareil + l\'espace partagé) ?')) return;
+    if(!(await askBox('Effacer définitivement tout le journal (cet appareil + l\'espace partagé) ?', { ok:'Effacer' }))) return;
     statSave([]);
     renderStats();
     if(sbReady()){
@@ -1389,7 +1487,7 @@ if('serviceWorker' in navigator){
     }
   });
 
-  $('admin-close').addEventListener('click', ()=>{ $('admin-modal').classList.add('hidden'); });
+  $('admin-close').addEventListener('click', ()=>{ $('admin-modal').classList.add('hidden'); statManage = false; });
   $('fd-force-refresh').addEventListener('click', async ()=>{
     const btn = $('fd-force-refresh');
     btn.disabled = true; btn.title = 'Mise à jour...';
