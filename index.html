@@ -431,8 +431,8 @@ if('serviceWorker' in navigator){
     <div class="fd-eyebrow">RECORD · MAINTENANCE TRAVAUX</div>
     <div class="fd-title">Outils techniciens</div>
     <div class="fd-sub">Choisis la fiche à remplir</div>
-    <a href="Fiche Tailles Vetements.dc.html" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;">👕 Dotations vêtements</a>
-    <a href="remontee-fo.html" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;margin-left:6px;background:rgba(126,176,214,.2);border:1px solid rgba(160,200,230,.38);color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;"><span style="color:#F2B55C;font-size:14px;line-height:1;">⚠&#xFE0E;</span> Remontée FO</a>
+    <a href="Fiche Tailles Vetements.dc.html" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;">👕 Vêtements</a>
+    <a href="remontee-fo.html" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;margin-left:6px;background:rgba(126,176,214,.2);border:1px solid rgba(160,200,230,.38);color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;"><span style="color:#F2B55C;font-size:14px;line-height:1;">⚠&#xFE0E;</span> Remontée Service Support</a>
     <button type="button" id="btn-admin" class="fd-admin-btn" title="Administration">⚙️</button>
     <button type="button" id="fd-force-refresh" class="fd-refresh-btn" title="Actualiser la version" aria-label="Actualiser la version">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
@@ -501,7 +501,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.74</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.76</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -863,7 +863,7 @@ if('serviceWorker' in navigator){
 
   /* ---------- Statistiques d'utilisation ---------- */
   const STAT_KEY = 'record-stats-usage';
-  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', PN:'Porte neuve', FO:'Remontée FO' };
+  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', PN:'Porte neuve', FO:'Service Support' };
   function sbReady(){ return !!(window.RECORD_SUPABASE_URL && window.RECORD_SUPABASE_KEY); }
   function sbHeaders(extra){
     return Object.assign({ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY, 'Content-Type':'application/json' }, extra || {});
@@ -919,7 +919,7 @@ if('serviceWorker' in navigator){
     html += '<div style="overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px;">'
       + '<table style="width:100%;border-collapse:collapse;">'
       + '<thead><tr style="background:var(--surface);">'
-      + ['Technicien','Devis','Vantaux','Rideaux','Porte neuve','Remontée FO','Total','Dernière'].concat(statManage ? [''] : [])
+      + ['Technicien','Devis','Vantaux','Rideaux','Porte neuve','Service Support','Total','Dernière'].concat(statManage ? [''] : [])
         .map((t,ix)=>'<th style="' + cell + 'text-align:' + (ix ? 'center' : 'left') + ';font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);font-weight:700;">' + t + '</th>').join('')
       + '</tr></thead><tbody>';
     techs.forEach(t=>{

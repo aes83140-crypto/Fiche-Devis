@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Remontée Front Office — RECORD</title>
+<title>Remontée Service Support — RECORD</title>
 
 <script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -547,9 +547,9 @@ if('serviceWorker' in navigator){
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     </button>
     <span class="fd-logo"><img src="./record-logo.webp" alt="RECORD"></span>
-    <div class="fd-eyebrow"><span>RECORD · MAINTENANCE TRAVAUX</span><span id="fd-ticket-no">FO —</span></div>
-    <div class="fd-title">Remontée Front Office</div>
-    <div class="fd-sub">Signaler une erreur du FO</div>
+    <div class="fd-eyebrow"><span>RECORD · MAINTENANCE TRAVAUX</span><span id="fd-ticket-no">SUP —</span></div>
+    <div class="fd-title">Remontée Service Support</div>
+    <div class="fd-sub">Signaler un dysfonctionnement au Service Support</div>
   </div>
 
   <div class="fd-body">
@@ -567,7 +567,7 @@ if('serviceWorker' in navigator){
         <div class="fd-field"><label>N° d'intervention</label><input type="text" class="fd-mono" id="f-inter" placeholder="Facultatif"></div>
         <div class="fd-field full">
           <label>Ce qui s'est passé <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
-          <textarea id="f-expl" placeholder="Ex. panne reçue à 17h50 sans appel préalable du FO"></textarea>
+          <textarea id="f-expl" placeholder="Ex. panne reçue à 17h50 sans appel préalable du Service Support"></textarea>
         </div>
       </div>
     </div>
@@ -606,7 +606,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.16</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.17</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -817,12 +817,12 @@ if('serviceWorker' in navigator){
       doc.text("RECORD  ·  MAINTENANCE TRAVAUX", margin, 15, { charSpace:0.7 });
       if(window.RECORD_LOGO_PDF){ try{ doc.addImage(window.RECORD_LOGO_PDF, 'PNG', pageW - margin - 24, 6.2, 24, 8.34, 'recordlogo', 'FAST'); }catch(e){} }
       doc.setTextColor(255,255,255); doc.setFontSize(20);
-      doc.text("Remontée Front Office", margin, 29);
+      doc.text("Remontée Service Support", margin, 29);
       doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
       doc.setTextColor(180,198,213);
       doc.text((data.tech || '') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 4 });
       // le site est déjà sur la ligne de sous-titre : la pastille reste courte
-      const ref = data.inter ? 'N\u00B0 ' + data.inter : 'FO';
+      const ref = data.inter ? 'N\u00B0 ' + data.inter : 'SUPPORT';
       doc.setFont('helvetica','bold'); doc.setFontSize(10);
       const maxRw = 62;
       let rw = Math.min(doc.getTextWidth(ref) + 13, maxRw);
@@ -1209,7 +1209,7 @@ if('serviceWorker' in navigator){
         d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) +
         (e.how ? '  ·  ' + e.how : '') + (e.nbPhotos ? '  ·  ' + e.nbPhotos + ' photo(s)' : '');
       return '<div class="fd-hist-item">' +
-        '<div class="fd-hist-main"><div class="fd-hist-title">' + String(e.label || 'Remontée FO').replace(/</g,'&lt;') + '</div>' +
+        '<div class="fd-hist-main"><div class="fd-hist-title">' + String(e.label || 'Remontée Service Support').replace(/</g,'&lt;') + '</div>' +
         '<div class="fd-hist-meta">' + meta + '</div></div>' +
         '<button type="button" class="fd-hist-btn" data-load="' + e.id + '">Reprendre</button>' +
         '<button type="button" class="fd-hist-del" data-del="' + e.id + '">✕</button>' +
@@ -1420,7 +1420,7 @@ if('serviceWorker' in navigator){
   }
 
   function updateTicketRef(){
-    $('fd-ticket-no').textContent = $('f-inter').value.trim() ? 'FO-' + $('f-inter').value.trim() : 'FO —';
+    $('fd-ticket-no').textContent = $('f-inter').value.trim() ? 'SUP-' + $('f-inter').value.trim() : 'SUP —';
   }
   $('f-inter').addEventListener('input', updateTicketRef);
   if(!$('f-date').value) $('f-date').value = todayIso();
@@ -1437,7 +1437,7 @@ if('serviceWorker' in navigator){
   function formatText(data, opts){
     opts = opts || {};
     const rule = '\u2500'.repeat(20);
-    const L = ['REMONTÉE FRONT OFFICE', rule,
+    const L = ['REMONTÉE SERVICE SUPPORT', rule,
       'Technicien : ' + (data.tech || '\u2014'),
       'Site / client : ' + (data.site || '\u2014'),
       data.regle ? 'Sujet : ' + data.regle : null,
@@ -1512,13 +1512,13 @@ if('serviceWorker' in navigator){
   function pdfName(data){
     const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
     const simple = s => clean(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-    return ['FO', simple(data.site) || 'site', (data.date || todayIso())].join('-') + '.pdf';
+    return ['Support', simple(data.site) || 'site', (data.date || todayIso())].join('-') + '.pdf';
   }
   $('btn-mail').addEventListener('click', ()=>{
     const data = readForm();
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
-    const subject = 'Remontée FO - ' + (data.tech || '') + ' - ' + data.site;
+    const subject = 'Remontée Service Support - ' + (data.tech || '') + ' - ' + data.site;
     let pdfDoc = null, pdfFile = null;
     const name = pdfName(data);
     try{
