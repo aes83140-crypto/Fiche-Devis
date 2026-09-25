@@ -657,7 +657,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.45</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.46</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -871,10 +871,10 @@ if('serviceWorker' in navigator){
       doc.text(variant === 'fournisseur' ? "Demande de chiffrage pièces" : "Demande de devis", margin, 29);
       doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
       doc.setTextColor(180,198,213);
-      doc.text((data.site || 'Site non renseigné') + (variant === 'fournisseur' && data.equip ? '   \u00B7   N\u00B0 équipement ' + data.equip : '') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 4 });
+      doc.text((data.site || 'Site non renseigné') + (variant === 'fournisseur' && data.equip ? '   \u00B7   Réf. à rappeler : ' + data.equip : '') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 4 });
       // le site est déjà sur la ligne de sous-titre : la pastille reste courte
       const ref = variant === 'fournisseur'
-        ? ('Éq. ' + (data.equip || '\u2014'))
+        ? ('Réf. ' + (data.equip || '\u2014'))
         : (data.fq ? 'FQ ' + data.fq : 'FQ \u2014');
       doc.setFont('helvetica','bold'); doc.setFontSize(10);
       const maxRw = 62;
@@ -1035,12 +1035,12 @@ if('serviceWorker' in navigator){
     header();
 
     if(variant === 'fournisseur'){
-      callout('MERCI DE RAPPELER IMPÉRATIVEMENT CETTE RÉFÉRENCE SUR VOTRE CHIFFRAGE — SANS ELLE, VOTRE DEVIS NE POURRA PAS ÊTRE TRAITÉ',
-        'N\u00B0 équipement : ' + (data.equip || '\u2014'), 'red');
+      callout('RÉFÉRENCE À RAPPELER OBLIGATOIREMENT SUR VOTRE DEVIS — SANS ELLE, IL NE POURRA PAS ÊTRE TRAITÉ',
+        'Réf. ' + (data.equip || '\u2014') + '  (n\u00B0 équipement RECORD)', 'red');
 
       section('Équipement à chiffrer');
       tiles([
-        { k:'N° équipement', v:data.equip },
+        { k:'Réf. à rappeler', v:data.equip },
         { k:'Marque', v:data.marque },
         { k:'Modèle', v:data.modele },
       ]);

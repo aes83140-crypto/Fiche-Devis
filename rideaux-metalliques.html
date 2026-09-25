@@ -815,7 +815,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.52</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.53</div>
 </div>
 
 <script>
@@ -2212,8 +2212,8 @@ if('serviceWorker' in navigator){
       doc.text(variant === 'fournisseur' ? "Demande de chiffrage pièces" : "Relevé de cotes — Rideau métallique", margin, 29);
       doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
       doc.setTextColor(180,198,213);
-      doc.text((data.client || 'Client non renseigné') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 50 });
-      const ref = data.equip ? 'Éq. ' + data.equip : 'Éq. \u2014';
+      doc.text((data.client || 'Client non renseigné') + (variant === 'fournisseur' && data.equip ? '   \u00B7   Réf. à rappeler : ' + data.equip : '') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 50 });
+      const ref = variant === 'fournisseur' ? 'Réf. ' + (data.equip || '\u2014') : (data.equip ? 'Éq. ' + data.equip : 'Éq. \u2014');
       doc.setFont('helvetica','bold'); doc.setFontSize(10);
       const rw = doc.getTextWidth(ref) + 13;
       doc.setDrawColor(118,146,170); doc.setLineWidth(0.5);
@@ -2417,8 +2417,8 @@ if('serviceWorker' in navigator){
     header();
 
     if(variant === 'fournisseur'){
-      callout('MERCI DE RAPPELER IMPÉRATIVEMENT CETTE RÉFÉRENCE SUR VOTRE CHIFFRAGE — SANS ELLE, VOTRE DEVIS NE POURRA PAS ÊTRE TRAITÉ',
-        'N\u00B0 équipement : ' + (data.equip || '\u2014'), 'red');
+      callout('RÉFÉRENCE À RAPPELER OBLIGATOIREMENT SUR VOTRE DEVIS — SANS ELLE, IL NE POURRA PAS ÊTRE TRAITÉ',
+        'Réf. ' + (data.equip || '\u2014') + '  (n\u00B0 équipement RECORD)', 'red');
 
       section('Type de travaux');
       callout('Périmètre de l\'intervention', data.travaux, 'red');
