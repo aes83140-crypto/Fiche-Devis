@@ -719,6 +719,17 @@ if('serviceWorker' in navigator){
           <input type="hidden" id="f-meca" value="">
         </div>
       </div>
+      <button type="button" id="btn-deux" role="checkbox" aria-checked="false" style="margin-top:16px;width:100%;min-height:48px;border-radius:12px;border:1.5px dashed var(--steel,#2F5674);background:#fff;color:var(--steel,#2F5674);font:inherit;font-weight:700;font-size:15px;cursor:pointer;">＋ Ajouter un 2ᵉ vantail cassé</button>
+      <input type="hidden" id="f-deux" value="">
+      <div id="bloc-v2" style="display:none;margin-top:14px;padding-top:14px;border-top:1.5px dashed var(--line-2,#CCD3DB);">
+        <div style="font-family:var(--disp);font-weight:700;font-size:15px;color:var(--ink);margin-bottom:10px;">2ᵉ vantail — dimensions</div>
+        <div class="fd-grid">
+          <div class="fd-field full"><label>Repère du 2ᵉ vantail <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-v2-repere" placeholder="Ex. vantail lent droit"></div>
+          <div class="fd-field"><label>Hauteur (mm) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" id="f-v2-hauteur" placeholder="0"></div>
+          <div class="fd-field"><label>Largeur (mm) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" id="f-v2-largeur" placeholder="0"></div>
+        </div>
+        <div class="fd-hint">Finition, vitrage et hauteur méca : identiques au 1ᵉʳ vantail. Les photos des deux vantaux vont dans le même bloc Photos.</div>
+      </div>
     </div>
 
     <div class="fd-section" id="sec-infos">
@@ -811,7 +822,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.45</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.48</div>
 </div>
 
 <script>
@@ -819,7 +830,7 @@ if('serviceWorker' in navigator){
   const $ = id => document.getElementById(id);
 
   const fields = ['tech','client','numero-porte','mailclient','hauteur','largeur','finition','vitrage','meca','remarques','mes-av','mes-ar','mes-ci','mes-pl',
-                  'marque','clair-l','clair-h','feuillure','verre-type'];
+                  'marque','clair-l','clair-h','feuillure','verre-type','deux','v2-repere','v2-hauteur','v2-largeur'];
 
   // --- Listes préenregistrées (gérées depuis la page d'accueil > Administration) ---
   function lsGet(key){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
@@ -938,7 +949,24 @@ if('serviceWorker' in navigator){
   let modeVitrage = false;
   const SEC_RECORD = ['sec-config','sec-dimensions','sec-infos','sec-profil','sec-recap'];
 
+  function applyDeux(){
+    const on = $('f-deux').value === 'oui';
+    $('bloc-v2').style.display = on ? '' : 'none';
+    const b = $('btn-deux');
+    b.style.background = on ? 'var(--steel,#2F5674)' : '#fff';
+    b.style.color = on ? '#fff' : 'var(--steel,#2F5674)';
+    b.style.borderStyle = on ? 'solid' : 'dashed';
+    b.setAttribute('aria-checked', on ? 'true' : 'false');
+    b.textContent = on ? '✓ 2ᵉ vantail ajouté — toucher pour retirer' : '＋ Ajouter un 2ᵉ vantail cassé';
+  }
+  $('btn-deux').addEventListener('click', ()=>{
+    $('f-deux').value = $('f-deux').value === 'oui' ? '' : 'oui';
+    applyDeux();
+    if($('f-deux').value === 'oui') setTimeout(()=>{ try{ $('f-v2-repere').focus(); }catch(e){} }, 50);
+  });
+
   function applyMode(){
+    applyDeux();
     SEC_RECORD.forEach(id=>{ const e = $(id); if(e) e.classList.toggle('hidden', modeVitrage); });
     const sv = $('sec-vitrage');
     if(sv) sv.classList.toggle('hidden', !modeVitrage);
@@ -2140,6 +2168,8 @@ if('serviceWorker' in navigator){
   const PLAGES = {
     'f-largeur': { min:300,  max:2500, nom:'largeur de vantail' },
     'f-hauteur': { min:1600, max:3200, nom:'hauteur de vantail' },
+    'f-v2-largeur': { min:300,  max:2500, nom:'largeur du 2e vantail' },
+    'f-v2-hauteur': { min:1600, max:3200, nom:'hauteur du 2e vantail' },
     'f-clair-l': { min:300,  max:2500, nom:'largeur de clair' },
     'f-clair-h': { min:1600, max:3200, nom:'hauteur de clair' }
   };
@@ -2168,7 +2198,7 @@ if('serviceWorker' in navigator){
   });
   // À l'envoi : une cote inhabituelle demande confirmation au technicien.
   function confirmeCotes(){
-    const ids = modeVitrage ? ['f-clair-l','f-clair-h'] : ['f-largeur','f-hauteur'];
+    const ids = modeVitrage ? ['f-clair-l','f-clair-h'] : ['f-largeur','f-hauteur'].concat($('f-deux').value === 'oui' ? ['f-v2-largeur','f-v2-hauteur'] : []);
     const hors = ids.filter(id=> alerteCote(id));
     if(!hors.length) return true;
     const liste = hors.map(id=> '\u2022 ' + PLAGES[id].nom + ' : ' + $(id).value + ' mm').join('\n');
@@ -2195,6 +2225,11 @@ if('serviceWorker' in navigator){
     if(!data.largeur) return { msg:'La largeur est obligatoire.', target:'#f-largeur' };
     if(!data.finition) return { msg:'La finition est obligatoire.', target:'#f-finition' };
     if(!data.vitrage) return { msg:'Le type de vitrage est obligatoire.', target:'#f-vitrage' };
+    if(data.deux === 'oui'){
+      if(!data['v2-repere']) return { msg:'Indique le repère du 2e vantail (ex. vantail lent droit).', target:'#f-v2-repere' };
+      if(!data['v2-hauteur']) return { msg:'La hauteur du 2e vantail est obligatoire.', target:'#f-v2-hauteur' };
+      if(!data['v2-largeur']) return { msg:'La largeur du 2e vantail est obligatoire.', target:'#f-v2-largeur' };
+    }
     if(!toggles.meca) return { msg:'La hauteur méca impérative est obligatoire (108, 150 ou 200).', target:'.fd-toggle[data-field="meca"]' };
     if(!data.config) return { msg:'La configuration de la porte est obligatoire.', target:'#grid-config' };
     if(!data.brokenPanel) return { msg:'Merci de cocher le vantail ou le fixe cassé.', target:'.fd-panel-box' };
@@ -2243,6 +2278,7 @@ if('serviceWorker' in navigator){
 
     bloc('Élément à remplacer', [
       kv('Vantail / fixe cassé', data.brokenPanel),
+      data.deux === 'oui' ? kv('2e vantail', data['v2-repere']) : '',
       kv('Configuration', data.config),
     ]);
 
@@ -2256,6 +2292,15 @@ if('serviceWorker' in navigator){
       kv('Type de vitrage', data.vitrage),
       kv('★ Méca impératif', data.meca),
     ]);
+
+    if(data.deux === 'oui'){
+      bloc('2e vantail — cotes', [
+        kv('Repère', data['v2-repere']),
+        kv('Hauteur', (data['v2-hauteur'] ? data['v2-hauteur'] + ' mm' : '')),
+        kv('Largeur', (data['v2-largeur'] ? data['v2-largeur'] + ' mm' : '')),
+        'Finition, vitrage et méca identiques au 1er vantail',
+      ]);
+    }
 
     bloc('Profilé alu', [
       kv('Type de profilé', data.profil),
@@ -2540,6 +2585,16 @@ if('serviceWorker' in navigator){
     row('Type de vitrage', data.vitrage);
     callout('★ Type et hauteur méca impératif', data.meca, 'green');
 
+    if(data.deux === 'oui'){
+      section('2e vantail — cotes');
+      row('Repère', data['v2-repere']);
+      tiles([
+        { k:'Hauteur (mm)', v:data['v2-hauteur'] },
+        { k:'Largeur (mm)', v:data['v2-largeur'] },
+      ]);
+      row('Finition / vitrage / méca', 'Identiques au 1er vantail');
+    }
+
     section('Profilé alu');
     row('Type de profilé', data.profil);
     tiles([
@@ -2619,7 +2674,7 @@ if('serviceWorker' in navigator){
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
     if(!confirmeCotes()) return;
-    const subject = 'Vantail SAV cassé - ' + (data.client||'Client') + (data['numero-porte'] ? ' - Porte '+data['numero-porte'] : '');
+    const subject = (data.deux === 'oui' ? '2 vantaux SAV cassés - ' : 'Vantail SAV cassé - ') + (data.client||'Client') + (data['numero-porte'] ? ' - Porte '+data['numero-porte'] : '');
 
     let pdfFile = null, pdfDoc = null;
     const pdfName = pdfFileName('RV', data.client, data['numero-porte']);

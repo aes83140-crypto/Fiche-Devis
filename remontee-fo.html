@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Demande de devis — RECORD</title>
+<title>Remontée Service Support — RECORD</title>
 
 <script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -405,7 +405,7 @@
     .fd-actions{grid-template-columns:1fr 1fr;}
     .fd-title{font-size:24px;}
   }
-  @media (max-width:420px){
+  @media (max-width:340px){
     .fd-actions{grid-template-columns:1fr;}
   }
 
@@ -421,7 +421,7 @@
   }
 
   /* ---------- Ajustements ---------- */
-  #btn-new{grid-column:1/-1;justify-self:center;width:100%;max-width:300px;}
+  #btn-new{width:100%;}
   #grid-config{grid-template-columns:repeat(auto-fill, minmax(152px,1fr));}
   #grid-config .fd-visual-card{display:flex;flex-direction:column;align-items:stretch;padding:10px 10px 12px;}
   #grid-config svg{width:100%;height:auto;display:block;}
@@ -547,109 +547,58 @@ if('serviceWorker' in navigator){
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
     </button>
     <span class="fd-logo"><img src="./record-logo.webp" alt="RECORD"></span>
-    <div class="fd-eyebrow"><span>RECORD · MAINTENANCE TRAVAUX</span><span id="fd-ticket-no">FD —</span></div>
-    <div class="fd-title">Demande de devis</div>
-    <div class="fd-sub">Relevé technicien à compléter sur site</div>
+    <div class="fd-eyebrow"><span>RECORD · MAINTENANCE TRAVAUX</span><span id="fd-ticket-no">SUP —</span></div>
+    <div class="fd-title">Remontée Service Support</div>
+    <div class="fd-sub">Signaler un dysfonctionnement au Service Support</div>
   </div>
 
   <div class="fd-body">
 
     <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">Intervention</span></div>
+      <div class="fd-section-head"><span class="fd-num">1</span><span class="fd-section-title">L'erreur</span></div>
       <div class="fd-grid">
-        <div class="fd-field">
+        <div class="fd-field full">
           <label>Technicien <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
           <input type="text" id="f-tech">
         </div>
-        <div class="fd-field full"><label>Nom du site / Ville <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-site" placeholder="Ex. Entrepôt Logidis, Aubagne"></div>
+        <div class="fd-field full"><label>Nom du site / client <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-site" placeholder="Ex. Carrefour, Nice Lingostière"></div>
+        <div class="fd-field full"><label>Sujet <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" id="f-regle" placeholder="Ex. demande d'intervention incomplète"></div>
+        <div class="fd-field"><label>Date <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="date" id="f-date"></div>
+        <div class="fd-field"><label>N° d'intervention</label><input type="text" class="fd-mono" id="f-inter" placeholder="Facultatif"></div>
         <div class="fd-field full">
-          <label>Mail client <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
-          <input type="email" id="f-mail" placeholder="contact@client.fr">
-          <div class="fd-photo-hint">Info à titre indicatif, reprise dans le texte — ce n'est pas l'adresse de destination de l'envoi.</div>
+          <label>Ce qui s'est passé <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+          <textarea id="f-expl" placeholder="Ex. panne reçue à 17h50 sans appel préalable du Service Support"></textarea>
         </div>
       </div>
     </div>
 
     <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Équipement</span></div>
-      <div class="fd-grid">
-        <div class="fd-field"><label>N° équipement <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="text" class="fd-mono" id="f-equip" placeholder="EQ-000000"></div>
-        <div class="fd-field"><label>N° FQ</label><input type="text" class="fd-mono" id="f-fq" placeholder="FQ-000000"></div>
-        <div class="fd-field full"><label>Localisation</label><input type="text" id="f-loc" placeholder="Bâtiment / quai / porte n°"></div>
-        <div class="fd-field"><label>Marque</label><input type="text" id="f-marque" placeholder="Ex. Record"></div>
-        <div class="fd-field"><label>Modèle</label><input type="text" id="f-modele" placeholder="Ex. Speedor 2"></div>
-      </div>
-    </div>
-
-    <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Moyens & statut</span></div>
-      <div class="fd-grid">
-        <div class="fd-field"><label>Temps par technicien (heures) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="0.5" min="0" id="f-temps" placeholder="0"></div>
-        <div class="fd-field"><label>Nombre de techniciens <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label><input type="number" step="1" min="0" id="f-nbtech" placeholder="0"></div>
-        <div class="fd-field"><label>Nacelle nécessaire <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
-          <div class="fd-toggle-row">
-            <div class="fd-toggle" data-field="nacelle" data-val="oui">Oui</div>
-            <div class="fd-toggle" data-field="nacelle" data-val="non">Non</div>
-          </div>
-        </div>
-        <div class="fd-field"><label>PIRL nécessaire <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
-          <div class="fd-toggle-row">
-            <div class="fd-toggle" data-field="pirl" data-val="oui">Oui</div>
-            <div class="fd-toggle" data-field="pirl" data-val="non">Non</div>
-          </div>
-        </div>
-        <div class="fd-field full"><label>Statut de l'intervention <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
-          <div class="fd-chip-row">
-            <div class="fd-chip" data-type="arret">Porte à l'arrêt</div>
-            <div class="fd-chip" data-type="urgent">Urgent</div>
-            <div class="fd-chip" data-type="preventif">Préventif</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">4</span><span class="fd-section-title">Pièces & photos</span></div>
+      <div class="fd-section-head"><span class="fd-num">2</span><span class="fd-section-title">Capture d'écran</span></div>
       <div class="fd-field full">
-        <label>Détail des pièces (transmis au fournisseur) <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
-        <textarea id="f-pieces" placeholder="Ex. palpeur bas complet, bâche complète, armoire de commande"></textarea>
-        <div style="display:flex;justify-content:flex-end;margin-top:6px;">
-          <button type="button" id="btn-remarque" style="display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;min-height:36px;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;">
-            <span id="remarque-label">+ Ajouter une remarque</span>
-          </button>
-        </div>
-        <div id="remarque-box" style="display:none;margin-top:8px;">
-          <label for="f-remarque">Remarque interne (non transmise au fournisseur)</label>
-          <textarea id="f-remarque" placeholder="Ex. pièce à commander avant le 15, accès par le quai n°3…"></textarea>
-        </div>
-      </div>
-      <div class="fd-field full">
-        <label>Photos <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span> (au moins 1 obligatoire)</label>
+        <label>Capture ou photo (facultatif)</label>
         <div class="fd-photo-actions">
-          <label class="fd-photo-btn cam" for="f-photo-cam">📷 Prendre une photo</label>
-          <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none;">
-          <label class="fd-photo-btn" for="f-photo-input">🖼 Choisir dans la galerie</label>
+          <label class="fd-photo-btn cam" for="f-photo-input">🖼 Choisir une capture</label>
           <input type="file" id="f-photo-input" accept="image/*" multiple style="display:none;">
+          <label class="fd-photo-btn" for="f-photo-cam">📷 Prendre une photo</label>
+          <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none;">
         </div>
-        <div class="fd-photo-hint">Les photos seront jointes directement au partage (mail, WhatsApp...).</div>
+        <div class="fd-photo-hint">Fais d'abord une capture d'écran de la demande d'intervention, puis choisis-la ici.</div>
         <div class="fd-photo-grid" id="fd-photo-grid"></div>
       </div>
     </div>
 
-
     <div class="fd-section">
-      <div class="fd-section-head"><span class="fd-num">↺</span><span class="fd-section-title">Fiches envoyées depuis cet appareil</span></div>
+      <div class="fd-section-head"><span class="fd-num">↺</span><span class="fd-section-title">Remontées envoyées depuis cet appareil</span></div>
       <div class="fd-hist-list" id="hist-list"></div>
-      <div class="fd-hint">« Reprendre » recharge la fiche pour un nouvel envoi (les photos ne sont pas conservées).</div>
+      <div class="fd-photo-hint">« Reprendre » recharge la remontée pour un nouvel envoi (les captures ne sont pas conservées).</div>
     </div>
 
     <div class="fd-actions">
-      <button class="fd-btn" id="btn-mail">Envoyer par mail avec photos</button>
+      <button class="fd-btn" id="btn-mail">Envoyer par mail</button>
+      <div class="fd-photo-hint" style="grid-column:1/-1;text-align:center;margin:-4px 0 0;">Envoi à christophe.bataille@record.fr</div>
       <button class="fd-btn secondary" id="btn-pdf">Télécharger le PDF</button>
-      <button class="fd-btn secondary" id="btn-copy">Copier le texte</button>
-      <a class="fd-btn secondary" id="btn-new" href="index.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">← Retour au menu</a>
+      <a class="fd-btn secondary" id="btn-new" href="index.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box;">← Retour au menu</a>
     </div>
-    <div class="fd-photo-hint" style="text-align:center;margin-top:8px;">Le PDF reprend la mise en forme complète de la fiche, photos incluses.</div>
     <div class="fd-msg" id="fd-msg"></div>
   </div>
 </div>
@@ -657,14 +606,14 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.46</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.17</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  const fields = ['tech','site','mail','equip','fq','loc','marque','modele','temps','nbtech','pieces','remarque'];
+  const fields = ['tech','site','regle','date','inter','expl'];
   let toggles = { nacelle:null, pirl:null };
   let chips = { arret:false, urgent:false, preventif:false };
   let photos = []; // dataURLs (jpeg compressés)
@@ -868,14 +817,12 @@ if('serviceWorker' in navigator){
       doc.text("RECORD  ·  MAINTENANCE TRAVAUX", margin, 15, { charSpace:0.7 });
       if(window.RECORD_LOGO_PDF){ try{ doc.addImage(window.RECORD_LOGO_PDF, 'PNG', pageW - margin - 24, 6.2, 24, 8.34, 'recordlogo', 'FAST'); }catch(e){} }
       doc.setTextColor(255,255,255); doc.setFontSize(20);
-      doc.text(variant === 'fournisseur' ? "Demande de chiffrage pièces" : "Demande de devis", margin, 29);
+      doc.text("Remontée Service Support", margin, 29);
       doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
       doc.setTextColor(180,198,213);
-      doc.text((data.site || 'Site non renseigné') + (variant === 'fournisseur' && data.equip ? '   \u00B7   Réf. à rappeler : ' + data.equip : '') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 4 });
+      doc.text((data.tech || '') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 4 });
       // le site est déjà sur la ligne de sous-titre : la pastille reste courte
-      const ref = variant === 'fournisseur'
-        ? ('Réf. ' + (data.equip || '\u2014'))
-        : (data.fq ? 'FQ ' + data.fq : 'FQ \u2014');
+      const ref = data.inter ? 'N\u00B0 ' + data.inter : 'SUPPORT';
       doc.setFont('helvetica','bold'); doc.setFontSize(10);
       const maxRw = 62;
       let rw = Math.min(doc.getTextWidth(ref) + 13, maxRw);
@@ -995,12 +942,12 @@ if('serviceWorker' in navigator){
       if(!list || !list.length) return;
       doc.addPage(); y = 26;
       doc.setFont('helvetica','bold'); doc.setFontSize(9); setC(STEEL);
-      doc.text('PHOTOS  \u00B7  ' + list.length, margin, y, { charSpace:0.9 });
+      doc.text('CAPTURES  \u00B7  ' + list.length, margin, y, { charSpace:0.9 });
       y += 3.6;
       drawC(LINE); doc.setLineWidth(0.4);
       doc.line(margin, y, pageW - margin, y);
       y += 8;
-      const gap = 6, cellW = (contentW - gap) / 2, cellH = cellW * 0.8;
+      const gap = 6, cellW = (contentW - gap) / 2, cellH = cellW * 1.35;
       let col = 0;
       list.forEach((p, i)=>{
         const ph = photoOf(p);
@@ -1013,7 +960,7 @@ if('serviceWorker' in navigator){
         if(ih > cellH - 5){ ih = cellH - 5; iw = ih * ratio; }
         try{ doc.addImage(ph.dataUrl, 'JPEG', x + (cellW - iw)/2, y + (cellH - ih)/2, iw, ih); }catch(err){}
         doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
-        doc.text('PHOTO ' + (i+1), x, y + cellH + 5.2, { charSpace:0.4 });
+        doc.text('CAPTURE ' + (i+1), x, y + cellH + 5.2, { charSpace:0.4 });
         col++;
         if(col === 2){ col = 0; y += cellH + 12; }
       });
@@ -1034,50 +981,15 @@ if('serviceWorker' in navigator){
 
     header();
 
-    if(variant === 'fournisseur'){
-      callout('RÉFÉRENCE À RAPPELER OBLIGATOIREMENT SUR VOTRE DEVIS — SANS ELLE, IL NE POURRA PAS ÊTRE TRAITÉ',
-        'Réf. ' + (data.equip || '\u2014') + '  (n\u00B0 équipement RECORD)', 'red');
-
-      section('Équipement à chiffrer');
-      tiles([
-        { k:'Réf. à rappeler', v:data.equip },
-        { k:'Marque', v:data.marque },
-        { k:'Modèle', v:data.modele },
-      ]);
-      row('Site', data.site);
-
-      section('Pièces à chiffrer');
-      block('Descriptif', data.pieces);
-      row('Demande', 'Chiffrage des pièces uniquement \u2014 la main d\u2019œuvre est traitée en interne.');
-    } else {
-      section('Intervention');
-      row('Technicien', data.tech);
-      row('Site / Ville', data.site);
-      row('Mail client', data.mail);
-
-      section('Équipement');
-      tiles([
-        { k:'N° équipement', v:data.equip },
-        { k:'N° FQ', v:data.fq },
-      ]);
-      row('Localisation', data.loc);
-      row('Marque / Modèle', [data.marque, data.modele].filter(Boolean).join(' ') || '');
-
-      section('Moyens \u00E0 prévoir');
-      tiles([
-        { k:'Temps / technicien', v:(data.temps ? data.temps + ' h' : '') },
-        { k:'Nb techniciens', v:data.nbtech },
-        { k:'Nacelle', v:data.toggles.nacelle },
-        { k:'PIRL', v:data.toggles.pirl },
-      ]);
-
-      section("Statut de l'intervention");
-      pills(statusLabel(data).map(t=>({ t:t, tone:(t === 'Préventif' ? 'green' : 'red') })));
-
-      section('Pièces à devis');
-      block('Descriptif', data.pieces);
-      if(data.remarque) block('Remarque interne', data.remarque);
-    }
+    section('Erreur signalée');
+    row('Technicien', data.tech);
+    row('Site / client', data.site);
+    if(data.regle) row('Sujet', data.regle);
+    tiles([
+      { k:'Date', v:frDate(data.date) },
+      { k:"N° d'intervention", v:data.inter },
+    ]);
+    block("Ce qui s'est passé", data.expl);
 
     photosPages(data.photos);
     footers();
@@ -1222,7 +1134,7 @@ if('serviceWorker' in navigator){
   function mailOk(v){ return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(String(v || '').trim()); }
 
   /* ---------- Historique des fiches envoyées ---------- */
-  const HIST_KEY = 'record-hist-devis';
+  const HIST_KEY = 'record-hist-fo';
   function histLoad(){
     try{ const a = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); return Array.isArray(a) ? a : []; }
     catch(e){ return []; }
@@ -1268,7 +1180,7 @@ if('serviceWorker' in navigator){
   }
   window.addEventListener('online', statFlush);
   function histAdd(data, how){
-    statLog(data.tech, 'FD', how);
+    statLog(data.tech, 'FO', how);
     const clean = {...data};
     delete clean.photos;
     const list = histLoad();
@@ -1288,7 +1200,7 @@ if('serviceWorker' in navigator){
     if(!wrap) return;
     const list = histLoad();
     if(!list.length){
-      wrap.innerHTML = '<div class="fd-empty">Aucune fiche envoyée depuis cet appareil.</div>';
+      wrap.innerHTML = '<div class="fd-empty">Aucune remontée envoyée depuis cet appareil.</div>';
       return;
     }
     wrap.innerHTML = list.map(e=>{
@@ -1297,7 +1209,7 @@ if('serviceWorker' in navigator){
         d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) +
         (e.how ? '  ·  ' + e.how : '') + (e.nbPhotos ? '  ·  ' + e.nbPhotos + ' photo(s)' : '');
       return '<div class="fd-hist-item">' +
-        '<div class="fd-hist-main"><div class="fd-hist-title">' + String(e.label || 'Fiche devis').replace(/</g,'&lt;') + '</div>' +
+        '<div class="fd-hist-main"><div class="fd-hist-title">' + String(e.label || 'Remontée Service Support').replace(/</g,'&lt;') + '</div>' +
         '<div class="fd-hist-meta">' + meta + '</div></div>' +
         '<button type="button" class="fd-hist-btn" data-load="' + e.id + '">Reprendre</button>' +
         '<button type="button" class="fd-hist-del" data-del="' + e.id + '">✕</button>' +
@@ -1308,7 +1220,7 @@ if('serviceWorker' in navigator){
         const e = histLoad().find(x => String(x.id) === b.dataset.load);
         if(!e) return;
         applyForm(e.data);
-        showMsg('Fiche reprise \u2014 les photos ne sont pas conservées, pense à les reprendre.');
+        showMsg('Remontée reprise \u2014 les captures ne sont pas conservées, pense à les remettre.');
         window.scrollTo({ top:0, behavior:'smooth' });
       });
     });
@@ -1458,10 +1370,9 @@ if('serviceWorker' in navigator){
     };
   })();
 
-  function histTitle(data){
-    return [data.site || 'Site non renseigné', data.equip ? 'Éq. ' + data.equip : '', data.fq ? 'FQ ' + data.fq : '']
-      .filter(Boolean).join('  ·  ');
-  }
+  function histTitle(data){ return [data.site, data.regle, data.inter ? 'N° ' + data.inter : ''].filter(Boolean).join('  ·  '); }
+  function frDate(v){ const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? m[3] + '/' + m[2] + '/' + m[1] : (v || ''); }
+  function todayIso(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 
   function syncRemarque(ouvrir){
     const box = $('remarque-box'), lab = $('remarque-label');
@@ -1498,7 +1409,7 @@ if('serviceWorker' in navigator){
 
   function resetForm(){
     fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = ''; });
-    syncRemarque(false);
+    $('f-date').value = todayIso();
     photos = [];
     renderPhotoGrid();
     toggles = { nacelle:null, pirl:null };
@@ -1509,14 +1420,10 @@ if('serviceWorker' in navigator){
   }
 
   function updateTicketRef(){
-    // même composition que le nom du PDF : FD-(site)-(n° équipement)
-    const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
-    const site = clean($('f-site').value), eq = clean($('f-equip').value);
-    $('fd-ticket-no').textContent = (site || eq)
-      ? 'FD-' + (site || 'chantier') + '-' + (eq || 'equipement')
-      : 'FD —';
+    $('fd-ticket-no').textContent = $('f-inter').value.trim() ? 'SUP-' + $('f-inter').value.trim() : 'SUP —';
   }
-  ['f-site','f-equip'].forEach(id => $(id).addEventListener('input', updateTicketRef));
+  $('f-inter').addEventListener('input', updateTicketRef);
+  if(!$('f-date').value) $('f-date').value = todayIso();
   updateTicketRef();
 
   function statusLabel(data){
@@ -1529,60 +1436,16 @@ if('serviceWorker' in navigator){
 
   function formatText(data, opts){
     opts = opts || {};
-    const dateStr = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
-    const statuts = statusLabel(data).join('  \u00B7  ') || '\u2014';
-    const nbtechDisplay = (data.nbtech === '' || data.nbtech === undefined || data.nbtech === null) ? '\u2014' : data.nbtech;
-    const L = [];
-    const rule = '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500';
-    function bloc(titre, lignes){
-      L.push('');
-      L.push(titre.toUpperCase());
-      L.push(rule);
-      lignes.filter(Boolean).forEach(l => L.push(l));
-    }
-    function kv(k, v){ return k + ' : ' + (v || '\u2014'); }
-
-    L.push('DEMANDE DE DEVIS');
-    L.push(rule);
-    L.push(data.site || 'Site non renseigné');
-    L.push((data.fq ? 'FQ ' + data.fq + '  \u00B7  ' : '') + dateStr);
-    L.push('Statut : ' + statuts);
-
-    bloc('Intervention', [
-      kv('Technicien', data.tech),
-      kv('Mail client', data.mail),
-    ]);
-
-    bloc('Équipement', [
-      kv('N° équipement', data.equip),
-      data.fq ? kv('N° FQ', data.fq) : null,
-      data.loc ? kv('Localisation', data.loc) : null,
-      kv('Marque / Modèle', [data.marque, data.modele].filter(Boolean).join(' ')),
-    ]);
-
-    bloc('Moyens à prévoir', [
-      kv('Temps par technicien', (data.temps ? data.temps + ' h' : '')),
-      kv('Nombre de techniciens', nbtechDisplay),
-      kv('Nacelle', data.toggles.nacelle),
-      kv('PIRL', data.toggles.pirl),
-    ]);
-
-    bloc('Pièces à devis', [ (data.pieces || '\u2014') ]);
-    if(data.remarque) bloc('Remarque interne', [ data.remarque ]);
-
-    if(opts.notePhotos || opts.note){
-      const lignes = [];
-      if(opts.notePhotos){
-        lignes.push(data.photos && data.photos.length
-          ? data.photos.length + ' photo(s) à joindre manuellement'
-          : 'Aucune photo');
-      }
-      if(opts.note) lignes.push(opts.note);
-      bloc('Pièces jointes', lignes);
-    }
-
-    L.push('');
-    L.push('\u2014 Relevé technicien RECORD');
+    const rule = '\u2500'.repeat(20);
+    const L = ['REMONTÉE SERVICE SUPPORT', rule,
+      'Technicien : ' + (data.tech || '\u2014'),
+      'Site / client : ' + (data.site || '\u2014'),
+      data.regle ? 'Sujet : ' + data.regle : null,
+      'Date : ' + (frDate(data.date) || '\u2014'),
+      "N° d'intervention : " + (data.inter || '\u2014'),
+      '', "CE QUI S'EST PASSÉ", rule, data.expl || '\u2014'].filter(l => l !== null);
+    if(opts.note){ L.push('', opts.note); }
+    L.push('', '\u2014 Outils techniciens RECORD');
     return L.join('\n');
   }
 
@@ -1629,33 +1492,14 @@ if('serviceWorker' in navigator){
 
   function validate(data){
     if(!data.tech) return { msg:'Le technicien est obligatoire.', target:'#f-tech' };
-    if(!data.site) return { msg:'Le nom du site est obligatoire.', target:'#f-site' };
-    if(!data.equip) return { msg:"Le n° d'équipement est obligatoire.", target:'#f-equip' };
-    if(!data.mail) return { msg:'Le mail client est obligatoire.', target:'#f-mail' };
-    if(!mailOk(data.mail)) return { msg:"L'adresse mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mail' };
-    if(!data.temps) return { msg:'Le temps par technicien est obligatoire.', target:'#f-temps' };
-    if(!data.nbtech) return { msg:'Le nombre de techniciens est obligatoire.', target:'#f-nbtech' };
-    if(parseFloat(String(data.nbtech).replace(',','.')) <= 0) return { msg:'Le nombre de techniciens doit être supérieur à 0 — merci de le saisir.', target:'#f-nbtech' };
-    if(!toggles.nacelle) return { msg:'Merci de préciser si une nacelle est nécessaire.', target:'.fd-toggle[data-field="nacelle"]' };
-    if(!toggles.pirl) return { msg:'Merci de préciser si un PIRL est nécessaire.', target:'.fd-toggle[data-field="pirl"]' };
-    if(!data.chips.arret && !data.chips.urgent && !data.chips.preventif) return { msg:"Le statut de l'intervention est obligatoire.", target:'.fd-chip-row' };
-    if(!data.pieces) return { msg:'Le détail des pièces est obligatoire.', target:'#f-pieces' };
-    if(!data.photos || !data.photos.length) return { msg:'Au moins une photo est obligatoire.', target:'.fd-photo-btn' };
+    if(!data.site) return { msg:'Le nom du site ou du client est obligatoire.', target:'#f-site' };
+    if(!data.regle) return { msg:'Le sujet est obligatoire.', target:'#f-regle' };
+    if(!data.date) return { msg:'La date est obligatoire.', target:'#f-date' };
+    if(!data.expl) return { msg:'Explique en une ligne ce qui s\'est passé.', target:'#f-expl' };
     return null;
   }
 
-
   renderHistory();
-
-  $('btn-copy').addEventListener('click', async ()=>{
-    const text = formatText(readForm(), { notePhotos:true });
-    try{
-      await navigator.clipboard.writeText(text);
-      showMsg('Texte copié dans le presse-papiers.');
-    }catch(e){
-      showMsg("Copie impossible sur cet appareil.", false);
-    }
-  });
 
   /* Poids cumulé des pièces jointes, en clair pour le technicien. */
   let dernierPoids = 0;
@@ -1664,59 +1508,54 @@ if('serviceWorker' in navigator){
     return mo < 1 ? Math.round(dernierPoids / 1024) + ' Ko joints' : mo.toFixed(1).replace('.', ',') + ' Mo joints';
   }
 
+  const DEST = 'christophe.bataille@record.fr';
+  function pdfName(data){
+    const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const simple = s => clean(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    return ['Support', simple(data.site) || 'site', (data.date || todayIso())].join('-') + '.pdf';
+  }
   $('btn-mail').addEventListener('click', ()=>{
     const data = readForm();
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
-    const subject = 'Demande de devis - ' + (data.site||'Site') + (data.fq ? ' - FQ '+data.fq : '');
-
-    let pdfFile = null, pdfDoc = null, fourFile = null, fourDoc = null;
-    const pdfName = pdfFileName('FD', data.site, data.equip);
-    const fourName = pdfFileName('FD-FOURNISSEUR', data.site, data.equip);
+    const subject = 'Remontée Service Support - ' + (data.tech || '') + ' - ' + data.site;
+    let pdfDoc = null, pdfFile = null;
+    const name = pdfName(data);
     try{
       pdfDoc = generateFichePDF(data);
-      const pdfBlob = pdfDoc.output('blob');
-      pdfFile = new File([pdfBlob], pdfName, { type:'application/pdf' });
-      fourDoc = generateFichePDF(data, 'fournisseur');
-      const fourBlob = fourDoc.output('blob');
-      fourFile = new File([fourBlob], fourName, { type:'application/pdf' });
-      dernierPoids = pdfBlob.size + fourBlob.size;
+      const blob = pdfDoc.output('blob');
+      pdfFile = new File([blob], name, { type:'application/pdf' });
+      dernierPoids = blob.size;
     }catch(e){
-      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ") — utilise \"Copier le texte\" en secours.", false);
+      showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ").", false);
       return;
     }
-
-    const files = [pdfFile, fourFile];
+    const files = [pdfFile];
     const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files: files }));
     if(canAttach){
-      const filesAttached = true;
-      const note = '📎 2 PDF joints : fiche complète (interne) et demande de chiffrage à transmettre au fournisseur.';
-      const text = formatText(data, { note: note });
-      const shareData = { title: subject, text: text };
-      if(filesAttached){
-        shareData.files = files;
-      }
-      navigator.share(shareData).then(()=>{
+      const text = formatText(data, { note: data.photos.length ? '📎 PDF joint avec la capture.' : '📎 PDF joint.' });
+      navigator.share({ title: subject, text: text, files: files }).then(()=>{
         histAdd(data, 'mail');
-        showMsg('Partage envoyé — ' + pdfPoids() + '.');
+        showMsg('Partage envoyé — ' + pdfPoids() + '. Destinataire : ' + DEST);
+        resetForm();
       }).catch(e=>{
-        if(e && e.name === 'AbortError') return; // annulé par l'utilisateur
+        if(e && e.name === 'AbortError') return;
         const detail = (e && e.message) ? e.message : (e && e.name) ? e.name : 'erreur inconnue';
-        showMsg('Le partage a échoué (' + detail + ') — utilise "Télécharger le PDF" puis joins-le manuellement.', false);
+        showMsg('Le partage a échoué (' + detail + ') — utilise "Télécharger le PDF".', false);
       });
     } else {
-      const text = formatText(data, { note: '📎 PDF à télécharger (bouton dédié) et à joindre manuellement.' });
+      const text = formatText(data, { note:'📎 PDF téléchargé : merci de le joindre à ce mail.' });
       try{
-        const url = 'mailto:' + '' + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
         const a = document.createElement('a');
-        a.href = url; a.rel = 'noopener';
+        a.target = '_top';
+        a.href = 'mailto:' + DEST + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
+        a.rel = 'noopener';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(()=>{ try{ pdfDoc.save(pdfName); }catch(e2){} }, 1200);
-        setTimeout(()=>{ try{ fourDoc.save(fourName); }catch(e2){} }, 2400);
+        setTimeout(()=>{ try{ pdfDoc.save(name); }catch(e2){} }, 900);
         histAdd(data, 'mail');
-        showMsg('Mail ouvert — choisis le destinataire ; les 2 PDF (complet + fournisseur) viennent d\'être téléchargés, joins-les au message.');
+        showMsg('Mail ouvert vers ' + DEST + ' — le PDF vient d\'être téléchargé, joins-le au message.');
       }catch(e){
-        showMsg("Partage indisponible sur cet appareil — utilise \"Télécharger le PDF\".", false);
+        showMsg('Partage indisponible sur cet appareil — utilise "Télécharger le PDF".', false);
       }
     }
   });
@@ -1727,7 +1566,7 @@ if('serviceWorker' in navigator){
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
     try{
       const pdfDoc = generateFichePDF(data, variant);
-      const name = pdfFileName(variant === 'fournisseur' ? 'FD-FOURNISSEUR' : 'FD', data.site, data.equip);
+      const name = pdfName(data);
       pdfDoc.save(name);
       histAdd(data, 'PDF');
       showMsg('PDF téléchargé — tu peux le joindre manuellement à ton mail.');

@@ -595,6 +595,34 @@ if('serviceWorker' in navigator){
       <div class="fd-section-head"><span class="fd-num">3</span><span class="fd-section-title">Configuration de la porte</span></div>
       <label>Type de configuration <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
       <div class="fd-visual-grid" id="grid-config"></div>
+      <div class="fd-grid" style="margin-top:14px;">
+        <div class="fd-field full"><label>Marque de la porte remplacée</label>
+          <select id="f-marque-sel" data-libre="f-marque">
+            <option value="">— Choisir —</option>
+            <option value="Assa Abloy">Assa Abloy</option>
+            <option value="Came">Came</option>
+            <option value="Ditec">Ditec</option>
+            <option value="dormakaba">dormakaba</option>
+            <option value="FAAC">FAAC</option>
+            <option value="Geze">Geze</option>
+            <option value="Gilgen">Gilgen</option>
+            <option value="Label">Label</option>
+            <option value="Manusa">Manusa</option>
+            <option value="Nabco">Nabco</option>
+            <option value="Portalp">Portalp</option>
+            <option value="Record">Record</option>
+            <option value="Tormax">Tormax</option>
+            <option value="Besam (Assa Abloy)">Besam (Assa Abloy)</option>
+            <option value="Dorma">Dorma</option>
+            <option value="Kaba">Kaba</option>
+            <option value="Horton">Horton</option>
+            <option value="Stanley">Stanley</option>
+            <option value="Marque inconnue / illisible">Marque inconnue / illisible</option>
+            <option value="__autre__">Autre — saisir la marque</option>
+          </select>
+          <input type="text" id="f-marque" placeholder="Saisir la marque" autocomplete="off" style="display:none;margin-top:8px;">
+        </div>
+      </div>
     </div>
 
     <div class="fd-section" id="config-detail" style="display:none;">
@@ -692,13 +720,13 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">R&eacute;alisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.52</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.53</div>
 </div>
 
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  const fields = ['tech','date','nomclient','numporte','adresse','mail','tel','cpville','remarque','hauteur','largeur','largeur-pf','motif-precision'];
+  const fields = ['tech','date','nomclient','numporte','marque','adresse','mail','tel','cpville','remarque','hauteur','largeur','largeur-pf','motif-precision'];
   let photos = [];
   let photoInt = null, photoExt = null;
   let configSelected = null;
@@ -1652,8 +1680,29 @@ if('serviceWorker' in navigator){
     return [data.tech || 'Technicien non renseigné', data.date || ''].filter(Boolean).join('  ·  ');
   }
 
+  function syncLibre(sel){
+    const inp = $(sel.dataset.libre);
+    if(!inp) return;
+    const libre = sel.value === '__autre__';
+    inp.style.display = libre ? '' : 'none';
+    if(libre){ if(Array.prototype.some.call(sel.options, o=> o.value === inp.value)) inp.value = ''; inp.focus(); }
+    else inp.value = sel.value;
+  }
+  function selFromLibre(){
+    document.querySelectorAll('select[data-libre]').forEach(sel=>{
+      const inp = $(sel.dataset.libre);
+      if(!inp) return;
+      const v = inp.value;
+      const connu = v && Array.prototype.some.call(sel.options, o=> o.value === v && v !== '__autre__');
+      sel.value = !v ? '' : (connu ? v : '__autre__');
+      inp.style.display = sel.value === '__autre__' ? '' : 'none';
+    });
+  }
+  document.querySelectorAll('select[data-libre]').forEach(sel=> sel.addEventListener('change', ()=> syncLibre(sel)));
+
   function applyForm(data){
     fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = data[f] || ''; });
+    selFromLibre();
     configSelected = data.config || null;
     fixeSelected = !!data.fixeSelected;
     motifSelected = Array.isArray(data.motif) ? data.motif : [];
@@ -1698,6 +1747,7 @@ if('serviceWorker' in navigator){
 
   function resetForm(){
     fields.forEach(f => $('f-'+f).value = '');
+    selFromLibre();
     motifSelected = [];
     document.querySelectorAll('.fd-toggle[data-field="motif"]').forEach(x=>x.classList.remove('on'));
     $('f-date').value = new Date().toISOString().slice(0, 10);
@@ -1880,6 +1930,7 @@ if('serviceWorker' in navigator){
 
     section('Configuration de la porte');
     row('Type', data.configLabel);
+    row('Marque de la porte remplacée', data.marque);
     tiles([
       { k:'Hauteur passage libre (mm)', v:data.hauteur },
       { k:'Largeur passage libre (mm)', v:data.largeur },
@@ -1943,6 +1994,7 @@ if('serviceWorker' in navigator){
 
     bloc('Configuration de la porte', [
       kv('Type', data.configLabel),
+      kv('Marque de la porte remplacée', data.marque),
       kv('Hauteur passage libre', data.hauteur ? data.hauteur + ' mm' : ''),
       kv('Largeur passage libre', data.largeur ? data.largeur + ' mm' : ''),
       kv('Largeur parties fixes', data['largeur-pf'] ? data['largeur-pf'] + ' mm' : ''),
