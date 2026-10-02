@@ -1,15 +1,12 @@
-/* Code d'accès administrateur — UN SEUL endroit à modifier.
-   Utilisé par la page d'accueil (mode administrateur) et par les fiches
-   en construction (accès réservé). */
-window.RECORD_ADMIN_CODE = 'Chris04';
-/* Indice affiché en cas d'oubli (le code lui-même reste inchangé ici).
-   Ne jamais y écrire le code ou une partie reconnaissable : juste un rappel
-   de la logique utilisée pour le retrouver (ex. « demander à Christophe »). */
-window.RECORD_ADMIN_HINT = 'Demander le code à Christophe BATAILLE.';
+/* Accès administrateur : il n'y a plus de code ici. L'administrateur se connecte avec
+   son e-mail et son mot de passe Supabase (compte créé dans Authentication > Users),
+   vérifiés par Supabase lui-même — voir recordAdminLogin plus bas.
+   Indice affiché en cas d'erreur de connexion : ne jamais y écrire le mot de passe. */
+window.RECORD_ADMIN_HINT = 'Demander le mot de passe à Christophe BATAILLE.';
 
-/* Code séparé, demandé uniquement pour REMETTRE À ZÉRO les statistiques ou les avis.
-   À ne pas communiquer avec le code administrateur : un responsable peut consulter
-   et gérer les listes, mais pas effacer l'historique. */
+/* Code de confirmation, demandé avant d'effacer des statistiques ou des avis
+   (remise à zéro ou mode gestion). Simple garde-fou contre une fausse manœuvre :
+   la vraie protection est la connexion administrateur, exigée par Supabase. */
 window.RECORD_RESET_CODE = 'Reset04';
 
 /* Espace partagé Supabase (statistiques + liste des techniciens) — collé une fois
@@ -19,7 +16,38 @@ window.RECORD_SUPABASE_URL = 'https://aviixriaxyoumhxndzdw.supabase.co';
 window.RECORD_SUPABASE_KEY = 'sb_publishable_3q4W4qZgUiNjhQrP2DPWQw_BKjNxp06';
 
 /* Version de ce fichier — sert uniquement de repère visuel dans la Console (F12). */
-window.RECORD_CONFIG_VERSION = 'v2026-09.7';
+window.RECORD_CONFIG_VERSION = 'v2026-10.1';
+
+/* Connexion administrateur (Supabase Auth). Le mot de passe n'est écrit nulle part :
+   Supabase le vérifie et renvoie un jeton valable environ 1 h, gardé le temps de l'onglet.
+   Sans ce jeton, Supabase refuse de lire les stats et les avis, de les effacer
+   et de modifier la liste des techniciens. */
+(function(){
+  var KEY = 'record-admin-session';
+  var memo = null; // secours si sessionStorage est bloqué
+  function lire(){ try{ return JSON.parse(sessionStorage.getItem(KEY) || 'null') || memo; }catch(e){ return memo; } }
+  window.recordAdminToken = function(){
+    var s = lire();
+    return (s && s.token && Date.now() < s.exp - 60000) ? s.token : null;
+  };
+  window.recordAdminEmail = function(){ var s = lire(); return (s && window.recordAdminToken()) ? s.email : ''; };
+  window.recordAdminLogout = function(){ memo = null; try{ sessionStorage.removeItem(KEY); }catch(e){} };
+  /* Renvoie true si l'e-mail et le mot de passe sont acceptés, false sinon ;
+     lève une erreur si Supabase est injoignable (réseau). */
+  window.recordAdminLogin = async function(email, password){
+    var r = await fetch(window.RECORD_SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method:'POST',
+      headers:{ apikey: window.RECORD_SUPABASE_KEY, 'Content-Type':'application/json' },
+      body: JSON.stringify({ email: String(email || '').trim(), password: String(password || '') })
+    });
+    if(!r.ok) return false;
+    var d = await r.json();
+    if(!d || !d.access_token) return false;
+    memo = { token: d.access_token, exp: Date.now() + (d.expires_in || 3600) * 1000, email: (d.user && d.user.email) || email };
+    try{ sessionStorage.setItem(KEY, JSON.stringify(memo)); }catch(e){}
+    return true;
+  };
+})();
 
 /* Contrôle de version : chaque page compare sa version (repère vAAAA-MM.N en bas de page)
    à celle en ligne, à l'ouverture et à chaque retour sur l'appli. Si elle est dépassée,

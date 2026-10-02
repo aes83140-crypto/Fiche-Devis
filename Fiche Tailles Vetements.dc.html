@@ -71,17 +71,19 @@
   <sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
   <div style="max-width:400px;margin:60px auto 0;display:flex;flex-direction:column;gap:16px;">
     <div style="background:#1E3448;color:#fff;padding:22px 22px 20px;border-radius:16px;position:relative;overflow:hidden;box-shadow:0 18px 40px -26px rgba(18,23,28,.75);">
-      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);margin-bottom:10px;">RECORD · EN CONSTRUCTION</div>
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);margin-bottom:10px;">RECORD · ACCÈS RÉSERVÉ</div>
       <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-.015em;line-height:1.2;">Fiche tailles vêtements</h1>
-      <div style="font-size:13.5px;color:rgba(255,255,255,.68);margin-top:6px;">Page en construction — accès réservé à l'administrateur.</div>
+      <div style="font-size:13.5px;color:rgba(255,255,255,.68);margin-top:6px;">Accès réservé à l'administrateur — connexion avec le compte administrateur.</div>
     </div>
     <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(18,23,28,.05);display:flex;flex-direction:column;gap:10px;">
-      <label style="font-size:12px;font-weight:600;color:#5A646E;text-transform:uppercase;letter-spacing:.05em;">Code administrateur</label>
-      <input type="password" placeholder="Code" value="{{ pwInput }}" onChange="{{ onPwChange }}" onKeyDown="{{ onPwKeyDown }}" style="border:1px solid #CCD3DB;border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;color:#12171C;"></input>
+      <label style="font-size:12px;font-weight:600;color:#5A646E;text-transform:uppercase;letter-spacing:.05em;">E-mail</label>
+      <input type="email" autoComplete="username" placeholder="E-mail" value="{{ emailInput }}" onChange="{{ onEmailChange }}" onKeyDown="{{ onPwKeyDown }}" style="border:1px solid #CCD3DB;border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;color:#12171C;"></input>
+      <label style="font-size:12px;font-weight:600;color:#5A646E;text-transform:uppercase;letter-spacing:.05em;">Mot de passe</label>
+      <input type="password" autoComplete="current-password" placeholder="Mot de passe" value="{{ pwInput }}" onChange="{{ onPwChange }}" onKeyDown="{{ onPwKeyDown }}" style="border:1px solid #CCD3DB;border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;color:#12171C;"></input>
       <sc-if value="{{ pwError }}" hint-placeholder-val="{{ false }}">
         <div style="font-size:12.5px;color:#B3403A;">{{ pwError }}</div>
       </sc-if>
-      <button onClick="{{ checkPassword }}" style="padding:13px;border-radius:10px;border:none;background:#1E3448;color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;">Déverrouiller</button>
+      <button onClick="{{ checkPassword }}" style="padding:13px;border-radius:10px;border:none;background:#1E3448;color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;">{{ pwButton }}</button>
       <a href="index.html" style="text-align:center;color:#5A646E;font-size:13px;text-decoration:none;">← Retour au menu</a>
     </div>
   </div>
@@ -228,7 +230,7 @@
     <div style="text-align:center;margin-top:10px;">
       <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8A939C;">Réalisation</div>
       <div style="font-size:13.5px;font-weight:650;color:#5A646E;margin-top:2px;">Christophe BATAILLE</div>
-      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;margin-top:4px;">v2026-09.15</div>
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;margin-top:4px;">v2026-09.16</div>
     </div>
 
   </div>
@@ -293,20 +295,29 @@ const GARMENTS = [
 {cat:'Chaussures de sécurité', ref:'S431481', color:'Gris/Menthe', name:'Chaussure Slalum Femme S1PS', gender:'femme', sizes:SHOE_SIZES},
 ];
 
+/* Accès réservé : true = page limitée à l'administrateur connecté (même compte que le
+   panneau ⚙️ de l'accueil, session partagée dans l'onglet). La fiche est en service :
+   false = ouverte à tous les techniciens. */
+const ACCES_RESERVE = false;
+
 class Component extends DCLogic {
   state = { tech:'', techSelect:'', genre:null, selections:{}, step:'form', techniciens:[], mailMsg:'', techOpen:false,
-    isUnlocked: true,
-    pwInput:'', pwError:'' };
+    isUnlocked: !ACCES_RESERVE || !!(window.recordAdminToken && window.recordAdminToken()),
+    emailInput:'', pwInput:'', pwError:'', pwBusy:false };
 
+  onEmailChange = (e) => this.setState({ emailInput: e.target.value, pwError:'' });
   onPwChange = (e) => this.setState({ pwInput: e.target.value, pwError:'' });
   onPwKeyDown = (e) => { if (e.key === 'Enter') this.checkPassword(); };
-  checkPassword = () => {
-    const code = (window.RECORD_ADMIN_CODE || '').toString();
-    if (code && this.state.pwInput === code) {
-      try { sessionStorage.setItem('recordFicheVetUnlocked', '1'); } catch(e) {}
-      this.setState({ isUnlocked: true, pwError:'' });
-    } else {
-      this.setState({ pwError: 'Code incorrect.' });
+  checkPassword = async () => {
+    if (this.state.pwBusy) return;
+    if (!window.recordAdminLogin) { this.setState({ pwError: 'Connexion indisponible (config.js non chargé).' }); return; }
+    this.setState({ pwBusy:true, pwError:'' });
+    try {
+      const ok = await window.recordAdminLogin(this.state.emailInput, this.state.pwInput);
+      this.setState(ok ? { isUnlocked:true, pwInput:'', pwBusy:false }
+                       : { pwError:'E-mail ou mot de passe incorrect.', pwBusy:false });
+    } catch(e) {
+      this.setState({ pwError:'Connexion impossible : vérifie le réseau.', pwBusy:false });
     }
   };
 
@@ -580,8 +591,9 @@ class Component extends DCLogic {
       sendMail: () => this.sendMail(), mailMsg: this.state.mailMsg,
       openTechList: this.openTechList, closeTechList: this.closeTechList, toggleTechList: this.toggleTechList,
       locked: !this.state.isUnlocked, unlocked: this.state.isUnlocked,
-      pwInput: this.state.pwInput, pwError: this.state.pwError,
-      onPwChange: this.onPwChange, onPwKeyDown: this.onPwKeyDown, checkPassword: this.checkPassword,
+      emailInput: this.state.emailInput, pwInput: this.state.pwInput, pwError: this.state.pwError,
+      pwButton: this.state.pwBusy ? 'Connexion…' : 'Se connecter',
+      onEmailChange: this.onEmailChange, onPwChange: this.onPwChange, onPwKeyDown: this.onPwKeyDown, checkPassword: this.checkPassword,
       techOpen: this.state.techOpen, techFiltered, hasTechMatches: techFiltered.length > 0, noTechMatches: techFiltered.length === 0,
       showTechList: this.state.techOpen && techFiltered.length > 0,
       techSelect: this.state.techSelect || '',

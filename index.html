@@ -503,7 +503,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.77</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-09.78</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -573,6 +573,11 @@ if('serviceWorker' in navigator){
       <button type="button" class="fd-modal-close" id="admin-close">✕</button>
     </div>
     <div class="fd-hint">Les techniciens enregistrés ici sont proposés automatiquement dans toutes les fiches : devis, Relevé Vantaux SAV, rideaux métalliques et relevé porte neuve.</div>
+    <div class="fd-hint" id="admin-session" style="margin-top:10px;"></div>
+    <div class="fd-admin-row" style="margin-top:8px;">
+      <button type="button" class="fd-add-btn" id="admin-manage" style="flex:1;">Mode gestion</button>
+      <button type="button" class="fd-add-btn" id="admin-logout" style="flex:1;background:#fff;color:var(--steel);">Se déconnecter</button>
+    </div>
 
     <div class="fd-modal-section">
       <h4>Satisfaction de l'application</h4>
@@ -582,7 +587,7 @@ if('serviceWorker' in navigator){
         <button class="fd-add-btn" id="avis-refresh" style="flex:1;">Actualiser</button>
         <button class="fd-add-btn" id="avis-reset" style="flex:1;background:var(--red-bg);color:var(--red);border-color:#E9BEB9;">Effacer les avis</button>
       </div>
-      <div class="fd-hint" style="margin-top:12px;">Pour voir ici les avis de <strong>toutes</strong> les tablettes, créer une fois dans Supabase (SQL Editor) :<br><code>create table avis (id bigserial primary key, d text, n int, t text, c text);<br>alter table avis enable row level security;<br>create policy avis_all on avis for all using (true) with check (true);</code></div>
+      <div class="fd-hint" style="margin-top:12px;">Les avis de <strong>toutes</strong> les tablettes sont lus dans l'espace partagé Supabase — lecture et suppression réservées à l'administrateur connecté.</div>
       <div class="fd-hint" id="avis-status" style="margin-top:8px;"></div>
     </div>
 
@@ -597,7 +602,7 @@ if('serviceWorker' in navigator){
       <div class="fd-admin-row">
         <button class="fd-add-btn" id="stats-reset" style="flex:1;background:var(--red-bg);color:var(--red);border-color:#E9BEB9;">Remettre les compteurs à zéro</button>
       </div>
-      <div class="fd-hint" style="margin-top:12px;">Espace partagé Supabase déjà configuré dans <code>config.js</code> — diffusion automatique à toutes les tablettes, sans jeton.</div>
+      <div class="fd-hint" style="margin-top:12px;">Espace partagé Supabase configuré dans <code>config.js</code> — les tablettes envoient leurs compteurs, seul l'administrateur connecté peut les lire ou les effacer.</div>
       <div class="fd-hint" id="stats-status" style="margin-top:8px;"></div>
     </div>
 
@@ -634,13 +639,13 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  // Le code d'accès est défini dans config.js (seul endroit à modifier)
-  const ADMIN_CODE = window.RECORD_ADMIN_CODE || 'Chris04';
-  // Code distinct, réservé aux remises à zéro (statistiques et avis).
+  // L'accès administrateur passe par la connexion Supabase (config.js : recordAdminLogin).
+  // Code de confirmation avant tout effacement (remise à zéro, mode gestion) — simple garde-fou.
   const RESET_CODE = window.RECORD_RESET_CODE || 'Reset04';
-  let statManage = false; // mode gestion : admin ouvert avec le code Reset04
+  let statManage = false; // mode gestion : suppression ligne par ligne, activé depuis le panneau avec le code Reset04
   /* Fenêtre interne (remplace prompt/confirm, bloqués dans certains navigateurs et aperçus).
-     askBox(message, {code:true}) -> Promise<string|null> ; askBox(message) -> Promise<boolean> */
+     askBox(message, {code:true}) -> Promise<string|null> ; askBox(message) -> Promise<boolean>
+     askBox(message, {login:true}) -> Promise<{email, password}|null> */
   function askBox(msg, opt){
     opt = opt || {};
     return new Promise(res=>{
@@ -652,13 +657,22 @@ if('serviceWorker' in navigator){
       p.style.cssText = 'font-size:15.5px;line-height:1.45;color:#12171C;font-weight:600;white-space:pre-line;';
       p.textContent = msg;
       box.appendChild(p);
-      let inp = null;
-      if(opt.code){
-        inp = document.createElement('input');
-        inp.type = 'password'; inp.autocomplete = 'off'; inp.setAttribute('autocapitalize','off');
-        inp.style.cssText = 'margin-top:14px;width:100%;box-sizing:border-box;height:48px;border:1.5px solid #CCD3DB;border-radius:12px;padding:0 14px;font-size:17px;font-family:inherit;';
-        box.appendChild(inp);
+      const field = (type, auto, ph)=>{
+        const f = document.createElement('input');
+        f.type = type; f.autocomplete = auto; f.placeholder = ph || ''; f.setAttribute('autocapitalize','off');
+        f.style.cssText = 'margin-top:14px;width:100%;box-sizing:border-box;height:48px;border:1.5px solid #CCD3DB;border-radius:12px;padding:0 14px;font-size:17px;font-family:inherit;';
+        box.appendChild(f);
+        return f;
+      };
+      let inp = null, mail = null;
+      if(opt.login){
+        mail = field('email', 'username', 'E-mail');
+        inp = field('password', 'current-password', 'Mot de passe');
+      } else if(opt.code){
+        inp = field('password', 'off');
       }
+      const value = ()=> opt.login ? { email: mail.value, password: inp.value } : inp.value;
+      const empty = (opt.code || opt.login) ? null : false;
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;gap:10px;margin-top:18px;';
       const mk = (t, primary)=>{ const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
@@ -667,10 +681,13 @@ if('serviceWorker' in navigator){
       row.appendChild(no); row.appendChild(yes); box.appendChild(row);
       ov.appendChild(box); document.body.appendChild(ov);
       const done = v=>{ ov.remove(); res(v); };
-      no.onclick = ()=> done(opt.code ? null : false);
-      yes.onclick = ()=> done(opt.code ? inp.value : true);
-      ov.addEventListener('click', e=>{ if(e.target === ov) done(opt.code ? null : false); });
-      if(inp){ inp.addEventListener('keydown', e=>{ if(e.key === 'Enter') yes.click(); if(e.key === 'Escape') no.click(); }); setTimeout(()=> inp.focus(), 30); }
+      no.onclick = ()=> done(empty);
+      yes.onclick = ()=> done(inp ? value() : true);
+      ov.addEventListener('click', e=>{ if(e.target === ov) done(empty); });
+      if(inp){
+        [mail, inp].forEach(f=> f && f.addEventListener('keydown', e=>{ if(e.key === 'Enter') yes.click(); if(e.key === 'Escape') no.click(); }));
+        setTimeout(()=> (mail || inp).focus(), 30);
+      }
       else setTimeout(()=> yes.focus(), 30);
     });
   }
@@ -870,6 +887,25 @@ if('serviceWorker' in navigator){
   function sbHeaders(extra){
     return Object.assign({ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY, 'Content-Type':'application/json' }, extra || {});
   }
+  /* Actions réservées (lire/effacer stats et avis, modifier les listes) : jeton de connexion
+     administrateur obligatoire. Sans lui, Supabase refuserait sans erreur visible
+     (0 ligne lue ou effacée) — on s'arrête donc avant. */
+  function adminToken(){ return (window.recordAdminToken && window.recordAdminToken()) || null; }
+  const SESSION_MSG = '⚠ Session administrateur expirée — ferme le panneau et reconnecte-toi avec ⚙️.';
+  function adminHeaders(extra){
+    const t = adminToken();
+    if(!t) throw new Error('session');
+    return Object.assign(sbHeaders(extra), { Authorization:'Bearer ' + t });
+  }
+  // Message d'erreur commun : session expirée (jeton absent ou refusé) ou réseau.
+  function adminErr(e, fallback){
+    const m = (e && e.message) || '';
+    if(m === 'session' || m === 'http 401' || m === 'http 403'){
+      if(m !== 'session' && window.recordAdminLogout) window.recordAdminLogout();
+      return SESSION_MSG;
+    }
+    return fallback;
+  }
 
   function statLoad(){
     try{ const a = JSON.parse(localStorage.getItem(STAT_KEY) || '[]'); return Array.isArray(a) ? a : []; }
@@ -999,22 +1035,25 @@ if('serviceWorker' in navigator){
     shareStatus('Diffusion en cours...');
     try{
       const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1', {
-        method:'PATCH', headers: sbHeaders({ Prefer:'return=minimal' }),
+        method:'PATCH', headers: adminHeaders({ Prefer:'return=representation' }),
         body: JSON.stringify({ techniciens: loadPreList(TECH_KEY) })
       });
       if(!r.ok) throw new Error('http ' + r.status);
+      // Aucune ligne renvoyée = modification refusée par Supabase (compte non autorisé).
+      const done = await r.json();
+      if(!Array.isArray(done) || !done.length) throw new Error('http 403');
       // Les groupes vont dans une colonne à part ; best-effort (n'existe pas encore si l'ALTER TABLE
       // n'a pas été fait) — ne doit jamais faire échouer la diffusion des techniciens.
       try{
         await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1', {
-          method:'PATCH', headers: sbHeaders({ Prefer:'return=minimal' }),
+          method:'PATCH', headers: adminHeaders({ Prefer:'return=minimal' }),
           body: JSON.stringify({ groupes: loadGroups() })
         });
       }catch(e2){}
       setDirty(false);
       shareStatus('\u2713 Liste diffusée \u2014 toutes les tablettes l\'auront à leur prochaine ouverture.', 'ok');
     }catch(e){
-      shareStatus('\u26A0 Diffusion impossible (réseau ?) \u2014 la liste reste enregistrée ici, réessaie plus tard.', 'err');
+      shareStatus(adminErr(e, '\u26A0 Diffusion impossible (réseau ?) \u2014 la liste reste enregistrée ici, réessaie plus tard.'), 'err');
     }
   }
 
@@ -1091,29 +1130,68 @@ if('serviceWorker' in navigator){
     pushSilently();
   });
 
-  $('btn-admin').addEventListener('click', async ()=>{
-    const code = await askBox('Code administrateur :', { code:true });
-    if(code === null) return;
-    if(code === RESET_CODE){
-      statManage = true;
-      renderAdminPanel();
-      collapseAdminSections();
-      renderStats();
-      renderAvis();
-      $('admin-modal').classList.remove('hidden');
-      return;
+  /* Connexion administrateur : e-mail + mot de passe vérifiés par Supabase.
+     Session gardée le temps de l'onglet (environ 1 h) : pas de nouvelle saisie à chaque ouverture. */
+  async function adminLogin(){
+    if(adminToken()) return true;
+    if(!sbReady() || !window.recordAdminLogin){
+      await askBox('Connexion administrateur indisponible : config.js n\'est pas chargé.', { ok:'OK', cancel:'Fermer' });
+      return false;
     }
-    if(code !== ADMIN_CODE){
+    const id = await askBox('Connexion administrateur', { login:true, ok:'Se connecter' });
+    if(!id) return false;
+    let ok = false;
+    try{ ok = await window.recordAdminLogin(id.email, id.password); }
+    catch(e){
+      await askBox('Connexion impossible : vérifie le réseau.\n(La connexion administrateur nécessite Internet.)', { ok:'OK', cancel:'Fermer' });
+      return false;
+    }
+    if(!ok){
       const hint = window.RECORD_ADMIN_HINT || '';
-      if(hint){ if(await askBox('Code administrateur incorrect.\n\nVoir l\'indice ?', { ok:'Voir l\'indice' })) await askBox('Indice : ' + hint, { ok:'OK', cancel:'Fermer' }); }
-      else await askBox('Code administrateur incorrect.', { ok:'OK', cancel:'Fermer' });
-      return;
+      if(hint){ if(await askBox('E-mail ou mot de passe incorrect.\n\nVoir l\'indice ?', { ok:'Voir l\'indice' })) await askBox('Indice : ' + hint, { ok:'OK', cancel:'Fermer' }); }
+      else await askBox('E-mail ou mot de passe incorrect.', { ok:'OK', cancel:'Fermer' });
+      return false;
     }
+    return true;
+  }
+  function renderAdminSession(){
+    const el = $('admin-session');
+    if(el) el.textContent = 'Connecté : ' + ((window.recordAdminEmail && window.recordAdminEmail()) || '—')
+      + (statManage ? ' · mode gestion actif (suppression ligne par ligne)' : '');
+    const b = $('admin-manage');
+    if(b) b.textContent = statManage ? 'Quitter le mode gestion' : 'Mode gestion';
+  }
+
+  $('btn-admin').addEventListener('click', async ()=>{
+    if(!(await adminLogin())) return;
     statManage = false;
     renderAdminPanel();
-    renderAvis();
+    renderAdminSession();
     collapseAdminSections();
     $('admin-modal').classList.remove('hidden');
+  });
+
+  // Mode gestion : boutons × de suppression ligne par ligne. Le code Reset04 sert de confirmation ;
+  // les suppressions elles-mêmes exigent la connexion administrateur (refusées par Supabase sinon).
+  $('admin-manage').addEventListener('click', async ()=>{
+    if(statManage){
+      statManage = false;
+    } else {
+      if(!adminToken()){ await askBox('Session administrateur expirée : ferme le panneau et reconnecte-toi avec ⚙️.', { ok:'OK', cancel:'Fermer' }); return; }
+      const code = await askBox('Code de réinitialisation, pour activer la suppression ligne par ligne :', { code:true });
+      if(code === null) return;
+      if(code !== RESET_CODE){ await askBox('Code de réinitialisation incorrect.', { ok:'OK', cancel:'Fermer' }); return; }
+      statManage = true;
+    }
+    renderStats();
+    renderAvis();
+    renderAdminSession();
+  });
+
+  $('admin-logout').addEventListener('click', ()=>{
+    if(window.recordAdminLogout) window.recordAdminLogout();
+    statManage = false;
+    $('admin-modal').classList.add('hidden');
   });
 
 
@@ -1221,52 +1299,57 @@ if('serviceWorker' in navigator){
     if(!sbReady()){ renderAvis(); return; }
     avisStatus('Lecture des avis en ligne...');
     try{
-      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis?select=d,n,t,c&order=d.asc', { headers: sbHeaders(), cache:'no-store' });
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis?select=d,n,t,c&order=d.asc', { headers: adminHeaders(), cache:'no-store' });
       if(!r.ok) throw new Error('http ' + r.status);
       avisSave(await r.json());
       renderAvis();
       avisStatus('\u2713 Avis à jour.', 'ok');
     }catch(e){
       renderAvis();
-      avisStatus('Avis de cette tablette uniquement — la table « avis » n\'existe pas encore dans Supabase (SQL ci-dessus).', null);
+      avisStatus(adminErr(e, '\u26A0 Avis de cette tablette uniquement \u2014 lecture en ligne impossible (réseau ?).'), 'err');
     }
   }
   $('avis-refresh') && $('avis-refresh').addEventListener('click', avisPull);
   $('avis-body') && $('avis-body').addEventListener('click', async (e)=>{
     const btn = e.target.closest && e.target.closest('.avis-del');
     if(!btn || !statManage) return;
+    // Suppression réservée à l'administrateur connecté : rien n'est effacé sans session valide.
+    if(sbReady() && !adminToken()){ avisStatus(SESSION_MSG, 'err'); return; }
     const d = btn.dataset.d || '';
     const row = avisLoad().find(r=> String(r.d) === d);
     if(!row) return;
     if(!(await askBox('Supprimer définitivement l\'avis de « ' + (row.t || 'Anonyme') + ' » (' + row.n + '/5) ?', { ok:'Supprimer' }))) return;
-    avisSave(avisLoad().filter(r=> String(r.d) !== d));
-    renderAvis();
     if(sbReady()){
       avisStatus('Suppression en cours...');
       try{
-        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis?d=eq.' + encodeURIComponent(d), { method:'DELETE', headers: sbHeaders() });
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis?d=eq.' + encodeURIComponent(d), { method:'DELETE', headers: adminHeaders() });
         if(!r.ok) throw new Error('http ' + r.status);
+        avisSave(avisLoad().filter(r=> String(r.d) !== d));
+        renderAvis();
         avisStatus('\u2713 Avis supprimé (appareil + espace partagé).', 'ok');
       }catch(err){
-        avisStatus('\u26A0 Supprimé sur cet appareil, mais pas dans l\'espace partagé (réseau ?).', 'err');
+        avisStatus(adminErr(err, '\u26A0 Suppression impossible (réseau ?) \u2014 rien n\'a été effacé.'), 'err');
       }
     } else {
+      avisSave(avisLoad().filter(r=> String(r.d) !== d));
+      renderAvis();
       avisStatus('\u2713 Avis supprimé sur cet appareil.', 'ok');
     }
   });
   $('avis-reset') && $('avis-reset').addEventListener('click', async ()=>{
-    const code = await askBox('Code de réinitialisation (distinct du code administrateur) :', { code:true });
+    if(sbReady() && !adminToken()){ avisStatus(SESSION_MSG, 'err'); return; }
+    const code = await askBox('Code de réinitialisation (confirmation) :', { code:true });
     if(code === null) return;
-    if(code !== RESET_CODE){ avisStatus('\u26A0 Code de réinitialisation incorrect — rien n\'a été effacé.', 'err'); return; }
+    if(code !== RESET_CODE){ avisStatus('\u26A0 Code de réinitialisation incorrect \u2014 rien n\'a été effacé.', 'err'); return; }
     if(!(await askBox('Effacer définitivement tous les avis (cet appareil + espace partagé) ?', { ok:'Effacer' }))) return;
-    avisSave([]); renderAvis();
     if(sbReady()){
       try{
-        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis?id=gt.0', { method:'DELETE', headers: sbHeaders() });
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/avis?id=gt.0', { method:'DELETE', headers: adminHeaders() });
         if(!r.ok) throw new Error('http ' + r.status);
+        avisSave([]); renderAvis();
         avisStatus('\u2713 Avis effacés (appareil + espace partagé).', 'ok');
-      }catch(e){ avisStatus('\u26A0 Effacé sur cet appareil ; l\'espace partagé n\'a pas pu être vidé.', 'err'); }
-    } else avisStatus('Avis effacés sur cet appareil.', 'ok');
+      }catch(e){ avisStatus(adminErr(e, '\u26A0 Effacement impossible (réseau ?) \u2014 rien n\'a été effacé.'), 'err'); }
+    } else { avisSave([]); renderAvis(); avisStatus('Avis effacés sur cet appareil.', 'ok'); }
   });
 
   /* Construit la demande ; renvoie null si un champ obligatoire manque. */
@@ -1418,14 +1501,15 @@ if('serviceWorker' in navigator){
     if(!sbReady()){ renderStats(); return; }
     statStatus('Lecture des compteurs en ligne...');
     try{
-      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/stats?select=d,t,f,h&order=d.asc', { headers: sbHeaders(), cache:'no-store' });
+      // Lecture réservée à l'administrateur connecté (sans jeton, Supabase renverrait une liste vide).
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/stats?select=d,t,f,h&order=d.asc', { headers: adminHeaders(), cache:'no-store' });
       if(!r.ok) throw new Error('http ' + r.status);
       const rows = await r.json();
       statSave(rows); // Supabase fait référence pour ce panneau : on remplace, pas on ajoute (sinon un reset ailleurs ne s'affiche jamais ici).
       renderStats();
       statStatus('\u2713 Compteurs à jour.', 'ok');
     }catch(e){
-      statStatus('\u26A0 Lecture impossible (réseau ?) : ' + ((e && e.message) || 'erreur'), 'err');
+      statStatus(adminErr(e, '\u26A0 Lecture impossible (réseau ?) : ' + ((e && e.message) || 'erreur')), 'err');
     }
   }
   $('stats-refresh') && $('stats-refresh').addEventListener('click', statsPull);
@@ -1445,47 +1529,54 @@ if('serviceWorker' in navigator){
     statStatus('\u2713 ' + rows.length + ' ligne(s) exportée(s).', 'ok');
   });
 
-  /* Mode gestion (code Reset04) : suppression ligne par ligne d'un technicien dans les statistiques. */
-  // statManage est déclaré en haut du script : vrai uniquement quand l'admin a été ouvert avec le code Reset04.
+  /* Mode gestion (activé depuis le panneau, code Reset04 en confirmation) : suppression ligne par ligne
+     d'un technicien dans les statistiques. Supabase n'accepte la suppression que de l'administrateur connecté. */
+  // statManage est déclaré en haut du script.
   $('stats-body') && $('stats-body').addEventListener('click', async (e)=>{
     const btn = e.target.closest && e.target.closest('.stat-del');
     if(!btn || !statManage) return;
+    if(sbReady() && !adminToken()){ statStatus(SESSION_MSG, 'err'); return; }
     const tech = decodeURIComponent(btn.dataset.tech || '');
     const n = statLoad().filter(r=> r.t === tech).length;
     if(!(await askBox('Supprimer définitivement la ligne « ' + tech + ' » (' + n + ' fiche(s)) ?', { ok:'Supprimer' }))) return;
-    statSave(statLoad().filter(r=> r.t !== tech));
-    renderStats();
     if(sbReady()){
       statStatus('Suppression en cours...');
       try{
-        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/stats?t=eq.' + encodeURIComponent(tech), { method:'DELETE', headers: sbHeaders() });
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/stats?t=eq.' + encodeURIComponent(tech), { method:'DELETE', headers: adminHeaders() });
         if(!r.ok) throw new Error('http ' + r.status);
+        statSave(statLoad().filter(r=> r.t !== tech));
+        renderStats();
         statStatus('\u2713 « ' + tech + ' » supprimé (appareil + espace partagé).', 'ok');
       }catch(err){
-        statStatus('\u26A0 Supprimé sur cet appareil, mais pas dans l\'espace partagé (réseau ?).', 'err');
+        statStatus(adminErr(err, '\u26A0 Suppression impossible (réseau ?) \u2014 rien n\'a été effacé.'), 'err');
       }
     } else {
+      statSave(statLoad().filter(r=> r.t !== tech));
+      renderStats();
       statStatus('\u2713 « ' + tech + ' » supprimé sur cet appareil.', 'ok');
     }
   });
 
   $('stats-reset') && $('stats-reset').addEventListener('click', async ()=>{
-    const code = await askBox('Code de réinitialisation (distinct du code administrateur) :', { code:true });
+    if(sbReady() && !adminToken()){ statStatus(SESSION_MSG, 'err'); return; }
+    const code = await askBox('Code de réinitialisation (confirmation) :', { code:true });
     if(code === null) return;
     if(code !== RESET_CODE){ statStatus('\u26A0 Code de réinitialisation incorrect \u2014 rien n\'a été effacé.', 'err'); return; }
     if(!(await askBox('Effacer définitivement tout le journal (cet appareil + l\'espace partagé) ?', { ok:'Effacer' }))) return;
-    statSave([]);
-    renderStats();
     if(sbReady()){
       statStatus('Réinitialisation en cours...');
       try{
-        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/stats?id=gt.0', { method:'DELETE', headers: sbHeaders() });
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/stats?id=gt.0', { method:'DELETE', headers: adminHeaders() });
         if(!r.ok) throw new Error('http ' + r.status);
+        statSave([]);
+        renderStats();
         statStatus('\u2713 Compteurs remis à zéro (appareil + espace partagé).', 'ok');
       }catch(e){
-        statStatus('\u26A0 Effacé sur cet appareil, mais la remise à zéro de l\'espace partagé a échoué (réseau ?).', 'err');
+        statStatus(adminErr(e, '\u26A0 Remise à zéro impossible (réseau ?) \u2014 rien n\'a été effacé.'), 'err');
       }
     } else {
+      statSave([]);
+      renderStats();
       statStatus('Compteurs remis à zéro sur cet appareil.', 'ok');
     }
   });
