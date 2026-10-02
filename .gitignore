@@ -1,0 +1,32 @@
+# --- Fichiers système ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# --- Éditeurs / IDE ---
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- Fichiers temporaires et sauvegardes ---
+*.tmp
+*.bak
+*.orig
+*.log
+
+# --- Office (fichiers de verrouillage) ---
+~$*
+
+# --- Secrets / configuration locale (ne jamais publier) ---
+.env
+.env.*
+*.local.js
+
+# --- Dépendances / outils (si un jour ajoutés) ---
+node_modules/
+
+# --- Réglages locaux de Claude Code ---
+.claude/settings.local.json
