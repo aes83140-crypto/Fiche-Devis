@@ -1245,7 +1245,7 @@ if('serviceWorker' in navigator){
   starBtns.forEach(b=> b.addEventListener('click', ()=>{ helpNote = Number(b.dataset.n); paintStars(); }));
   paintStars();
 
-  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function avisLoad(){ try{ const v = localStorage.getItem(AVIS_KEY); return v ? JSON.parse(v) : []; }catch(e){ return []; } }
   function avisSave(a){ try{ localStorage.setItem(AVIS_KEY, JSON.stringify(a.slice(-2000))); }catch(e){} }
   function avisStatus(msg, tone){

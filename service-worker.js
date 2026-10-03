@@ -1,9 +1,12 @@
 /* Cache applicatif : la page s'ouvre même sans réseau.
    Les pages et les données passent par le réseau en priorité (toujours à jour),
    le cache ne sert qu'en secours hors connexion. */
-const CACHE = 'record-outils-v20';
+const CACHE = 'record-outils-v21';
 const ASSETS = ['./', './index.html', './fiche-devis.html', './remontee-fo.html', './vantaux-sav.html', './rideaux-metalliques.html', './porte-neuve.html', './Fiche Tailles Vetements.dc.html', './support.js', './record-logo.webp',
-  './listes.json', './config.js', './lame-p116.jpg', './manifest.webmanifest', './icone-192.png', './icone-512.png'];
+  './listes.json', './config.js', './lame-p116.jpg', './manifest.webmanifest', './icone-192.png', './icone-512.png',
+  './image-slot.js', './lib/jspdf.umd.min.js',
+  // Photos de la Fiche Vêtements : disponibles hors réseau même si la fiche n'a jamais été ouverte
+  ...Array.from({ length: 46 }, (_, i) => './vetement-photos/v' + i + '.png')];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

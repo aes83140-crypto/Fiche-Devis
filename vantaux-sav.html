@@ -6,7 +6,7 @@
 <title>Relevé Vantaux SAV — RECORD</title>
 
 <script src="config.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="lib/jspdf.umd.min.js"></script>
 <script>
   window.addEventListener('error', function(e){
     // Avertissements bénins du navigateur (ResizeObserver, erreurs de scripts externes
@@ -1430,7 +1430,7 @@ if('serviceWorker' in navigator){
   });
 
   // --- Schéma du vantail (élévation, mis à jour en direct) ---
-  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   const CIMAISE_RULES = {
     '108': { '22R':'30', '32R':'32' },
     '150': { '22R':'50', '32R':'50' },
