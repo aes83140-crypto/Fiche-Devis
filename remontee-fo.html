@@ -6,6 +6,7 @@
 <title>Remontée Service Support — RECORD</title>
 
 <script src="config.js"></script>
+<script src="commun.js"></script>
 <script src="lib/jspdf.umd.min.js"></script>
 <script>
   window.addEventListener('error', function(e){
@@ -613,105 +614,16 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
   const $ = id => document.getElementById(id);
+  // Fonctions communes à toutes les fiches : voir commun.js
+  const { lsGet, lsSet, dedupe, mailOk, pdfFileName, photoOf, dataUrlToFileSync, resizeImage, setupCombo, statLog, statFlush } = window.RecordCommun;
+  function histLoad(){ return RecordCommun.histLoad(HIST_KEY); }
+  function histSave(list){ RecordCommun.histSave(HIST_KEY, list); }
+  function loadSharedLists(){ return RecordCommun.chargerTechniciens(refreshAllDatalists); }
   const fields = ['tech','site','regle','date','inter','expl'];
   let toggles = { nacelle:null, pirl:null };
   let chips = { arret:false, urgent:false, preventif:false };
   let photos = []; // dataURLs (jpeg compressés)
 
-  /* Réduction des photos. Les appareils photo de tablette sortent des images de
-     10 à 50 Mpx : dessinées d'un coup dans un canvas, elles dépassent la limite
-     mémoire du navigateur et le résultat ressort blanc. On passe donc par
-     createImageBitmap (qui red imensionne au décodage), avec repli en deux étapes
-     et contrôle final que l'image n'est pas vide. */
-  function resizeImage(file){
-    const maxDim = 1024;
-    const QUAL = 0.55;
-
-    function dessine(src, sw, sh){
-      let w = sw, h = sh;
-      if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
-      else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
-      const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      const x = c.getContext('2d');
-      x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, w, h);
-      x.drawImage(src, 0, 0, w, h);
-      return { canvas:c, w, h };
-    }
-    function estVide(canvas){
-      try{
-        const x = canvas.getContext('2d');
-        const pts = [[2,2],[canvas.width>>1,canvas.height>>1],[canvas.width-3,canvas.height-3],
-                     [canvas.width>>2,canvas.height>>2],[canvas.width-(canvas.width>>2),canvas.height-(canvas.height>>2)]];
-        return pts.every(p=>{
-          const d = x.getImageData(p[0], p[1], 1, 1).data;
-          return d[0] > 250 && d[1] > 250 && d[2] > 250;
-        });
-      }catch(e){ return false; }
-    }
-
-    return new Promise(async (resolve)=>{
-      // 1. createImageBitmap : red imensionnement pendant le décodage, sans charger
-      //    l'image entière en mémoire graphique.
-      if(window.createImageBitmap){
-        try{
-          const probe = await createImageBitmap(file);
-          const sw = probe.width, sh = probe.height;
-          let bmp = probe;
-          if(Math.max(sw, sh) > maxDim){
-            const r = maxDim / Math.max(sw, sh);
-            try{
-              bmp = await createImageBitmap(file, {
-                resizeWidth: Math.round(sw * r),
-                resizeHeight: Math.round(sh * r),
-                resizeQuality: 'high'
-              });
-              probe.close && probe.close();
-            }catch(e){ bmp = probe; }
-          }
-          const out = dessine(bmp, bmp.width, bmp.height);
-          bmp.close && bmp.close();
-          if(!estVide(out.canvas)){
-            resolve({ dataUrl: out.canvas.toDataURL('image/jpeg', QUAL), w: out.w, h: out.h });
-            return;
-          }
-        }catch(e){}
-      }
-
-      // 2. Repli : <img> classique, avec réduction en paliers successifs pour
-      //    rester sous la limite mémoire des tablettes.
-      const reader = new FileReader();
-      reader.onload = function(e){
-        const img = new Image();
-        img.onload = async function(){
-          try{ if(img.decode) await img.decode(); }catch(err){}
-          let out = dessine(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
-          if(estVide(out.canvas)){
-            // paliers : on divise par deux jusqu'à la taille cible
-            let src = img, sw = img.naturalWidth || img.width, sh = img.naturalHeight || img.height;
-            while(Math.max(sw, sh) > maxDim * 2){
-              sw = Math.round(sw / 2); sh = Math.round(sh / 2);
-              const step = document.createElement('canvas');
-              step.width = sw; step.height = sh;
-              const sx = step.getContext('2d');
-              sx.fillStyle = '#FFFFFF'; sx.fillRect(0, 0, sw, sh);
-              sx.drawImage(src, 0, 0, sw, sh);
-              src = step;
-            }
-            out = dessine(src, sw, sh);
-          }
-          resolve({ dataUrl: out.canvas.toDataURL('image/jpeg', QUAL), w: out.w, h: out.h });
-        };
-        img.onerror = function(){ resolve(null); };
-        img.src = e.target.result;
-      };
-      reader.onerror = function(){ resolve(null); };
-      reader.readAsDataURL(file);
-    });
-  }
-  function photoOf(p){
-    return (p && typeof p === 'object') ? p : { dataUrl: p, w: 4, h: 3 };
-  }
 
   function renderPhotoGrid(){
     const grid = $('fd-photo-grid');
@@ -767,21 +679,7 @@ if('serviceWorker' in navigator){
     e.target.value = '';
   }
 
-  function dataUrlToFileSync(dataUrl, name){
-    const parts = dataUrl.split(',');
-    const mimeMatch = parts[0].match(/data:(.*?);base64/);
-    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-    const binary = atob(parts[1]);
-    const len = binary.length;
-    const bytes = new Uint8Array(len);
-    for(let i=0;i<len;i++){ bytes[i] = binary.charCodeAt(i); }
-    return new File([bytes], name, { type: mime });
-  }
 
-  function pdfFileName(prefix, chantier, equip){
-    const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
-    return [prefix, clean(chantier) || 'chantier', clean(equip) || 'equipement'].join('-') + '.pdf';
-  }
 
   function generateFichePDF(data, variant){
     if(!window.jspdf || !window.jspdf.jsPDF){
@@ -997,61 +895,12 @@ if('serviceWorker' in navigator){
     return doc;
   }
 
-  // --- Stockage local (fonctionne hors-ligne, propre à cette tablette/navigateur) ---
-  function lsGet(key){
-    try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; }
-  }
-  function lsSet(key, val){
-    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
-  }
 
   // --- Listes préenregistrées (gérées depuis la page d'accueil > Administration) ---
   const TECH_KEY = 'techniciens-preenregistres';
 
   function loadPreList(key){ return lsGet(key) || []; }
 
-  function setupCombo(inputId, key, placeholder){
-    const input = $(inputId);
-    if(!input) return;
-    // Un seul encart : le technicien tape son nom, des propositions apparaissent ;
-    // il peut en choisir une ou continuer à écrire s'il n'est pas enregistré.
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:relative;';
-    input.parentNode.insertBefore(wrap, input);
-    wrap.appendChild(input);
-    input.placeholder = placeholder;
-    input.setAttribute('autocomplete', 'off');
-    input.style.minHeight = '44px';
-    const list = document.createElement('div');
-    list.style.cssText = 'display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:70;background:#fff;border:1.5px solid #CCD3DB;border-radius:12px;box-shadow:0 20px 40px -22px rgba(18,23,28,.45);max-height:240px;overflow-y:auto;padding:6px;';
-    wrap.appendChild(list);
-    function fold(s){
-      return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    }
-    function render(){
-      const q = fold(input.value).trim();
-      const found = (lsGet(key) || []).slice()
-        .sort((a,b)=>String(a).localeCompare(String(b),'fr'))
-        .filter(t=> !q || fold(t).indexOf(q) >= 0)
-        .slice(0, 40);
-      if(!found.length || (found.length === 1 && fold(found[0]) === q)){ list.style.display = 'none'; return; }
-      list.innerHTML = found.map(v=> '<div data-v="' + String(v).replace(/"/g,'&quot;') + '" style="padding:11px 12px;border-radius:8px;font-size:15px;color:#12171C;cursor:pointer;min-height:44px;display:flex;align-items:center;">' + String(v).replace(/</g,'&lt;') + '</div>').join('');
-      list.style.display = '';
-    }
-    input.addEventListener('focus', render);
-    input.addEventListener('input', render);
-    input.addEventListener('keydown', e=>{ if(e.key === 'Escape' || e.key === 'Enter') list.style.display = 'none'; });
-    list.addEventListener('mousedown', e=>{
-      const opt = e.target.closest('[data-v]');
-      if(!opt) return;
-      e.preventDefault();
-      input.value = opt.getAttribute('data-v');
-      list.style.display = 'none';
-      input.dispatchEvent(new Event('change', { bubbles:true }));
-    });
-    document.addEventListener('click', e=>{ if(!wrap.contains(e.target)) list.style.display = 'none'; });
-    return { refresh: ()=>{ if(list.style.display !== 'none') render(); } };
-  }
 
   const comboTech = setupCombo('f-tech', TECH_KEY, 'Saisir le nom du technicien');
   function refreshAllDatalists(){
@@ -1063,51 +912,6 @@ if('serviceWorker' in navigator){
   window.addEventListener('pageshow', refreshAllDatalists);
   window.addEventListener('storage', refreshAllDatalists);
 
-  function dedupe(a){ const o = []; (a || []).forEach(v=>{ v = String(v).trim(); if(v && o.indexOf(v) < 0) o.push(v); }); return o; }
-  async function loadSharedLists(){
-    try{
-      const r = await fetch('listes.json?v=' + Date.now(), { cache:'no-store' });
-      if(!r.ok) return;
-      const d = await r.json();
-      lsSet(TECH_KEY, dedupe(d.techniciens));
-      if(typeof d.statsUrl === 'string') try{ localStorage.setItem('record-stats-url', d.statsUrl); }catch(e){}
-      refreshAllDatalists();
-      statFlush();
-      loadSharedFromCloud();
-    }catch(e){}
-  }
-  /* Liste tenue à jour par les responsables depuis le mode administrateur (espace partagé) :
-     elle fait référence dès qu'elle répond. */
-  /* Lecture des données de l'espace partagé sans requête inter-origine :
-     Google renvoie parfois une page de connexion aux fetch ; le chargement
-     par balise <script> (JSONP) est traité comme une navigation et passe. */
-  function cloudGet(url, params, timeoutMs){
-    return new Promise((resolve, reject)=>{
-      if(!url) return reject(new Error('adresse absente'));
-      const cb = 'recordCb' + Math.random().toString(36).slice(2);
-      const s = document.createElement('script');
-      const q = Object.keys(params || {}).map(k => k + '=' + encodeURIComponent(params[k]));
-      q.push('callback=' + cb, 'v=' + Date.now());
-      let done = false;
-      const clean = ()=>{ try{ delete window[cb]; }catch(e){ window[cb] = undefined; } if(s.parentNode) s.parentNode.removeChild(s); };
-      const timer = setTimeout(()=>{ if(!done){ done = true; clean(); reject(new Error('pas de réponse (10 s)')); } }, timeoutMs || 10000);
-      window[cb] = d =>{ if(done) return; done = true; clearTimeout(timer); clean(); resolve(d || {}); };
-      s.onerror = ()=>{ if(done) return; done = true; clearTimeout(timer); clean(); reject(new Error('adresse injoignable')); };
-      s.src = url + (url.indexOf('?') < 0 ? '?' : '&') + q.join('&');
-      document.head.appendChild(s);
-    });
-  }
-  async function loadSharedFromCloud(){
-    if(!window.RECORD_SUPABASE_URL || !window.RECORD_SUPABASE_KEY) return;
-    try{
-      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/listes?id=eq.1&select=techniciens', {
-        headers:{ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY }, cache:'no-store'
-      });
-      const d = await r.json();
-      const t = dedupe(d[0] && d[0].techniciens || []);
-      if(t.length){ lsSet(TECH_KEY, t); refreshAllDatalists(); }
-    }catch(e){}
-  }
   loadSharedLists();
   window.addEventListener('focus', loadSharedLists);
 
@@ -1130,54 +934,12 @@ if('serviceWorker' in navigator){
   });
 
 
-  /* ---------- Contrôle des adresses mail ---------- */
-  function mailOk(v){ return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(String(v || '').trim()); }
 
   /* ---------- Historique des fiches envoyées ---------- */
   const HIST_KEY = 'record-hist-fo';
-  function histLoad(){
-    try{ const a = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); return Array.isArray(a) ? a : []; }
-    catch(e){ return []; }
-  }
-  function histSave(list){
-    try{ localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, 10))); }catch(e){}
-  }
   /* --- Journal d'utilisation (statistiques, mode administrateur) --- */
   const STAT_KEY = 'record-stats-usage';
   const STAT_Q = 'record-stats-queue';
-  function statLog(tech, fiche, how){
-    const row = { d: new Date().toISOString(), t: String(tech || '').trim() || 'Non renseigné', f: fiche, h: how || '' };
-    try{
-      const a = JSON.parse(localStorage.getItem(STAT_KEY) || '[]');
-      a.push(row);
-      localStorage.setItem(STAT_KEY, JSON.stringify(a.slice(-2000)));
-    }catch(e){}
-    try{
-      const q = JSON.parse(localStorage.getItem(STAT_Q) || '[]');
-      q.push(row);
-      localStorage.setItem(STAT_Q, JSON.stringify(q.slice(-500)));
-    }catch(e){}
-    statFlush();
-  }
-  /* Remonte les compteurs vers l'espace partagé Supabase, sans aucune action du technicien.
-     Hors réseau, les lignes restent en attente et repartent à la prochaine ouverture. */
-  async function statFlush(){
-    const SB_URL = window.RECORD_SUPABASE_URL, SB_KEY = window.RECORD_SUPABASE_KEY;
-    const tag = $('fd-sync-tag');
-    if(!SB_URL || !SB_KEY){ if(tag) tag.textContent = '⚠ statistiques : config.js non à jour'; return; }
-    let q = [];
-    try{ q = JSON.parse(localStorage.getItem(STAT_Q) || '[]'); }catch(e){}
-    if(!q.length){ if(tag) tag.textContent = ''; return; }
-    try{
-      const r = await fetch(SB_URL + '/rest/v1/stats', {
-        method:'POST', keepalive:true,
-        headers:{ apikey: SB_KEY, Authorization:'Bearer ' + SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
-        body: JSON.stringify(q)
-      });
-      if(r.ok){ localStorage.setItem(STAT_Q, '[]'); if(tag) tag.textContent = ''; }
-      else if(tag) tag.textContent = '⚠ statistiques en attente (réessai à la prochaine ouverture)';
-    }catch(e){ if(tag) tag.textContent = '⚠ statistiques en attente (hors ligne ?)'; }
-  }
   window.addEventListener('online', statFlush);
   function histAdd(data, how){
     statLog(data.tech, 'FO', how);
