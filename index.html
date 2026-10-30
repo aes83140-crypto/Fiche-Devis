@@ -433,7 +433,7 @@ if('serviceWorker' in navigator){
     <div class="fd-sub">Choisis la fiche à remplir</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-right:62px;">
       <a href="Fiche Tailles Vetements.dc.html" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;">👕 Vêtements</a>
-      <a href="remontee-fo.html" style="display:inline-flex;align-items:center;gap:6px;background:rgba(126,176,214,.2);border:1px solid rgba(160,200,230,.38);color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;"><span style="color:#F2B55C;font-size:14px;line-height:1;">⚠&#xFE0E;</span> Remontée Service Support</a>
+      <a href="soustraitant.html" style="display:inline-flex;align-items:center;gap:6px;background:rgba(126,176,214,.2);border:1px solid rgba(160,200,230,.38);color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;text-decoration:none;"><span style="color:#F2B55C;font-size:14px;line-height:1;">🔧&#xFE0E;</span> Devis sous-traitant</a>
     </div>
     <button type="button" id="btn-admin" class="fd-admin-btn" title="Administration">⚙️</button>
     <button type="button" id="fd-force-refresh" class="fd-refresh-btn" title="Actualiser la version" aria-label="Actualiser la version">
@@ -503,7 +503,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.1</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.5</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -630,6 +630,34 @@ if('serviceWorker' in navigator){
           <input type="text" id="admin-group-new" placeholder="Nouvelle agence (ex. Lyon, Nord...)">
           <button type="button" class="fd-add-btn" id="admin-group-add">Ajouter</button>
         </div>
+      </div>
+    </div>
+    <div class="fd-modal-section">
+      <h4 id="admin-cat-toggle" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;">
+        <span id="admin-cat-arrow">▸</span> Catalogue sous-traitant
+      </h4>
+      <div id="admin-cat-body" style="display:none;">
+        <div class="fd-hint" style="margin:8px 0 12px;">Ajoute ou corrige une pièce : elle apparaît tout de suite chez les sous-traitants, sans redéposer de fichier. Même référence = mise à jour.</div>
+        <div style="display:grid;gap:8px;">
+          <input type="text" id="cat-r" placeholder="Référence (ex. 998-044639100)" style="font-family:var(--mono);">
+          <input type="text" id="cat-d" placeholder="Désignation">
+          <input type="text" id="cat-t" list="cat-types" placeholder="Famille (ex. MOTEUR, CARTE DE COMMANDE / LOGIQUE)">
+          <datalist id="cat-types"></datalist>
+          <input type="text" id="cat-m" placeholder="Marque (facultatif)">
+          <input type="text" id="cat-c" placeholder="Commentaire (facultatif)">
+          <div class="fd-admin-row" style="align-items:center;">
+            <label class="fd-add-btn" for="cat-photo" style="flex:1;text-align:center;cursor:pointer;background:#fff;color:var(--steel);">📷 Photo</label>
+            <input type="file" id="cat-photo" accept="image/*" style="display:none;">
+            <img id="cat-photo-prev" alt="" style="display:none;width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--line);">
+          </div>
+          <div class="fd-admin-row">
+            <button type="button" class="fd-add-btn" id="cat-save" style="flex:1;">Enregistrer la pièce</button>
+            <button type="button" class="fd-add-btn" id="cat-hide" style="flex:1;background:#fff;color:#B3403A;">Retirer cette réf.</button>
+          </div>
+        </div>
+        <div class="fd-hint" id="cat-status" style="margin-top:10px;"></div>
+        <div style="font-weight:700;margin:14px 0 6px;">Modifications en ligne</div>
+        <div id="cat-list" style="display:grid;gap:6px;"></div>
       </div>
     </div>
 
@@ -882,7 +910,7 @@ if('serviceWorker' in navigator){
 
   /* ---------- Statistiques d'utilisation ---------- */
   const STAT_KEY = 'record-stats-usage';
-  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', PN:'Porte neuve', FO:'Service Support' };
+  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', PN:'Porte neuve', FO:'Service Support', ST:'Sous-traitant' };
   function sbReady(){ return !!(window.RECORD_SUPABASE_URL && window.RECORD_SUPABASE_KEY); }
   function sbHeaders(extra){
     return Object.assign({ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY, 'Content-Type':'application/json' }, extra || {});
@@ -898,6 +926,109 @@ if('serviceWorker' in navigator){
     return Object.assign(sbHeaders(extra), { Authorization:'Bearer ' + t });
   }
   // Message d'erreur commun : session expirée (jeton absent ou refusé) ou réseau.
+  /* ---------- Catalogue sous-traitant (table + photos Supabase) ---------- */
+  (function(){
+    const $c = id => document.getElementById(id);
+    let photoBlob = null, catRows = [];
+    const st = (m, bad) => { $c('cat-status').textContent = m; $c('cat-status').style.color = bad ? '#B3403A' : ''; };
+    const esc = v => String(v || '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+    $c('admin-cat-toggle').addEventListener('click', ()=>{
+      const b = $c('admin-cat-body'), open = b.style.display === 'none';
+      b.style.display = open ? '' : 'none'; $c('admin-cat-arrow').textContent = open ? '▾' : '▸';
+      if(open){ loadTypes(); loadList(); }
+    });
+    function loadTypes(){
+      fetch('catalogue-st.json', { cache:'no-store' }).then(r => r.ok ? r.json() : []).then(j => {
+        $c('cat-types').innerHTML = [...new Set(j.map(i => i.t).filter(Boolean))].sort().map(t => '<option value="' + esc(t) + '">').join('');
+      }).catch(()=>{});
+    }
+    async function loadList(){
+      if(!sbReady()) return;
+      try{
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/catalogue?select=r,d,t,i,masque&order=maj.desc', { headers: sbHeaders(), cache:'no-store' });
+        if(r.status === 404){ st('⚠ Table « catalogue » absente : colle supabase-catalogue.sql dans Supabase > SQL Editor.', true); return; }
+        catRows = r.ok ? await r.json() : [];
+      }catch(e){ catRows = []; }
+      $c('cat-list').innerHTML = catRows.length ? catRows.map(x =>
+        '<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;' + (x.masque ? 'opacity:.55;' : '') + '">' +
+        (x.i ? '<img src="' + esc(x.i) + '" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;">' : '<div style="width:36px;height:36px;border-radius:6px;background:var(--line);"></div>') +
+        '<div style="flex:1;min-width:0;cursor:pointer;" data-edit="' + esc(x.r) + '"><div style="font-family:var(--mono);font-size:12.5px;font-weight:700;">' + esc(x.r) + (x.masque ? ' · retirée' : '') + '</div><div style="font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(x.d) + '</div></div>' +
+        '<button type="button" data-del="' + esc(x.r) + '" title="Annuler cette modification" style="width:34px;height:34px;border:none;background:none;color:#B3403A;font-size:16px;cursor:pointer;">✕</button></div>'
+      ).join('') : '<div class="fd-hint">Aucune modification pour l\'instant.</div>';
+      $c('cat-list').querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', async ()=>{
+        const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/catalogue?r=eq.' + encodeURIComponent(el.dataset.edit), { headers: sbHeaders() });
+        const x = (await r.json())[0]; if(!x) return;
+        ['r','d','t','m','c'].forEach(k => $c('cat-' + k).value = x[k] || '');
+        photoBlob = null; const p = $c('cat-photo-prev'); p.src = x.i || ''; p.style.display = x.i ? '' : 'none';
+        st('Pièce chargée : modifie puis « Enregistrer ».');
+      }));
+      $c('cat-list').querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async ()=>{
+        if(!confirm('Annuler la modification de ' + b.dataset.del + ' ?\n(Si la pièce existait dans le catalogue de base, elle reprend sa fiche d\'origine.)')) return;
+        try{
+          const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/catalogue?r=eq.' + encodeURIComponent(b.dataset.del), { method:'DELETE', headers: adminHeaders() });
+          if(!r.ok) throw new Error('http ' + r.status);
+          st('Modification annulée.'); loadList();
+        }catch(e){ st(adminErr(e, 'Suppression impossible.'), true); }
+      }));
+    }
+    function compress(file){
+      return new Promise((res, rej) => {
+        const img = new Image(), url = URL.createObjectURL(file);
+        img.onload = () => {
+          const k = Math.min(1, 900 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+          cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+          cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+          URL.revokeObjectURL(url); cv.toBlob(b => b ? res(b) : rej(new Error('photo')), 'image/jpeg', 0.8);
+        };
+        img.onerror = () => rej(new Error('photo')); img.src = url;
+      });
+    }
+    $c('cat-photo').addEventListener('change', async e => {
+      const f = e.target.files && e.target.files[0]; e.target.value = '';
+      if(!f) return;
+      try{ photoBlob = await compress(f); const p = $c('cat-photo-prev'); p.src = URL.createObjectURL(photoBlob); p.style.display = ''; }
+      catch(err){ st('Photo illisible.', true); }
+    });
+    const ref = () => $c('cat-r').value.trim().toUpperCase().replace(/\s+/g, '');
+    async function upsert(row){
+      const r = await fetch(window.RECORD_SUPABASE_URL + '/rest/v1/catalogue?on_conflict=r', {
+        method:'POST', headers: adminHeaders({ Prefer:'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify(row)
+      });
+      if(!r.ok) throw new Error('http ' + r.status);
+    }
+    $c('cat-save').addEventListener('click', async ()=>{
+      const r = ref(), d = $c('cat-d').value.trim();
+      if(!r){ st('La référence est obligatoire.', true); return; }
+      if(!d){ st('La désignation est obligatoire.', true); return; }
+      try{
+        st('Enregistrement en cours...');
+        const row = { r, d, t: $c('cat-t').value.trim().toUpperCase(), m: $c('cat-m').value.trim(), c: $c('cat-c').value.trim(), masque:false, maj: new Date().toISOString() };
+        if(photoBlob){
+          const path = encodeURIComponent(r + '-' + Date.now() + '.jpg');
+          const up = await fetch(window.RECORD_SUPABASE_URL + '/storage/v1/object/catalogue/' + path, {
+            method:'POST', headers: Object.assign(adminHeaders(), { 'Content-Type':'image/jpeg', 'x-upsert':'true' }), body: photoBlob
+          });
+          if(!up.ok) throw new Error('http ' + up.status);
+          row.i = window.RECORD_SUPABASE_URL + '/storage/v1/object/public/catalogue/' + path;
+        } else {
+          const p = $c('cat-photo-prev'); if(p.style.display !== 'none' && /^https?:/.test(p.src)) row.i = p.src;
+        }
+        await upsert(row);
+        st('✓ ' + r + ' enregistrée — visible chez les sous-traitants.');
+        ['r','d','t','m','c'].forEach(k => $c('cat-' + k).value = '');
+        photoBlob = null; $c('cat-photo-prev').style.display = 'none';
+        loadList();
+      }catch(e){ st(adminErr(e, 'Enregistrement impossible. As-tu collé supabase-catalogue.sql dans Supabase ?'), true); }
+    });
+    $c('cat-hide').addEventListener('click', async ()=>{
+      const r = ref();
+      if(!r){ st('Tape la référence à retirer.', true); return; }
+      if(!confirm('Retirer ' + r + ' du catalogue sous-traitant ?')) return;
+      try{ await upsert({ r, masque:true, maj: new Date().toISOString() }); st('✓ ' + r + ' retirée du catalogue.'); $c('cat-r').value = ''; loadList(); }
+      catch(e){ st(adminErr(e, 'Impossible de retirer la pièce.'), true); }
+    });
+  })();
+
   function adminErr(e, fallback){
     const m = (e && e.message) || '';
     if(m === 'session' || m === 'http 401' || m === 'http 403'){
