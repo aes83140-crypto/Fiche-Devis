@@ -278,7 +278,7 @@
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.16</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.17</div>
 </div>
 
 <script>
@@ -290,7 +290,7 @@
   let CAT = SEED, type = '', cart = [], showAll = false, photos = [];
   const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const esc = s => String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const imgSrc = it => !it.i ? '' : (/^https?:/.test(it.i) ? it.i : 'img/catalogue/' + encodeURIComponent(it.i));
+  const imgSrc = it => !it.i ? '' : (/^https?:/.test(it.i) ? it.i : 'img/' + encodeURIComponent(it.i));
 
   function index(){ CAT.forEach(it => { it._s = fold([it.r, it.r.replace(/-/g, ''), it.d, it.t, it.m, it.c].join(' ')); }); }
   index();
