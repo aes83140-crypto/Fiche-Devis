@@ -258,6 +258,12 @@
       <div class="fd-hint">La pièce, sa plaque ou son étiquette : ça aide à identifier la bonne référence.</div>
     </div>
 
+    <div class="fd-section">
+      <div class="fd-section-head"><span class="fd-num">↺</span><span class="fd-section-title">Demandes envoyées depuis cet appareil</span></div>
+      <div id="st-hist" style="display:grid;gap:8px;"></div>
+      <div class="fd-hint" style="margin-top:10px;">« Reprendre » recharge la demande pour la renvoyer ou la compléter (les photos ne sont pas conservées).</div>
+    </div>
+
     <div class="fd-actions">
       <button class="fd-btn" id="btn-mail">Envoyer par mail</button>
       <button class="fd-btn secondary" id="btn-reset">Nouvelle demande</button>
@@ -278,7 +284,7 @@
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.19</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.20</div>
 </div>
 
 <script>
@@ -394,6 +400,40 @@
   }
   function msg(t, ok){ const m = $('fd-msg'); m.textContent = t; m.className = 'fd-msg ' + (ok ? 'ok' : 'err'); clearTimeout(msg._t); msg._t = setTimeout(() => { m.className = 'fd-msg'; }, ok ? 1800 : 6000); }
 
+  const HIST = 'record-st-hist';
+  const hEsc = v => String(v || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function histLoad(){ try{ const l = JSON.parse(localStorage.getItem(HIST) || '[]'); return Array.isArray(l) ? l : []; }catch(e){ return []; } }
+  function histSave(l){ try{ localStorage.setItem(HIST, JSON.stringify(l.slice(0, 10))); }catch(e){} }
+  function histAdd(){
+    const e = { ts: Date.now(), c:$('f-client').value.trim(), p:$('f-porte').value.trim(), e:$('f-mail').value.trim(), r:$('f-rem').value.trim(), cart: JSON.parse(JSON.stringify(cart)) };
+    histSave([e, ...histLoad()]); renderHist();
+  }
+  function renderHist(){
+    const l = histLoad(), box = $('st-hist');
+    if(!l.length){ box.innerHTML = '<div class="fd-hint" style="margin:0;">Aucune demande envoyée depuis cet appareil.</div>'; return; }
+    box.innerHTML = l.map((e, i) => {
+      const d = new Date(e.ts), n = (e.cart || []).length;
+      const title = [e.c, e.p ? 'Porte ' + e.p : ''].filter(Boolean).join(' · ') || 'Demande sans client';
+      return '<div style="display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;">' +
+        '<div style="flex:1;min-width:0;"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + hEsc(title) + '</div>' +
+        '<div style="font-size:12.5px;color:var(--ink-mute);">' + d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) + ' · ' + n + ' pièce' + (n > 1 ? 's' : '') + '</div></div>' +
+        '<button type="button" data-h="' + i + '" style="min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#fff;font-weight:700;color:var(--steel);cursor:pointer;">Reprendre</button>' +
+        '<button type="button" data-hx="' + i + '" aria-label="Supprimer" style="width:44px;height:44px;border:none;background:none;color:#B3403A;font-size:16px;cursor:pointer;">✕</button></div>';
+    }).join('');
+    box.querySelectorAll('[data-h]').forEach(b => b.addEventListener('click', () => {
+      const e = histLoad()[+b.dataset.h]; if(!e) return;
+      if((cart.length || $('f-client').value || $('f-porte').value) && !confirm('Remplacer la demande en cours ?')) return;
+      $('f-client').value = e.c || ''; $('f-porte').value = e.p || ''; $('f-mail').value = e.e || ''; $('f-rem').value = e.r || '';
+      cart = e.cart || []; photos = []; renderPhotos(); renderCart(); save();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      msg('Demande reprise — remets les photos si besoin.', true);
+    }));
+    box.querySelectorAll('[data-hx]').forEach(b => b.addEventListener('click', () => {
+      if(!confirm('Supprimer cette demande de l\'historique ?')) return;
+      const l = histLoad(); l.splice(+b.dataset.hx, 1); histSave(l); renderHist();
+    }));
+  }
+
   function renderPhotos(){
     $('st-ph-grid').innerHTML = photos.map((p, i) => '<div class="st-ph"><img src="' + p + '" alt=""><button type="button" data-x="' + i + '" aria-label="Retirer">✕</button></div>').join('');
     $('st-ph-grid').querySelectorAll('[data-x]').forEach(b => b.addEventListener('click', () => { photos.splice(+b.dataset.x, 1); renderPhotos(); }));
@@ -430,6 +470,7 @@
     L.push('', '— Envoyé depuis la fiche sous-traitant RECORD');
     const subject = ['Devis a Réaliser', client, porte ? 'porte ' + porte : ''].filter(Boolean).join(' - ');
     try{ if(window.RecordCommun) RecordCommun.statLog('Sous-traitant', 'ST', 'mail'); }catch(e){}
+    histAdd();
     const body = L.join('\n');
     const mailto = () => { location.href = 'mailto:' + DEST + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); };
     if(photos.length){
@@ -460,7 +501,7 @@
     location.reload();
   });
 
-  load(); renderTypes(); renderCart(); renderResults();
+  load(); renderTypes(); renderCart(); renderResults(); renderHist();
 })();
 </script>
 <script src="config.js"></script>
