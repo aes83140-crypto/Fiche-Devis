@@ -814,6 +814,7 @@ if('serviceWorker' in navigator){
       <button class="fd-btn secondary" id="btn-pdf">Télécharger le PDF</button>
       <button class="fd-btn secondary" id="btn-copy">Copier le texte</button>
       <a class="fd-btn secondary" id="btn-new" href="index.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">← Retour au menu</a>
+      <button type="button" id="btn-clear" style="grid-column:1 / -1;justify-self:center;align-self:center;width:auto;margin:0 auto;display:block;white-space:nowrap;text-align:center;background:none;border:none;color:#B3403A;font-size:14px;font-weight:600;padding:12px 8px;min-height:44px;cursor:pointer;text-decoration:underline;">Effacer la fiche et recommencer</button>
     </div>
     <div class="fd-hint" style="text-align:center;margin-top:8px;">Le PDF reprend le relevé complet : schéma de vérification et photos inclus.</div>
     <div class="fd-msg" id="fd-msg"></div>
@@ -823,7 +824,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.50</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.53</div>
 </div>
 
 <script>
@@ -1910,6 +1911,11 @@ if('serviceWorker' in navigator){
     }catch(e){}
     __draftOff = false;
   }, 0);
+
+  document.getElementById('btn-clear').addEventListener('click', ()=>{
+    if(!confirm('Effacer toute la saisie de cette fiche ?\nCette action est définitive.')) return;
+    resetForm(); window.scrollTo({ top:0, behavior:'smooth' });
+  });
 
   function resetForm(){
     try{ localStorage.removeItem(__DRAFT); }catch(e){}
