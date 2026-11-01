@@ -816,7 +816,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.1</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.2</div>
 </div>
 
 <script>
@@ -1748,7 +1748,39 @@ if('serviceWorker' in navigator){
     return data;
   }
 
+  /* Brouillon automatique : la saisie survit au passage sur une autre appli (appareil photo, téléphone…). */
+  const __DRAFT = 'record-brouillon-' + (location.pathname.split('/').pop() || 'fiche');
+  let __draftT = null, __draftOff = false, __blank = null;
+  function __snap(){ try{ return JSON.stringify(readForm()); }catch(e){ return null; } }
+  function __draftSave(){
+    if(__draftOff || __blank === null) return;
+    let d; try{ d = readForm(); }catch(e){ return; }
+    if(JSON.stringify(d) === __blank){ try{ localStorage.removeItem(__DRAFT); }catch(e){} return; }
+    const payload = { ts: Date.now(), data: d };
+    try{ localStorage.setItem(__DRAFT, JSON.stringify(payload)); }
+    catch(e){ try{ payload.data = Object.assign({}, d, { photos: [] }); localStorage.setItem(__DRAFT, JSON.stringify(payload)); }catch(e2){} }
+  }
+  function __draftLater(){ clearTimeout(__draftT); __draftT = setTimeout(__draftSave, 500); }
+  ['input','change','click'].forEach(ev => document.addEventListener(ev, __draftLater, true));
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') __draftSave(); });
+  window.addEventListener('pagehide', __draftSave);
+  setTimeout(() => {
+    __blank = __snap();
+    let p = null; try{ p = JSON.parse(localStorage.getItem(__DRAFT) || 'null'); }catch(e){}
+    if(!p || !p.data || Date.now() - p.ts > 7 * 864e5 || JSON.stringify(p.data) === __blank){ try{ localStorage.removeItem(__DRAFT); }catch(e){} return; }
+    __draftOff = true;
+    try{
+      applyForm(p.data);
+      if(Array.isArray(p.data.photos) && p.data.photos.length && typeof renderPhotoGrid === 'function'){ photos = p.data.photos; renderPhotoGrid(); }
+      if(typeof showMsg === 'function') showMsg('Saisie en cours récupérée.', true);
+    }catch(e){}
+    __draftOff = false;
+  }, 0);
+
   function resetForm(){
+    try{ localStorage.removeItem(__DRAFT); }catch(e){}
+    clearTimeout(__draftT); __draftOff = true;
+    setTimeout(() => { __blank = __snap(); __draftOff = false; }, 0);
     fields.forEach(f => $('f-'+f).value = '');
     photos = [];
     renderPhotoGrid();
