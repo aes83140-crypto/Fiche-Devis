@@ -224,6 +224,7 @@
       <div class="fd-grid">
         <div class="fd-field"><label>Client / site</label><input type="text" id="f-client" placeholder="Ex. Carrefour Aubagne" autocomplete="off"></div>
         <div class="fd-field"><label>N° de porte</label><input type="text" id="f-porte" placeholder="Ex. 4512" autocomplete="off" style="font-family:var(--mono);"></div>
+        <div class="fd-field full"><label>Adresse mail du client</label><input type="email" id="f-mail" inputmode="email" placeholder="Ex. contact@client.fr" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
       </div>
     </div>
 
@@ -259,7 +260,6 @@
 
     <div class="fd-actions">
       <button class="fd-btn" id="btn-mail">Envoyer par mail</button>
-      <div class="fd-hint" style="text-align:center;margin:0;">Envoi à christophe.bataille@record.fr · photos jointes s'il y en a</div>
       <button class="fd-btn secondary" id="btn-reset">Nouvelle demande</button>
       <a class="fd-btn secondary" href="index.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">← Retour au menu</a>
     </div>
@@ -278,7 +278,7 @@
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.17</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.19</div>
 </div>
 
 <script>
@@ -306,11 +306,11 @@
       .then(r => r.ok ? r.json() : null).then(j => { if(Array.isArray(j) && j.length){ EXTRA = j; merge(); } }).catch(()=>{});
   }
 
-  function save(){ try{ localStorage.setItem(DRAFT, JSON.stringify({ c:$('f-client').value, p:$('f-porte').value, r:$('f-rem').value, cart })); }catch(e){} }
-  function load(){ try{ const d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); if(!d) return; $('f-client').value = d.c || ''; $('f-porte').value = d.p || ''; $('f-rem').value = d.r || ''; cart = Array.isArray(d.cart) ? d.cart : []; }catch(e){} }
+  function save(){ try{ localStorage.setItem(DRAFT, JSON.stringify({ c:$('f-client').value, p:$('f-porte').value, e:$('f-mail').value, r:$('f-rem').value, cart })); }catch(e){} }
+  function load(){ try{ const d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); if(!d) return; $('f-client').value = d.c || ''; $('f-porte').value = d.p || ''; $('f-mail').value = d.e || ''; $('f-rem').value = d.r || ''; cart = Array.isArray(d.cart) ? d.cart : []; }catch(e){} }
 
   function renderTypes(){
-    const TOP = [['SANDOW','Sandow'],['BATTERIE / ACCUMULATEUR','Batterie'],['MOTEUR','Moteur'],['CARTE DE COMMANDE / LOGIQUE','Carte'],['SELECTEUR / BDE','Sélecteur'],['BBGV','BBGV'],['CHARIOT','Chariot']];
+    const TOP = [['SANDOW','Sandow'],['BATTERIE / ACCUMULATEUR','Batterie'],['MOTEUR','Moteur'],['CARTE DE COMMANDE / LOGIQUE','Carte'],['SELECTEUR / BDE','Sélecteur'],['BBGV','BBGV'],['CHARIOT','Chariot'],['RADAR','Radar']];
     const all = [...new Set(CAT.map(i => i.t).filter(Boolean))];
     const top = TOP.filter(t => all.indexOf(t[0]) >= 0);
     const rest = all.filter(t => !TOP.some(x => x[0] === t)).sort();
@@ -415,15 +415,16 @@
   $('f-q').addEventListener('focus', renderSugg);
   $('f-q').addEventListener('blur', () => setTimeout(() => $('st-sugg').classList.remove('on'), 150));
   $('f-q').addEventListener('keydown', e => { if(e.key === 'Enter'){ const f = $('st-sugg').querySelector('[data-s]'); if(f){ e.preventDefault(); f.click(); } } if(e.key === 'Escape') $('st-sugg').classList.remove('on'); });
-  ['f-client','f-porte','f-rem'].forEach(id => $(id).addEventListener('input', save));
+  ['f-client','f-porte','f-mail','f-rem'].forEach(id => $(id).addEventListener('input', save));
   $('st-free').addEventListener('click', () => { cart.push({ ref:'', d:'', q:1 }); renderCart(); const f = $('st-cart').querySelector('[data-f="' + (cart.length - 1) + '"]'); if(f) f.focus(); });
   $('st-zoom').addEventListener('click', e => { if(e.target.id === 'st-zoom' || e.target.id === 'st-zoom-close') $('st-zoom').classList.remove('on'); });
 
   $('btn-mail').addEventListener('click', () => {
-    const client = $('f-client').value.trim(), porte = $('f-porte').value.trim(), rem = $('f-rem').value.trim();
+    const client = $('f-client').value.trim(), porte = $('f-porte').value.trim(), rem = $('f-rem').value.trim(), cmail = $('f-mail').value.trim();
+    if(cmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cmail)){ msg('L\'adresse mail du client semble incorrecte.'); $('f-mail').focus(); return; }
     const lines = cart.filter(l => l.ref || l.d.trim());
     if(!client && !porte && !lines.length && !rem && !photos.length){ msg('La demande est vide : ajoute au moins une pièce, une photo ou une remarque.'); $('f-q').focus(); return; }
-    const L = ['DEVIS À RÉALISER', '', 'Client / site : ' + (client || '—'), 'N° de porte : ' + (porte || '—'), '', 'PIÈCES (' + lines.length + ')'];
+    const L = ['DEVIS À RÉALISER', '', 'Client / site : ' + (client || '—'), 'N° de porte : ' + (porte || '—'), 'Mail client : ' + (cmail || '—'), '', 'PIÈCES (' + lines.length + ')'];
     lines.forEach(l => L.push('• ' + l.q + ' × ' + (l.ref ? l.ref + ' — ' + l.d : '[hors catalogue] ' + l.d.trim())));
     if(rem) L.push('', 'Remarque : ' + rem);
     L.push('', '— Envoyé depuis la fiche sous-traitant RECORD');
@@ -435,7 +436,7 @@
       const stamp = (porte || client || 'photo').replace(/[^A-Za-z0-9-]+/g, '-').slice(0, 30);
       const files = photos.map((d, i) => RecordCommun.dataUrlToFileSync(d, 'ST-' + stamp + '-' + (i + 1) + '.jpg'));
       if(navigator.share && navigator.canShare && navigator.canShare({ files })){
-        navigator.share({ title: subject, text: 'À : ' + DEST + '\n\n' + body, files }).then(() => msg('Demande envoyée.', true)).catch(e => { if(!e || e.name !== 'AbortError') mailto(); });
+        navigator.share({ title: subject, text: body, files }).then(() => msg('Demande envoyée.', true)).catch(e => { if(!e || e.name !== 'AbortError') mailto(); });
         return;
       }
       mailto();
@@ -447,7 +448,7 @@
   });
   $('btn-reset').addEventListener('click', () => {
     if((cart.length || $('f-client').value || $('f-porte').value) && !confirm('Effacer la demande en cours ?')) return;
-    $('f-client').value = ''; $('f-porte').value = ''; $('f-rem').value = ''; $('f-q').value = ''; cart = []; type = ''; photos = [];
+    $('f-client').value = ''; $('f-porte').value = ''; $('f-mail').value = ''; $('f-rem').value = ''; $('f-q').value = ''; cart = []; type = ''; photos = [];
     renderPhotos(); renderTypes(); renderCart(); renderResults();
   });
   $('fd-force-refresh').addEventListener('click', async () => {
