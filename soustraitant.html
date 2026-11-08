@@ -291,7 +291,7 @@
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.2</div>
 </div>
 
 <script>
@@ -487,7 +487,14 @@
     const subject = ['Devis à Réaliser', client, porte ? 'porte ' + porte : ''].filter(Boolean).join(' - ');
     const body = L.join('\n');
     // l'historique et la statistique ne sont enregistrés que si la demande part vraiment
-    const envoyee = () => { try{ if(window.RecordCommun) RecordCommun.statLog('Sous-traitant', 'ST', 'mail'); }catch(e){} histAdd(); };
+    const envoyee = () => {
+      try{ if(window.RecordCommun) RecordCommun.statLog('Sous-traitant', 'ST', 'mail'); }catch(e){}
+      // copie dans les archives (admin) : texte de la demande + photos, en arrière-plan
+      try{ if(window.RecordCommun && RecordCommun.archiveFiche) RecordCommun.archiveFiche({ fiche:'ST', pdf:null, photos: photos.slice(),
+        data:{ client, porte, mailClient: cmail, remarque: rem, lignes: lines.map(l => ({ ref: l.ref, designation: l.d, qte: l.q })), texte: body },
+        meta:{ tech:'Sous-traitant', client, site:'', equip: porte } }); }catch(e){}
+      histAdd();
+    };
     const mailto = () => { envoyee(); location.href = 'mailto:' + DEST + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); };
     if(photos.length){
       const stamp = (porte || client || 'photo').replace(/[^A-Za-z0-9-]+/g, '-').slice(0, 30);

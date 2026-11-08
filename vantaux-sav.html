@@ -826,7 +826,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.2</div>
 </div>
 
 <script>
@@ -1644,8 +1644,10 @@ if('serviceWorker' in navigator){
   const STAT_KEY = 'record-stats-usage';
   const STAT_Q = 'record-stats-queue';
   window.addEventListener('online', statFlush);
-  function histAdd(data, how){
+  function histAdd(data, how, pdf){
     statLog(data.tech, 'RV', how);
+    // copie dans les archives (admin) : PDF interne + photos, en arrière-plan
+    try{ RecordCommun.archiveFiche({ fiche:'RV', data: data, pdf: pdf || (() => generateSAVPDF(data)) }); }catch(e){}
     const clean = {...data};
     delete clean.photos;
     const list = histLoad();
@@ -2488,7 +2490,7 @@ if('serviceWorker' in navigator){
     try{
       const pdfDoc = generateSAVPDF(data);
       pdfDoc.save(pdfFileName('RV', data.client, data['numero-porte']));
-      histAdd(data, 'PDF');
+      histAdd(data, 'PDF', pdfDoc);
       showMsg('PDF téléchargé — tu peux le joindre manuellement à ton mail.');
     }catch(e){ showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ").", false); }
   });
@@ -2526,7 +2528,7 @@ if('serviceWorker' in navigator){
       const text = formatText(data, { note: note });
       const shareData = { title: subject, text: text };
       if(filesAttached) shareData.files = [pdfFile];
-      navigator.share(shareData).then(()=>{ histAdd(data, 'mail'); showMsg('Partage envoyé — ' + pdfPoids() + '.'); }).catch(e=>{
+      navigator.share(shareData).then(()=>{ histAdd(data, 'mail', pdfFile); showMsg('Partage envoyé — ' + pdfPoids() + '.'); }).catch(e=>{
         if(e && e.name === 'AbortError') return;
         const detail = (e && e.message) ? e.message : (e && e.name) ? e.name : 'erreur inconnue';
         showMsg('Le partage a échoué (' + detail + ') — utilise "Télécharger le PDF" puis joins-le manuellement.', false);
@@ -2539,7 +2541,7 @@ if('serviceWorker' in navigator){
         a.href = url; a.rel = 'noopener';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(()=>{ try{ pdfDoc.save(pdfName); }catch(e2){} }, 1200);
-        histAdd(data, 'mail');
+        histAdd(data, 'mail', pdfFile);
         showMsg('Mail ouvert — choisis le destinataire dans ta messagerie ; le PDF (' + pdfName + ') vient d\'être téléchargé, joins-le au message.');
       }catch(e){ showMsg("Partage indisponible sur cet appareil — utilise \"Télécharger le PDF\".", false); }
     }

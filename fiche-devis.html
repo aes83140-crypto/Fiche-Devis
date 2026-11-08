@@ -662,7 +662,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.2</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -1062,8 +1062,10 @@ if('serviceWorker' in navigator){
   const STAT_KEY = 'record-stats-usage';
   const STAT_Q = 'record-stats-queue';
   window.addEventListener('online', statFlush);
-  function histAdd(data, how){
+  function histAdd(data, how, pdf){
     statLog(data.tech, 'FD', how);
+    // copie dans les archives (admin) : PDF interne + photos, en arrière-plan
+    try{ RecordCommun.archiveFiche({ fiche:'FD', data: data, pdf: pdf || (() => generateFichePDF(data)) }); }catch(e){}
     const clean = {...data};
     delete clean.photos;
     const list = histLoad();
@@ -1538,7 +1540,7 @@ if('serviceWorker' in navigator){
         shareData.files = files;
       }
       navigator.share(shareData).then(()=>{
-        histAdd(data, 'mail');
+        histAdd(data, 'mail', pdfFile);
         showMsg('Partage envoyé — ' + pdfPoids() + '.');
       }).catch(e=>{
         if(e && e.name === 'AbortError') return; // annulé par l'utilisateur
@@ -1554,7 +1556,7 @@ if('serviceWorker' in navigator){
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(()=>{ try{ pdfDoc.save(pdfName); }catch(e2){} }, 1200);
         setTimeout(()=>{ try{ fourDoc.save(fourName); }catch(e2){} }, 2400);
-        histAdd(data, 'mail');
+        histAdd(data, 'mail', pdfFile);
         showMsg('Mail ouvert — choisis le destinataire ; les 2 PDF (complet + fournisseur) viennent d\'être téléchargés, joins-les au message.');
       }catch(e){
         showMsg("Partage indisponible sur cet appareil — utilise \"Télécharger le PDF\".", false);
@@ -1570,7 +1572,7 @@ if('serviceWorker' in navigator){
       const pdfDoc = generateFichePDF(data, variant);
       const name = pdfFileName(variant === 'fournisseur' ? 'FD-FOURNISSEUR' : 'FD', data.site, data.equip);
       pdfDoc.save(name);
-      histAdd(data, 'PDF');
+      histAdd(data, 'PDF', variant === 'fournisseur' ? null : pdfDoc);
       showMsg('PDF téléchargé — tu peux le joindre manuellement à ton mail.');
     }catch(e){
       showMsg("Le PDF n'a pas pu être généré (" + (e.message||'erreur') + ").", false);

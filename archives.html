@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Archives des fiches — RECORD</title>
+<script src="config.js"></script>
+<style>
+  :root{
+    --bg:#EDEFF3; --surface:#FFFFFF; --surface-2:#F6F8FA;
+    --ink:#12171C; --ink-soft:#5A646E; --ink-mute:#8A939C;
+    --steel:#1E3448; --steel-2:#2F5674; --steel-soft:#E9EEF3;
+    --line:#E3E6EB; --line-2:#CCD3DB;
+    --amber:#C8811A; --amber-soft:#FCF3E2;
+    --red:#B3403A; --red-bg:#FBEAE8; --green:#3F7A46; --green-bg:#E9F1EA;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --r:14px;
+    --shadow:0 1px 2px rgba(18,23,28,.05),0 12px 30px -20px rgba(18,23,28,.45);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;}
+  .wrap{max-width:860px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom));}
+  header{display:flex;align-items:center;gap:12px;margin:4px 0 16px;}
+  header a{color:var(--steel-2);text-decoration:none;font-weight:600;font-size:14px;white-space:nowrap;}
+  header h1{font-size:20px;margin:0;color:var(--steel);flex:1;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:14px;}
+  .hint{color:var(--ink-soft);font-size:13px;line-height:1.45;}
+  label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin:0 0 4px;}
+  input,select{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:#fff;color:var(--ink);min-width:0;}
+  input:focus,select:focus{outline:2px solid var(--steel-2);outline-offset:-1px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .grid .full{grid-column:1 / -1;}
+  @media (min-width:640px){ .grid{grid-template-columns:2fr 1fr 1fr 1fr;} .grid .full{grid-column:auto;} }
+  .btn{font:inherit;font-weight:600;font-size:14px;border:1px solid var(--steel);background:var(--steel);color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;min-height:42px;}
+  .btn.ghost{background:#fff;color:var(--steel);border-color:var(--line-2);}
+  .btn.danger{background:var(--red-bg);color:var(--red);border-color:#E9BEB9;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+  .row .btn{flex:1;}
+  #status{font-size:13px;color:var(--ink-soft);margin:4px 2px 12px;min-height:18px;}
+  #status.err{color:var(--red);}
+  .item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;}
+  .item-top{display:flex;gap:10px;align-items:flex-start;}
+  .tag{font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px;background:var(--steel-soft);color:var(--steel);white-space:nowrap;}
+  .tag.ST{background:var(--amber-soft);color:#9A6210;}
+  .item-main{flex:1;min-width:0;}
+  .item-title{font-weight:650;overflow-wrap:anywhere;}
+  .item-sub{color:var(--ink-soft);font-size:13px;margin-top:2px;overflow-wrap:anywhere;}
+  .item-date{font-family:var(--mono);font-size:12px;color:var(--ink-mute);white-space:nowrap;}
+  .item-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .item-actions .btn{min-height:36px;padding:7px 12px;font-size:13px;}
+  .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px;}
+  .thumbs a{display:block;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line);}
+  .thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
+  pre.texte{white-space:pre-wrap;font-family:var(--sans);font-size:13px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px;margin:10px 0 0;}
+  .empty{text-align:center;color:var(--ink-mute);padding:30px 10px;}
+  .hidden{display:none !important;}
+  .more{display:block;width:100%;margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="index.html">← Outils</a>
+    <h1>Archives des fiches</h1>
+  </header>
+
+  <!-- Connexion -->
+  <div class="card hidden" id="login">
+    <div class="hint" style="margin-bottom:12px;">Réservé à l'administrateur. Connecte-toi avec le même compte que dans « Administration ».</div>
+    <form id="login-form" autocomplete="on">
+      <div style="margin-bottom:10px;"><label for="l-mail">E-mail</label><input id="l-mail" type="email" autocomplete="username" required></div>
+      <div><label for="l-pw">Mot de passe</label><input id="l-pw" type="password" autocomplete="current-password" required></div>
+      <div class="row"><button class="btn" type="submit" id="l-go">Se connecter</button></div>
+    </form>
+  </div>
+
+  <!-- Recherche -->
+  <div class="card hidden" id="search">
+    <form id="s-form">
+      <div class="grid">
+        <div class="full"><label for="s-q">Équipement, client, site ou technicien</label><input id="s-q" type="search" placeholder="ex. 12345, Carrefour, Martin…"></div>
+        <div class="full"><label for="s-type">Fiche</label>
+          <select id="s-type">
+            <option value="">Toutes</option>
+            <option value="RM">Rideau métallique</option>
+            <option value="FD">Demande de devis</option>
+            <option value="RV">Vantaux SAV</option>
+            <option value="PN">Porte neuve</option>
+            <option value="ST">Sous-traitant</option>
+          </select></div>
+        <div><label for="s-du">Du</label><input id="s-du" type="date"></div>
+        <div><label for="s-au">Au</label><input id="s-au" type="date"></div>
+      </div>
+      <div class="row">
+        <button class="btn" type="submit">Rechercher</button>
+        <button class="btn ghost" type="button" id="s-clear">Effacer les filtres</button>
+      </div>
+    </form>
+    <div class="hint" style="margin-top:12px;">Chaque fiche envoyée ou téléchargée par un technicien est copiée ici (PDF + photos). Les archives de plus de 2 ans sont supprimées automatiquement à l'ouverture de cette page.</div>
+  </div>
+
+  <div id="status" role="status"></div>
+  <div id="list"></div>
+  <button class="btn ghost more hidden" id="more" type="button">Afficher plus</button>
+
+  <div style="text-align:center;margin-top:24px;">
+    <button class="btn ghost hidden" id="logout" type="button">Se déconnecter</button>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:10px;">v2026-11.2</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const SB_URL = window.RECORD_SUPABASE_URL, SB_KEY = window.RECORD_SUPABASE_KEY;
+  const BUCKET = 'archives', PAGE = 50, GARDE_ANS = 2;
+  const LABEL = { RM:'Rideau métallique', FD:'Demande de devis', RV:'Vantaux SAV', PN:'Porte neuve', ST:'Sous-traitant' };
+  let page = 0, derniers = [];
+
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  function status(t, err){ const el = $('status'); el.textContent = t || ''; el.classList.toggle('err', !!err); }
+  const token = () => (window.recordAdminToken && window.recordAdminToken()) || null;
+  function entetes(extra){ return Object.assign({ apikey: SB_KEY, Authorization: 'Bearer ' + token() }, extra || {}); }
+
+  class Expire extends Error {}
+  async function api(path, opts){
+    if(!token()) throw new Expire();
+    const r = await fetch(SB_URL + path, Object.assign({}, opts, { headers: entetes((opts || {}).headers) }));
+    if(r.status === 401) throw new Expire();
+    if(!r.ok){
+      const t = await r.text().catch(() => '');
+      if(/relation .*archives.* does not exist|Bucket not found/i.test(t)) throw new Error('Les archives ne sont pas encore créées dans Supabase (script supabase-archives.sql à lancer).');
+      throw new Error('Supabase a répondu ' + r.status + (t ? ' — ' + t.slice(0, 160) : ''));
+    }
+    return r;
+  }
+  function gere(e){
+    if(e instanceof Expire){ afficheConnexion('Session expirée : reconnecte-toi.'); return; }
+    status((e && e.message) || 'Erreur inconnue.', true);
+  }
+
+  /* ---------- Connexion ---------- */
+  function afficheConnexion(msg){
+    $('login').classList.remove('hidden');
+    ['search','logout','more'].forEach(id => $(id).classList.add('hidden'));
+    $('list').innerHTML = '';
+    status(msg || '', !!msg);
+    setTimeout(() => $('l-mail').focus(), 50);
+  }
+  $('login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if(!SB_URL || !SB_KEY || !window.recordAdminLogin){ status('config.js non chargé : connexion impossible.', true); return; }
+    $('l-go').disabled = true; status('Connexion…');
+    try{
+      const ok = await window.recordAdminLogin($('l-mail').value, $('l-pw').value);
+      if(!ok){ status('E-mail ou mot de passe refusé.', true); return; }
+      $('l-pw').value = '';
+      demarre();
+    }catch(err){ status('Supabase injoignable (réseau ?).', true); }
+    finally{ $('l-go').disabled = false; }
+  });
+  $('logout').addEventListener('click', () => { if(window.recordAdminLogout) window.recordAdminLogout(); afficheConnexion('Déconnecté.'); });
+
+  async function demarre(){
+    $('login').classList.add('hidden');
+    $('search').classList.remove('hidden');
+    $('logout').classList.remove('hidden');
+    await purge();
+    cherche();
+  }
+
+  /* ---------- Suppression ---------- */
+  async function supprime(rows){
+    if(!rows.length) return;
+    const chemins = [];
+    rows.forEach(r => { if(r.pdf_path) chemins.push(r.pdf_path); (r.photo_paths || []).forEach(p => chemins.push(p)); });
+    for(let i = 0; i < chemins.length; i += 100){
+      await api('/storage/v1/object/' + BUCKET, { method:'DELETE', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ prefixes: chemins.slice(i, i + 100) }) });
+    }
+    await api('/rest/v1/archives?id=in.(' + rows.map(r => r.id).join(',') + ')', { method:'DELETE', headers:{ Prefer:'return=minimal' } });
+  }
+
+  /* Archives de plus de 2 ans : fichiers puis lignes, par paquets. */
+  async function purge(){
+    const limite = new Date(); limite.setFullYear(limite.getFullYear() - GARDE_ANS);
+    let total = 0;
+    try{
+      for(let tour = 0; tour < 20; tour++){
+        const r = await api('/rest/v1/archives?select=id,pdf_path,photo_paths&created_at=lt.' + encodeURIComponent(limite.toISOString()) + '&order=created_at.asc&limit=200');
+        const rows = await r.json();
+        if(!rows.length) break;
+        await supprime(rows);
+        total += rows.length;
+        if(rows.length < 200) break;
+      }
+      if(total) status(total + ' archive(s) de plus de 2 ans supprimée(s).');
+    }catch(e){ gere(e); }
+  }
+
+  /* ---------- Recherche ---------- */
+  function filtres(){
+    const p = [];
+    const q = $('s-q').value.replace(/[,()*"\\%]/g, ' ').trim();
+    if(q){
+      const m = '*' + q.split(/\s+/).join('*') + '*';
+      p.push('or=(' + ['client','equip','tech','site'].map(c => c + '.ilike.' + encodeURIComponent(m)).join(',') + ')');
+    }
+    if($('s-type').value) p.push('fiche=eq.' + $('s-type').value);
+    const et = [];
+    if($('s-du').value) et.push('fait_le.gte.' + new Date($('s-du').value + 'T00:00:00').toISOString());
+    if($('s-au').value){ const d = new Date($('s-au').value + 'T00:00:00'); d.setDate(d.getDate() + 1); et.push('fait_le.lt.' + d.toISOString()); }
+    if(et.length) p.push('and=(' + et.map(encodeURIComponent).join(',') + ')');
+    return p;
+  }
+  async function cherche(suite){
+    if(!suite){ page = 0; derniers = []; $('list').innerHTML = ''; }
+    $('more').classList.add('hidden');
+    status('Recherche…');
+    try{
+      const p = ['select=id,created_at,fait_le,fiche,tech,client,site,equip,pdf_path,photo_paths,texte:data->>texte', 'order=fait_le.desc.nullslast,created_at.desc',
+        'limit=' + PAGE, 'offset=' + page * PAGE].concat(filtres());
+      const r = await api('/rest/v1/archives?' + p.join('&'), { headers:{ Prefer:'count=exact' } });
+      const rows = await r.json();
+      const tot = parseInt(((r.headers.get('content-range') || '').split('/')[1]) || '0', 10) || 0;
+      derniers = derniers.concat(rows);
+      rows.forEach(row => $('list').appendChild(carte(row)));
+      if(!derniers.length) $('list').innerHTML = '<div class="empty">Aucune archive ne correspond.</div>';
+      status(tot ? tot + ' archive' + (tot > 1 ? 's' : '') + (derniers.length < tot ? ' — ' + derniers.length + ' affichée' + (derniers.length > 1 ? 's' : '') : '') : '');
+      $('more').classList.toggle('hidden', derniers.length >= tot);
+      page++;
+    }catch(e){ gere(e); }
+  }
+  $('s-form').addEventListener('submit', e => { e.preventDefault(); $('s-q').blur(); cherche(); });
+  $('s-clear').addEventListener('click', () => { $('s-q').value = ''; $('s-type').value = ''; $('s-du').value = ''; $('s-au').value = ''; cherche(); });
+  $('s-type').addEventListener('change', () => cherche());
+  $('more').addEventListener('click', () => cherche(true));
+
+  function quand(r){
+    const d = new Date(r.fait_le || r.created_at);
+    return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  /* Liens de téléchargement temporaires (1 h), le dossier restant privé. */
+  async function liens(chemins){
+    const r = await api('/storage/v1/object/sign/' + BUCKET, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ expiresIn: 3600, paths: chemins }) });
+    const a = await r.json();
+    const o = {};
+    (a || []).forEach(x => { if(x && x.signedURL && !x.error) o[x.path] = SB_URL + '/storage/v1' + (x.signedURL.startsWith('/') ? '' : '/') + x.signedURL; });
+    return o;
+  }
+
+  function carte(r){
+    const el = document.createElement('div');
+    el.className = 'item';
+    const titre = [r.client, r.equip ? (r.fiche === 'RV' || r.fiche === 'ST' ? 'Porte ' : 'Éq. ') + r.equip : ''].filter(Boolean).join(' — ') || '(sans nom)';
+    const sous = [r.tech, r.site].filter(Boolean).join(' · ');
+    const nb = (r.photo_paths || []).length;
+    el.innerHTML =
+      '<div class="item-top"><span class="tag ' + esc(r.fiche) + '" title="' + esc(LABEL[r.fiche] || r.fiche) + '">' + esc(r.fiche) + '</span>' +
+      '<div class="item-main"><div class="item-title">' + esc(titre) + '</div>' + (sous ? '<div class="item-sub">' + esc(sous) + '</div>' : '') + '</div>' +
+      '<div class="item-date">' + esc(quand(r)) + '</div></div>' +
+      '<div class="item-actions">' +
+        (r.pdf_path ? '<button class="btn" data-a="pdf" type="button">Ouvrir le PDF</button>' : '') +
+        (nb ? '<button class="btn ghost" data-a="photos" type="button">Photos (' + nb + ')</button>' : '') +
+        (r.texte ? '<button class="btn ghost" data-a="texte" type="button">Demande</button>' : '') +
+        '<button class="btn danger" data-a="del" type="button" style="margin-left:auto;">Supprimer</button>' +
+      '</div><div class="zone"></div>';
+    const zone = el.querySelector('.zone');
+    el.addEventListener('click', async e => {
+      const b = e.target.closest('button[data-a]');
+      if(!b) return;
+      const a = b.dataset.a;
+      if(a === 'pdf'){
+        // fenêtre ouverte tout de suite (sinon bloquée sur iPad), adresse donnée ensuite
+        const w = window.open('', '_blank');
+        b.disabled = true;
+        try{
+          const u = (await liens([r.pdf_path]))[r.pdf_path];
+          if(!u) throw new Error('PDF introuvable dans les archives.');
+          if(w) w.location.href = u; else location.href = u;
+        }catch(err){ if(w) w.close(); gere(err); }
+        finally{ b.disabled = false; }
+      }
+      else if(a === 'photos'){
+        if(zone.dataset.v === 'photos'){ zone.innerHTML = ''; zone.dataset.v = ''; return; }
+        b.disabled = true;
+        try{
+          const u = await liens(r.photo_paths);
+          zone.innerHTML = '<div class="thumbs">' + r.photo_paths.map((p, i) => u[p]
+            ? '<a href="' + esc(u[p]) + '" target="_blank" rel="noopener"><img loading="lazy" alt="Photo ' + (i + 1) + '" src="' + esc(u[p]) + '"></a>'
+            : '<a title="Photo manquante"></a>').join('') + '</div>';
+          zone.dataset.v = 'photos';
+        }catch(err){ gere(err); }
+        finally{ b.disabled = false; }
+      }
+      else if(a === 'texte'){
+        if(zone.dataset.v === 'texte'){ zone.innerHTML = ''; zone.dataset.v = ''; return; }
+        zone.innerHTML = '<pre class="texte">' + esc(r.texte) + '</pre>';
+        zone.dataset.v = 'texte';
+      }
+      else if(a === 'del'){
+        if(!confirm('Supprimer définitivement cette archive (PDF et photos) ?')) return;
+        b.disabled = true;
+        try{ await supprime([r]); el.remove(); status('Archive supprimée.'); }
+        catch(err){ b.disabled = false; gere(err); }
+      }
+    });
+    return el;
+  }
+
+  if(!SB_URL || !SB_KEY) afficheConnexion('config.js non chargé : archives indisponibles.');
+  else if(token()) demarre();
+  else afficheConnexion();
+})();
+</script>
+</body>
+</html>

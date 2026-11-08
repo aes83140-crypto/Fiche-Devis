@@ -251,6 +251,187 @@
     }catch(e){}
   }
 
+  /* ---------- Archives des fiches (PDF + photos) ----------
+     Chaque fiche envoyée ou téléchargée est copiée dans l'espace Supabase « archives »
+     (lecture réservée à l'administrateur, suppression automatique après 2 ans depuis la
+     page Archives). La copie se fait en arrière-plan, sans action du technicien : hors
+     réseau, elle attend dans la tablette (IndexedDB, les PDF étant trop lourds pour
+     localStorage) et repart au retour du réseau ou à la prochaine ouverture d'une fiche.
+     Aucune erreur d'archivage ne bloque ni ne retarde l'envoi de la fiche. */
+  const ARCH_DB = 'record-archives', ARCH_STORE = 'file', ARCH_BUCKET = 'archives';
+  const ARCH_SIG = 'record-archives-recentes', ARCH_MAX = 40;
+  let archDbP = null, archEnvoi = false, archMemo = [];
+
+  function archDb(){
+    if(archDbP) return archDbP;
+    archDbP = new Promise((ok, ko) => {
+      try{
+        const r = indexedDB.open(ARCH_DB, 1);
+        r.onupgradeneeded = () => { r.result.createObjectStore(ARCH_STORE, { keyPath:'id' }); };
+        r.onsuccess = () => ok(r.result);
+        r.onerror = () => ko(r.error);
+        r.onblocked = () => ko(new Error('bloqué'));
+      }catch(e){ ko(e); }
+    });
+    archDbP.catch(() => {});
+    return archDbP;
+  }
+  function archTx(mode, fn){
+    return archDb().then(db => new Promise((ok, ko) => {
+      const tx = db.transaction(ARCH_STORE, mode);
+      const st = tx.objectStore(ARCH_STORE);
+      let res;
+      const r = fn(st);
+      if(r) r.onsuccess = () => { res = r.result; };
+      tx.oncomplete = () => ok(res);
+      tx.onerror = () => ko(tx.error);
+      tx.onabort = () => ko(tx.error || new Error('abandon'));
+    }));
+  }
+  const archAll = () => archTx('readonly', st => st.getAll());
+  const archPut = rec => archTx('readwrite', st => st.put(rec));
+  const archDel = id => archTx('readwrite', st => st.delete(id));
+
+  function uuid(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    const b = new Uint8Array(16);
+    (window.crypto || {}).getRandomValues ? crypto.getRandomValues(b) : b.forEach((_, i) => b[i] = Math.random() * 256);
+    b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+    const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    return h.slice(0,8) + '-' + h.slice(8,12) + '-' + h.slice(12,16) + '-' + h.slice(16,20) + '-' + h.slice(20);
+  }
+
+  /* Copie des données sans les photos ni aucune image encodée (déjà archivées à part). */
+  function archNettoie(v, prof){
+    if(prof > 6) return null;
+    if(typeof v === 'string') return v.startsWith('data:') ? '[image]' : (v.length > 4000 ? v.slice(0, 4000) + '…' : v);
+    if(Array.isArray(v)) return v.slice(0, 200).map(x => archNettoie(x, prof + 1));
+    if(v && typeof v === 'object'){
+      const o = {};
+      Object.keys(v).forEach(k => { if(k !== 'photos' && k !== 'photo' && typeof v[k] !== 'function') o[k] = archNettoie(v[k], prof + 1); });
+      return o;
+    }
+    return v;
+  }
+  function txt(v, n){ return String(v == null ? '' : v).trim().slice(0, n || 200); }
+  function archSignature(fiche, data, photos){
+    const s = fiche + '|' + JSON.stringify(data) + '|' + photos.map(p => p.length + ':' + p.slice(-40)).join(',');
+    let h = 0;
+    for(let i = 0; i < s.length; i++){ h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+    return fiche + h.toString(36) + s.length.toString(36);
+  }
+
+  /* opts : { fiche:'RM', data, pdf, photos, meta }
+     pdf : Blob/File, document jsPDF, ou fonction qui renvoie l'un des deux (null si aucun PDF).
+     photos : facultatif — sinon pris dans data.photos (dataUrl ou { dataUrl }). */
+  function archiveFiche(opts){
+    try{
+      if(!window.RECORD_SUPABASE_URL || !window.RECORD_SUPABASE_KEY) return;
+      const fiche = txt(opts.fiche, 10) || 'XX';
+      const data = opts.data || {};
+      const photos = (opts.photos || data.photos || []).map(p => photoOf(p).dataUrl).filter(d => typeof d === 'string' && d.startsWith('data:image/'));
+      const propre = archNettoie(data, 0) || {};
+      // même fiche archivée deux fois (téléchargée puis envoyée) : une seule copie par 12 h
+      const sig = archSignature(fiche, propre, photos);
+      let recentes = lsGet(ARCH_SIG) || [];
+      const maintenant = Date.now();
+      recentes = recentes.filter(r => r && maintenant - r.t < 12 * 3600e3);
+      if(recentes.some(r => r.s === sig)) return;
+      recentes.push({ s: sig, t: maintenant });
+      lsSet(ARCH_SIG, recentes.slice(-50));
+
+      let pdf = opts.pdf;
+      if(typeof pdf === 'function') pdf = pdf();
+      if(pdf && typeof pdf.output === 'function') pdf = pdf.output('blob');
+      if(pdf && !(pdf instanceof Blob)) pdf = null;
+      if(pdf) pdf = new Blob([pdf], { type:'application/pdf' });
+
+      const m = opts.meta || {};
+      const d = new Date();
+      const id = uuid();
+      const dossier = d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + fiche + '-' + id;
+      const rec = {
+        id, dossier, essais: 0,
+        row: {
+          id, fiche,
+          tech: txt(m.tech != null ? m.tech : data.tech, 120),
+          client: txt(m.client != null ? m.client : (data.client || data.nomclient || data.site || data.nom), 200),
+          site: txt(m.site != null ? m.site : [data.adresse, data.cpville || data.ville].filter(Boolean).join(' '), 300),
+          equip: txt(m.equip != null ? m.equip : (data.equip || data['numero-porte'] || data.numporte || data.fq), 120),
+          fait_le: d.toISOString(),
+          data: propre,
+          pdf_path: pdf ? dossier + '/fiche.pdf' : null,
+          photo_paths: photos.map((p, i) => dossier + '/photo-' + String(i + 1).padStart(2, '0') + (/^data:image\/png/.test(p) ? '.png' : /^data:image\/webp/.test(p) ? '.webp' : '.jpg'))
+        },
+        pdf: pdf || null,
+        photos: photos.map((p, i) => { const f = dataUrlToFileSync(p, 'p' + i + '.jpg'); return new Blob([f], { type: f.type || 'image/jpeg' }); })
+      };
+      archPut(rec).then(archFlush, () => { archMemo.push(rec); archFlush(); });
+      // file trop longue (archivage impossible depuis longtemps) : on garde les plus récentes
+      archAll().then(list => {
+        if(list && list.length > ARCH_MAX){
+          list.sort((a, b) => String(a.row.fait_le).localeCompare(String(b.row.fait_le)));
+          list.slice(0, list.length - ARCH_MAX).forEach(r => archDel(r.id).catch(() => {}));
+        }
+      }).catch(() => {});
+    }catch(e){ try{ console.warn('[archives] non archivé :', e); }catch(e2){} }
+  }
+
+  /* Un objet déjà déposé (envoi précédent interrompu) compte comme réussi. */
+  async function archDepot(path, blob){
+    const SB_URL = window.RECORD_SUPABASE_URL, SB_KEY = window.RECORD_SUPABASE_KEY;
+    const r = await fetch(SB_URL + '/storage/v1/object/' + ARCH_BUCKET + '/' + path, {
+      method:'POST',
+      headers:{ apikey: SB_KEY, Authorization:'Bearer ' + SB_KEY, 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert':'false' },
+      body: blob
+    });
+    if(r.ok || r.status === 409) return;
+    const t = await r.text().catch(() => '');
+    if(/duplicate|already exists/i.test(t)) return;
+    throw new Error('dépôt ' + r.status + ' ' + t.slice(0, 120));
+  }
+  async function archEnvoie(rec){
+    const SB_URL = window.RECORD_SUPABASE_URL, SB_KEY = window.RECORD_SUPABASE_KEY;
+    if(rec.pdf) await archDepot(rec.row.pdf_path, rec.pdf);
+    for(let i = 0; i < rec.photos.length; i++) await archDepot(rec.row.photo_paths[i], rec.photos[i]);
+    const r = await fetch(SB_URL + '/rest/v1/archives', {
+      method:'POST',
+      headers:{ apikey: SB_KEY, Authorization:'Bearer ' + SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      body: JSON.stringify(rec.row)
+    });
+    if(r.ok || r.status === 409) return;
+    const t = await r.text().catch(() => '');
+    if(/duplicate key/i.test(t)) return;
+    throw new Error('fiche ' + r.status + ' ' + t.slice(0, 120));
+  }
+  async function archFlush(){
+    if(archEnvoi || !window.RECORD_SUPABASE_URL || !window.RECORD_SUPABASE_KEY) return;
+    if(navigator.onLine === false) return;
+    archEnvoi = true;
+    try{
+      let list = [];
+      try{ list = (await archAll()) || []; }catch(e){}
+      list = list.concat(archMemo);
+      list.sort((a, b) => String(a.row.fait_le).localeCompare(String(b.row.fait_le)));
+      for(const rec of list){
+        try{
+          await archEnvoie(rec);
+          archMemo = archMemo.filter(x => x.id !== rec.id);
+          await archDel(rec.id).catch(() => {});
+        }catch(e){
+          try{ console.warn('[archives] en attente :', e.message || e); }catch(e2){}
+          // une fiche refusée à chaque essai (trop lourde…) ne doit pas bloquer les suivantes
+          rec.essais = (rec.essais || 0) + 1;
+          if(rec.essais >= 25){ archMemo = archMemo.filter(x => x.id !== rec.id); await archDel(rec.id).catch(() => {}); continue; }
+          await archPut(rec).catch(() => {});
+          break; // réseau ou Supabase indisponible : on réessaiera plus tard
+        }
+      }
+    }finally{ archEnvoi = false; }
+  }
+  window.addEventListener('online', () => archFlush());
+  setTimeout(() => archFlush(), 4000);
+
   window.RecordCommun = { TECH_KEY, lsGet, lsSet, dedupe, mailOk, pdfFileName, photoOf, dataUrlToFileSync,
-    resizeImage, setupCombo, histLoad, histSave, statLog, statFlush, chargerTechniciens };
+    resizeImage, setupCombo, histLoad, histSave, statLog, statFlush, chargerTechniciens, archiveFiche, archFlush };
 })();
