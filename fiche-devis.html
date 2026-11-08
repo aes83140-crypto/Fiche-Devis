@@ -774,11 +774,11 @@ if('serviceWorker' in navigator){
       doc.text(variant === 'fournisseur' ? "Demande de chiffrage pièces" : "Demande de devis", margin, 29);
       doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
       doc.setTextColor(180,198,213);
-      doc.text((data.site || 'Site non renseigné') + (variant === 'fournisseur' && data.equip ? '   \u00B7   Réf. à rappeler : ' + data.equip : '') + '   \u00B7   ' + dateStr, margin, 38, { maxWidth: contentW - 4 });
+      doc.text(pdfSafe((data.site || 'Site non renseigné') + (variant === 'fournisseur' && data.equip ? '   \u00B7   Réf. à rappeler : ' + data.equip : '') + '   \u00B7   ' + dateStr), margin, 38, { maxWidth: contentW - 4 }); // en-tête aussi passé par pdfSafe
       // le site est déjà sur la ligne de sous-titre : la pastille reste courte
-      const ref = variant === 'fournisseur'
+      const ref = pdfSafe(variant === 'fournisseur'
         ? ('Réf. ' + (data.equip || '\u2014'))
-        : (data.fq ? 'FQ ' + data.fq : 'FQ \u2014');
+        : (data.fq ? 'FQ ' + data.fq : 'FQ \u2014'));
       doc.setFont('helvetica','bold'); doc.setFontSize(10);
       const maxRw = 62;
       let rw = Math.min(doc.getTextWidth(ref) + 13, maxRw);
