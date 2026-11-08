@@ -362,6 +362,8 @@
     transition:all .2s ease;
   }
   .fd-msg.show{padding:16px 18px;max-height:240px;opacity:1;border:1px solid;box-shadow:var(--shadow);}
+  /* le message reste visible à l'écran, même quand la page défile jusqu'au champ en erreur */
+  .fd-msg.show{position:fixed;left:16px;right:16px;bottom:16px;margin:0 auto;max-width:640px;z-index:9000;}
   .fd-msg.error{background:var(--red-bg);color:var(--red);border-color:#E9BEB9;}
   .fd-msg.success{background:var(--green-bg);color:var(--green);border-color:#C3DAC6;}
 
@@ -824,7 +826,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.53</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
 </div>
 
 <script>
@@ -895,7 +897,8 @@ if('serviceWorker' in navigator){
     if(hint) hint.textContent = modeVitrage
       ? "Remplacement du verre seul : marque du vantail, clair de vitrage et cote de commande."
       : "Relevé complet : profilé, mécanisme et configuration de la porte.";
-    if(modeVitrage) drawVitrageSchema(); else schemaImg = null;
+    // retour en mode RECORD : on redessine le schéma de la porte pour le PDF
+    if(modeVitrage) drawVitrageSchema(); else { schemaImg = null; try{ renderSchema(); }catch(e){} }
   }
 
   function coteVerre(){
@@ -1329,6 +1332,8 @@ if('serviceWorker' in navigator){
       profilSelected = matches[0].code;
       hint.textContent = '✓ Profilé identifié : ' + matches[0].code;
       hint.style.color = 'var(--green)';
+      // comme un clic sur la carte : les 4 cotes du profilé sont remplies et verrouillées
+      try{ applyProfileLocks(); }catch(e){}
     } else if(matches.length > 1){
       profilSelected = null;
       hint.textContent = 'Plusieurs profilés correspondent (' + matches.map(m=>m.code).join(', ') + ') — précise une cote ou clique le bon type.';
@@ -1554,6 +1559,8 @@ if('serviceWorker' in navigator){
       const img = new Image();
       img.onload = function(){
         try{
+          // en mode « Vitrage seul », le schéma du PDF est celui du verre : on ne l'écrase pas
+          if(modeVitrage) return;
           const s = 2.4;
           const c = document.createElement('canvas');
           c.width = W * s; c.height = H * s;
@@ -1860,6 +1867,11 @@ if('serviceWorker' in navigator){
     renderFullProfileTable();
     renderProfileTable(profilSelected ? PROFILE_TYPES.find(p=>p.code===profilSelected) : null);
     applyProfileLocks();
+    // fiche reprise : pas de photos ni d'alertes de la fiche précédente
+    photos = [];
+    if(typeof renderPhotoGrid === 'function') renderPhotoGrid();
+    const pmh = $('profile-match-hint'); if(pmh) pmh.textContent = '';
+    try{ Object.keys(PLAGES).forEach(id=> alerteCote(id)); }catch(e){}
     updateTicketRef();
   }
 
@@ -2230,15 +2242,26 @@ if('serviceWorker' in navigator){
       const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
       doc.setFont('helvetica','normal'); doc.setFontSize(11);
       const lines = doc.splitTextToSize(val, contentW - 14);
-      const h = 15 + lines.length * 5.8;
-      checkBreak(h + 4);
-      fillC(SURF);
-      doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
-      doc.text(label.toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
-      doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
-      doc.text(lines, margin + 7, y + 16.5);
-      y += h + 3.4;
+      // un long texte continue sur les pages suivantes au lieu d'\u00eatre coup\u00e9
+      const LH = 4.7;
+      let i = 0, first = true;
+      while(i < lines.length){
+        const room = (pageH - 24) - y - 6;
+        let n = Math.floor((room - 17) / LH);
+        const left = lines.length - i;
+        if(n < Math.min(2, left)){ doc.addPage(); y = 26; continue; }
+        n = Math.min(n, left);
+        const h = 17 + n * LH;
+        fillC(SURF);
+        doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
+        const lab = first ? label : (label ? label + ' (suite)' : '(suite)');
+        if(lab) doc.text(lab.toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
+        doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
+        lines.slice(i, i + n).forEach((ln, k)=> doc.text(ln, margin + 7, y + 16.5 + k * LH));
+        y += h + 3.4;
+        i += n; first = false;
+      }
     }
 
     function callout(label, value, tone){
@@ -2352,13 +2375,13 @@ if('serviceWorker' in navigator){
         { k:'Clair hauteur (mm)', v:data['clair-h'] },
       ]);
       row('Prise de feuillure', data.feu + ' mm par côté');
-      callout('★ Cote de commande du verre',
+      callout('Cote de commande du verre',
         (data.commandeL || '\u2014') + ' × ' + (data.commandeH || '\u2014') + ' mm', 'green');
 
       section('Verre');
       row('Type de vitrage', data['verre-type']);
 
-      if(data.remarques){ section('Remarques'); row('', data.remarques); }
+      if(data.remarques){ section('Remarques'); block('', data.remarques); }
 
       if(schemaImg && schemaImg.dataUrl){
         section('Schéma du vitrage');
@@ -2391,7 +2414,7 @@ if('serviceWorker' in navigator){
     ]);
     row('Finition', data.finition);
     row('Type de vitrage', data.vitrage);
-    callout('★ Type et hauteur méca impératif', data.meca, 'green');
+    callout('Type et hauteur méca impératif', data.meca, 'green');
 
     if(data.deux === 'oui'){
       section('2e vantail — cotes');
@@ -2482,7 +2505,7 @@ if('serviceWorker' in navigator){
     const err = validate(data);
     if(err){ showMsg(err.msg, false, true); highlight(err.target); return; }
     if(!confirmeCotes()) return;
-    const subject = (data.deux === 'oui' ? '2 vantaux SAV cassés - ' : 'Vantail SAV cassé - ') + (data.client||'Client') + (data['numero-porte'] ? ' - Porte '+data['numero-porte'] : '');
+    const subject = (data.deux === 'oui' && !modeVitrage ? '2 vantaux SAV cassés - ' : 'Vantail SAV cassé - ') + (data.client||'Client') + (data['numero-porte'] ? ' - Porte '+data['numero-porte'] : '');
 
     let pdfFile = null, pdfDoc = null;
     const pdfName = pdfFileName('RV', data.client, data['numero-porte']);

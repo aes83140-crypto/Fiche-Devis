@@ -236,6 +236,12 @@
     background:var(--steel);border-color:var(--steel);color:#fff;
     box-shadow:0 8px 18px -12px rgba(30,52,72,.9);
   }
+  /* cases à cocher compactes (options facultatives) */
+  .fd-cb-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+  .fd-toggle.fd-cb{min-height:38px;padding:6px 10px;font-size:13.5px;border-radius:10px;justify-content:flex-start;text-align:left;line-height:1.2;}
+  .fd-cbx{min-height:38px;padding:6px 10px;font-size:13.5px;border-radius:10px;display:flex;align-items:center;justify-content:flex-start;text-align:left;line-height:1.2;
+    border:1.5px solid var(--line-2);font-weight:650;cursor:pointer;background:var(--surface-2);color:var(--ink-soft);user-select:none;}
+  .fd-cbx.on{background:var(--steel);border-color:var(--steel);color:#fff;}
 
   .fd-chip-row{display:flex;gap:10px;flex-wrap:wrap;}
   .fd-chip{
@@ -704,8 +710,81 @@ if('serviceWorker' in navigator){
           </div>
           <div class="fd-hint">Coche si la lame finale (lame basse renforcée) est comprise dans le remplacement.</div>
         </div>
-        <div class="fd-field full" id="field-serrure" style="display:none;">
-          <div class="fd-chip-row">
+        <div class="fd-field full"><label>Marque et numéro de série du fabricant</label><input type="text" id="f-marque-serie" placeholder="Si disponible sur la plaque"></div>
+      </div>
+      <div id="complet-wrap" style="display:none;margin-top:16px;padding:16px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);">
+        <div style="font-size:15px;font-weight:700;color:var(--steel);margin-bottom:12px;">Configuration du rideau complet</div>
+        <div class="fd-grid">
+          <div class="fd-field full"><label>Type de pose <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+            <div class="fd-toggle-row">
+              <div class="fd-toggle" data-field="pose" data-val="applique">En applique</div>
+              <div class="fd-toggle" data-field="pose" data-val="tableau">En tableau</div>
+            </div>
+            <div class="fd-toggle-row" style="margin-top:12px;">
+              <div class="fd-toggle fd-cb" data-field="soude" data-val="oui" style="flex:0 0 auto;">☐ Pose soudée</div>
+            </div>
+            <div id="fixation-wrap" style="display:none;margin-top:12px;">
+              <label>Fixation des coulisses en applique <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+              <div class="fd-toggle-row">
+                <div class="fd-toggle" data-field="fixation" data-val="equerres">Équerres</div>
+                <div class="fd-toggle" data-field="fixation" data-val="corniere_coulisses">Cornière soudée sur coulisses</div>
+                <div class="fd-toggle" data-field="fixation" data-val="corniere_coulisses_drapeaux">Cornière soudée coulisses + drapeaux</div>
+              </div>
+            </div>
+          </div>
+          <div class="fd-field full"><label>Type de moteur <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+            <div class="fd-toggle-row">
+              <div class="fd-toggle" data-field="moteur" data-val="central">Moteur central</div>
+              <div class="fd-toggle" data-field="moteur" data-val="tubulaire">Moteur tubulaire</div>
+              <div class="fd-toggle" data-field="moteur" data-val="boutarbre">Moteur bout d'arbre</div>
+            </div>
+            <div id="moteurcote-wrap" style="display:none;margin-top:12px;">
+              <label>Côté du moteur <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+              <div class="fd-toggle-row">
+                <div class="fd-toggle" data-field="moteurcote" data-val="gauche">À gauche</div>
+                <div class="fd-toggle" data-field="moteurcote" data-val="droite">À droite</div>
+              </div>
+              <div class="fd-hint" style="margin-top:6px;">Vu de l'intérieur. Ce côté sert aussi de sortie de câble.</div>
+            </div>
+            <div id="moteurcentral-hint" class="fd-hint" style="display:none;margin-top:8px;">Moteur central : la manœuvre de secours se fait par le <strong>boîtier à clé avec déverrouillage</strong>, à cocher plus loin dans les Options (Boîtier de commande).</div>
+          </div>
+          <div class="fd-field full" id="secours-wrap" style="display:none;"><label>Manœuvre de secours <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+            <div class="fd-toggle-row">
+              <div class="fd-toggle" data-field="secours" data-val="manivelle">Manivelle</div>
+              <div class="fd-toggle" data-field="secours" data-val="treuil">Treuil</div>
+              <div class="fd-toggle" data-field="secours" data-val="aucune">Aucune</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fd-field full" id="opts-wrap" style="display:none;margin-top:16px;"><label>Options (facultatif)</label>
+        <div class="fd-cb-row">
+          <div class="fd-cbx" id="cb-lamefinale" role="button" tabindex="0" style="display:none;">☐ Lame finale à remplacer</div>
+          <div class="fd-cbx" id="cb-boitier" role="button" tabindex="0">☐ Boîtier de commande</div>
+          <div class="fd-cbx" id="cb-serrure" role="button" tabindex="0">☐ Serrure lame finale</div>
+          <div class="fd-toggle fd-cb cb-complet" data-field="coffre" data-val="oui">☐ Coffre tôle</div>
+          <div class="fd-toggle fd-cb cb-complet" data-field="parachute" data-val="oui">☐ Parachute</div>
+          <div class="fd-toggle fd-cb cb-complet" data-field="verrou" data-val="oui">☐ Verrous lame finale</div>
+          <div class="fd-toggle fd-cb cb-complet" data-field="finition" data-val="laque">☐ Laqué RAL</div>
+          <div class="fd-toggle fd-cb cb-complet" data-field="tampons" data-val="oui">☐ Tampons lames</div>
+          <div class="fd-toggle fd-cb cb-complet" data-field="tempete" data-val="oui">☐ Anti-tempête</div>
+          <div class="fd-toggle fd-cb plat-cb" data-field="plat" data-val="oui">☐ Plat soudé ressorts</div>
+        </div>
+        <div id="ral-wrap" style="display:none;margin-top:12px;">
+          <label for="f-ral">N° RAL <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+          <input type="text" class="fd-mono" id="f-ral" placeholder="ex. 7016">
+        </div>
+        <div id="boitier-wrap" style="display:none;margin-top:12px;">
+          <label>Type de boîtier de commande à poser <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
+          <div class="fd-toggle-row">
+            <div class="fd-toggle" data-field="boitier" data-multi="1" data-val="cle">Contact à clé</div>
+            <div class="fd-toggle" data-field="boitier" data-multi="1" data-val="poussoir">Bouton poussoir</div>
+            <div class="fd-toggle" data-field="boitier" data-multi="1" data-val="cle_deverr">Boîtier à clé avec déverrouillage</div>
+          </div>
+          <div class="fd-hint" style="margin-top:6px;">Plusieurs choix possibles.</div>
+        </div>
+        <div id="field-serrure" style="display:none;">
+          <div class="fd-chip-row" style="display:none;">
             <div class="fd-chip" id="chip-serrure" style="padding:0 18px;">Serrure sur lame finale</div>
           </div>
           <div id="serrure-pos-wrap" style="display:none;margin-top:12px;">
@@ -715,13 +794,13 @@ if('serviceWorker' in navigator){
               <div class="fd-toggle" data-field="serrurepos" data-val="centre">Centrée</div>
               <div class="fd-toggle" data-field="serrurepos" data-val="droite">À droite</div>
             </div>
+            <div class="fd-hint" style="margin-top:6px;">La serrure fait coulisser 2 plats en acier, à gauche et à droite, dans les coulisses.</div>
           </div>
           <div id="serrure-dist-wrap" style="display:none;margin-top:12px;">
             <label>Distance axe serrure &harr; fond de coulisse <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
             <input type="number" step="1" class="fd-mono" id="f-serrure-dist" placeholder="0">
           </div>
         </div>
-        <div class="fd-field full"><label>Marque et numéro de série du fabricant</label><input type="text" id="f-marque-serie" placeholder="Si disponible sur la plaque"></div>
       </div>
       <div class="fd-schema-box" style="margin-top:16px;"><div id="schema-svg"></div></div>
       <div class="fd-hint" style="text-align:center;">Le schéma se met à jour avec tes saisies — vérifie qu'il correspond bien au rideau.</div>
@@ -737,15 +816,6 @@ if('serviceWorker' in navigator){
         </div>
       </div>
       <div class="fd-chip-row" id="grid-options"></div>
-      <div class="fd-field full" id="boitier-wrap" style="display:none;margin-top:16px;">
-        <label>Type de boîtier de commande à poser <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span></label>
-        <div class="fd-toggle-row">
-          <div class="fd-toggle" data-field="boitier" data-multi="1" data-val="cle">Contact à clé</div>
-          <div class="fd-toggle" data-field="boitier" data-multi="1" data-val="poussoir">Bouton poussoir</div>
-          <div class="fd-toggle" data-field="boitier" data-multi="1" data-val="cle_deverr">Boîtier à clé avec déverrouillage</div>
-        </div>
-        <div class="fd-hint" style="margin-top:6px;">Plusieurs choix possibles.</div>
-      </div>
       <div class="fd-hint" id="options-hint">Tout ce qui est nécessaire à la préparation du chantier — plusieurs choix possibles.</div>
       <button type="button" class="fd-step-next" id="btn-no-option" data-step="sec-5">Aucune option → continuer</button>
     </div>
@@ -817,7 +887,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.5</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
 </div>
 
 <script>
@@ -829,7 +899,7 @@ if('serviceWorker' in navigator){
   function histSave(list){ RecordCommun.histSave(HIST_KEY, list); }
   function loadSharedLists(){ return RecordCommun.chargerTechniciens(refreshAllDatalists); }
 
-  const fields = ['tech','client','mailclient','equip','travauxdesc','temps','nbtech','hauteur-tableau','hauteur-totale','largeur-coulisses','longueur-axe','diametre-axe','nblames','marque-serie','serrure-dist','remarques'];
+  const fields = ['tech','client','mailclient','equip','travauxdesc','temps','nbtech','hauteur-tableau','hauteur-totale','largeur-coulisses','longueur-axe','diametre-axe','nblames','marque-serie','serrure-dist','remarques','ral'];
 
   const TECH_KEY = 'techniciens-preenregistres';
 
@@ -846,8 +916,186 @@ if('serviceWorker' in navigator){
   loadSharedLists();
   window.addEventListener('focus', loadSharedLists);
 
-  let toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:[], sortie:null, serrurepos:null };
+  let toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:[], sortie:null, serrurepos:null, pose:null, coffre:null, moteur:null, secours:null, parachute:null, finition:null, fixation:null, verrou:null, soude:null, moteurcote:null, plat:null, tampons:null, tempete:null };
   let photos = [];
+  // --- Configuration du rideau complet ---
+  const COMPLET_KEYS = ['pose','fixation','moteur','moteurcote','secours'];
+  const CHECKBOXES = [
+    ['soude', 'oui', 'Pose soudée'],
+    ['coffre', 'oui', 'Coffre tôle'],
+    ['parachute', 'oui', 'Parachute'],
+    ['verrou', 'oui', 'Verrous lame finale'],
+    ['finition', 'laque', 'Laqué RAL'],
+    ['tampons', 'oui', 'Tampons lames'],
+    ['tempete', 'oui', 'Anti-tempête']
+  ];
+  function isComplet(){ return travauxSelected === 'complet'; }
+  // options facultatives proposées aussi pour un tablier complet
+  const TABLIER_CB = ['verrou','finition','tampons','tempete'];
+  // lames seules / axe + lames : options des lames, verrous seulement si la lame finale est comprise
+  function cbAllowed(k){
+    if(isComplet()) return true;
+    if(travauxSelected === 'tablier') return TABLIER_CB.indexOf(k) >= 0;
+    if(isLameSel()) return ['finition','tampons','tempete'].indexOf(k) >= 0 || (k === 'verrou' && lameFinale);
+    return false;
+  }
+  function optTablier(){ return travauxSelected === 'tablier' || isLameSel(); }
+  const TRAV_OPT_LAMES = ['Tablier complet', 'Lame(s) seule(s)', 'Axe + lame(s)'];
+  function tablierRows(d){
+    const t = d.toggles || {};
+    return [
+      ...(t.verrou === 'oui' ? [['Verrous latéraux manuels sur lame finale (tirettes G + D)', 'Oui']] : []),
+      ['Finition', t.finition === 'laque' ? finitionLabel('laque', d.ral) : 'Galva brut'],
+      ...(t.tampons === 'oui' ? [['Tampons en extrémité des lames', 'Oui']] : []),
+      ...(t.tempete === 'oui' ? [['Lames anti-tempête', 'Oui — crochets en extrémité, 1 lame sur 2']] : [])
+    ];
+  }
+  // libellé de la cote de largeur dans le texte et les PDF
+  function largLabel(d){
+    if(/Tablier complet|lame/i.test(d.travaux || '')) return 'Longueur des lames';
+    if(d.travaux === 'Rideau métallique complet' && d.toggles && d.toggles.pose === 'applique') return 'Largeur entre coulisses (passage libre)';
+    return 'Largeur coulisses comprises';
+  }
+  function poseLabel(v){ return v === 'applique' ? 'En applique' : v === 'tableau' ? 'En tableau' : ''; }
+  function needFixation(){ return toggles.pose === 'applique' && toggles.soude !== 'oui'; }
+  function fixationLabel(v){ return v === 'equerres' ? 'Équerres' : v === 'corniere_coulisses' ? 'Cornière soudée sur coulisses' : v === 'corniere_coulisses_drapeaux' ? 'Cornière soudée sur coulisses et drapeaux' : ''; }
+  function moteurLabel(v, cote){ return v === 'central' ? 'Moteur central' : v === 'tubulaire' ? ('Moteur tubulaire' + coteTxt(cote)) : v === 'boutarbre' ? ("Moteur bout d'arbre" + coteTxt(cote)) : ''; }
+  function coteTxt(c){ return c === 'gauche' ? ' à gauche' : c === 'droite' ? ' à droite' : ''; }
+  function moteurLateral(){ return toggles.moteur === 'boutarbre' || toggles.moteur === 'tubulaire'; }
+  // manœuvres de secours possibles selon le moteur
+  function secoursAllowed(m){ return m === 'tubulaire' ? ['manivelle','aucune'] : m === 'boutarbre' ? ['treuil','aucune'] : []; }
+  function secoursLabel(v){ return v === 'manivelle' ? 'Manivelle' : v === 'treuil' ? 'Treuil' : v === 'aucune' ? 'Aucune' : ''; }
+  function finitionLabel(v, ral){ return v === 'galva' ? 'Galva brut' : v === 'laque' ? ('Laqué RAL ' + (ral || '—')) : ''; }
+  function ouiNon(v){ return v === 'oui' ? 'Oui' : v === 'non' ? 'Non' : ''; }
+  function completRows(d){
+    const t = d.toggles || {};
+    return [
+      ['Type de pose', poseLabel(t.pose)],
+      ...(t.soude === 'oui' ? [['Pose soudée', t.pose === 'applique' ? 'Sur structure métallique — soudure des 2 côtés des coulisses' : 'Sur structure métallique']] : []),
+      ...((t.pose === 'applique' && t.soude !== 'oui') ? [['Fixation des coulisses', fixationLabel(t.fixation)]] : []),
+      ...(t.coffre === 'oui' ? [['Coffre tôle', 'À prévoir']] : []),
+      ['Type de moteur', moteurLabel(t.moteur, t.moteurcote)],
+      ['Manœuvre de secours', t.moteur === 'central'
+        ? ((Array.isArray(t.boitier) && t.boitier.indexOf('cle_deverr') >= 0) ? 'Par boîtier à clé avec déverrouillage' : 'Non prévue (pas de boîtier à clé avec déverrouillage)')
+        : secoursLabel(t.secours)],
+      ...(t.parachute === 'oui' ? [['Parachute antichute', 'Oui']] : []),
+      ...(t.verrou === 'oui' ? [['Verrous latéraux manuels sur lame finale (tirettes G + D)', 'Oui']] : []),
+      ['Finition', t.finition === 'laque' ? finitionLabel('laque', d.ral) : 'Galva brut'],
+      ...(t.lames === 'cobra' ? [] : [['Tampons en extrémité des lames', t.tampons === 'oui' ? 'Oui' : 'Non (sans tampons)']]),
+      ...(t.tempete === 'oui' ? [['Lames anti-tempête', 'Oui — crochets en extrémité, 1 lame sur 2']] : [])
+    ];
+  }
+  function completMissing(){
+    if(!isComplet()){
+      if(optTablier() && toggles.finition === 'laque' && !$('f-ral').value.trim()) return { msg:'Indique le n° RAL de la finition laquée.', target:'#f-ral' };
+      return null;
+    }
+    const names = { moteurcote:'le côté du moteur (gauche ou droite)', pose:'le type de pose',soude:'si la pose est soudée',fixation:'la fixation des coulisses en applique', coffre:'si un coffre tôle est à prévoir', moteur:'le type de moteur', secours:'la manœuvre de secours', parachute:'si un parachute antichute est à prévoir', verrou:'si des verrous manuels (tirettes) sont à prévoir à la 4e lame',finition:'la finition' };
+    for(const k of COMPLET_KEYS){
+      if(k === 'fixation' && !needFixation()) continue;
+      if(k === 'moteurcote' && !moteurLateral()) continue;
+      if(k === 'secours' && toggles.moteur === 'central') continue;
+      if(!toggles[k]) return { msg:'Rideau complet : précise ' + names[k] + '.', target:'.fd-toggle[data-field="' + k + '"]' };
+    }
+    if(toggles.finition === 'laque' && !$('f-ral').value.trim()) return { msg:'Rideau complet : indique le n° RAL de la finition laquée.', target:'#f-ral' };
+    return null;
+  }
+  function updateCompletUI(){
+    const w = $('complet-wrap');
+    if(!w) return;
+    const show = isComplet();
+    w.style.display = show ? '' : 'none';
+    if(!show){
+      COMPLET_KEYS.forEach(k => { toggles[k] = null; document.querySelectorAll('.fd-toggle[data-field="' + k + '"]').forEach(x=>x.classList.remove('on')); });
+    }
+    // cases à cocher facultatives
+    CHECKBOXES.forEach(([k, val, lbl])=>{
+      if(!cbAllowed(k) && toggles[k]) toggles[k] = null;
+      document.querySelectorAll('.fd-toggle[data-field="' + k + '"]').forEach(x=>{
+        x.classList.toggle('on', toggles[k] === val);
+        x.textContent = (toggles[k] === val ? '☑ ' : '☐ ') + lbl;
+      });
+    });
+    // pose en tableau : seul le moteur central est possible, sélectionné d'office
+    const tab = show && toggles.pose === 'tableau';
+    if(tab) toggles.moteur = 'central';
+    document.querySelectorAll('.fd-toggle[data-field="moteur"]').forEach(x=>{
+      const off = tab && x.dataset.val !== 'central';
+      x.style.display = off ? 'none' : '';
+      x.classList.toggle('on', toggles.moteur === x.dataset.val);
+    });
+    // moteur : côté du bout d'arbre et manœuvres de secours autorisées
+    const ba = show && moteurLateral();
+    $('moteurcote-wrap').style.display = ba ? '' : 'none';
+    if(!ba && toggles.moteurcote){
+      toggles.moteurcote = null;
+      document.querySelectorAll('.fd-toggle[data-field="moteurcote"]').forEach(x=>x.classList.remove('on'));
+    }
+    $('secours-wrap').style.display = (show && toggles.moteur && toggles.moteur !== 'central') ? '' : 'none';
+    $('moteurcentral-hint').style.display = (show && toggles.moteur === 'central') ? '' : 'none';
+    // boîtier à clé avec déverrouillage : uniquement avec un moteur central
+    const noDev = show && toggles.moteur && toggles.moteur !== 'central';
+    document.querySelectorAll('.fd-toggle[data-field="boitier"][data-val="cle_deverr"]').forEach(x=>{
+      x.style.display = noDev ? 'none' : '';
+      if(noDev) x.classList.remove('on');
+    });
+    if(noDev && Array.isArray(toggles.boitier)) toggles.boitier = toggles.boitier.filter(v => v !== 'cle_deverr');
+    const okSec = secoursAllowed(toggles.moteur);
+    document.querySelectorAll('.fd-toggle[data-field="secours"]').forEach(x=>{ x.style.display = okSec.indexOf(x.dataset.val) >= 0 ? '' : 'none'; });
+    if(toggles.secours && (!show || okSec.indexOf(toggles.secours) < 0)){
+      toggles.secours = null;
+      document.querySelectorAll('.fd-toggle[data-field="secours"]').forEach(x=>x.classList.remove('on'));
+    }
+    // le côté du moteur bout d'arbre remplace la question de sortie de câble
+    const sw = $('sortie-wrap');
+    if(ba){
+      if(sw) sw.style.display = 'none';
+      if(toggles.moteurcote && toggles.sortie !== toggles.moteurcote){
+        toggles.sortie = toggles.moteurcote;
+        document.querySelectorAll('.fd-toggle[data-field="sortie"]').forEach(x=>x.classList.toggle('on', x.dataset.val === toggles.sortie));
+      }
+    } else if(sw && alimRequise()){
+      sw.style.display = '';
+    }
+    // plat soudé : seulement quand l'axe porte des boîtes à ressort
+    const rp = ressortsPresents();
+    if(!rp && toggles.plat) toggles.plat = null;
+    document.querySelectorAll('.plat-cb').forEach(x=>{
+      x.style.display = rp ? '' : 'none';
+      x.classList.toggle('on', platOn());
+      x.textContent = (platOn() ? '☑ ' : '☐ ') + 'Plat soudé ressorts';
+    });
+    // pose en applique : on relève la largeur intérieure entre coulisses (passage libre)
+    if(show){
+      $('lbl-larg').innerHTML = (toggles.pose === 'applique' ? 'Largeur entre coulisses — intérieur (passage libre)' : 'Largeur coulisses comprises') + ' <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span>';
+    }
+    // bloc d'options facultatives : visible dès qu'un type de travaux est choisi
+    $('opts-wrap').style.display = travauxSelected ? '' : 'none';
+    document.querySelectorAll('.cb-complet').forEach(x=>{ x.style.display = cbAllowed(x.dataset.field) ? '' : 'none'; });
+    // lame finale à remplacer : lames seules / axe + lames
+    const cbl = $('cb-lamefinale');
+    if(cbl){
+      cbl.style.display = isLameSel() ? '' : 'none';
+      cbl.classList.toggle('on', isLameSel() && lameFinale);
+      cbl.textContent = (isLameSel() && lameFinale ? '☑ ' : '☐ ') + 'Lame finale à remplacer';
+    }
+    // lames Cobra : ni anti-tempête, ni tampons
+    if(toggles.lames === 'cobra'){
+      ['tempete','tampons'].forEach(k=>{
+        toggles[k] = null;
+        document.querySelectorAll('.fd-toggle[data-field="' + k + '"]').forEach(x=>{ x.style.display = 'none'; x.classList.remove('on'); });
+      });
+    }
+    const appl = show && needFixation();
+    $('fixation-wrap').style.display = appl ? '' : 'none';
+    if(!appl && toggles.fixation){
+      toggles.fixation = null;
+      document.querySelectorAll('.fd-toggle[data-field="fixation"]').forEach(x=>x.classList.remove('on'));
+    }
+    const laque = cbAllowed('finition') && toggles.finition === 'laque';
+    $('ral-wrap').style.display = laque ? '' : 'none';
+    if(!laque) $('f-ral').value = '';
+  }
   let travauxSelected = null;
   function finaleConcernee(){ return travauxSelected === 'complet' || travauxSelected === 'tablier' || (isLameSel() && lameFinale); }
   function serrurePosLabel(v){ return v === 'centre' ? 'Centrée' : v === 'droite' ? 'À droite' : v === 'gauche' ? 'À gauche' : ''; }
@@ -868,6 +1116,12 @@ if('serviceWorker' in navigator){
       c.style.borderColor = serrure ? 'var(--steel)' : '';
       c.style.color = serrure ? '#fff' : '';
     }
+    const cbs = $('cb-serrure');
+    if(cbs){
+      cbs.style.display = show ? '' : 'none';
+      cbs.classList.toggle('on', serrure);
+      cbs.textContent = (serrure ? '☑ ' : '☐ ') + 'Serrure lame finale';
+    }
     $('serrure-pos-wrap').style.display = serrure ? '' : 'none';
     $('serrure-dist-wrap').style.display = (serrure && (toggles.serrurepos === 'droite' || toggles.serrurepos === 'gauche')) ? '' : 'none';
   }
@@ -882,9 +1136,16 @@ if('serviceWorker' in navigator){
     { id:'axe_lame', label:'Axe + lame(s)' }
   ];
 
+  const OPT_PLAT = 'Plat soudé sur les boîtes à ressort';
   const OPTIONS_LIST = [
     'Boîtier de commande à remplacer'
   ];
+  function platOn(){ return toggles.plat === 'oui'; }
+  // boîtes à ressort présentes sur l'axe : moteur central (ou axe seul / axe + lames)
+  function ressortsPresents(){
+    if(['complet','axe','moteur','axe_lame'].indexOf(travauxSelected) < 0) return false;
+    return !(travauxSelected === 'complet' && (toggles.moteur === 'tubulaire' || toggles.moteur === 'boutarbre'));
+  }
 
 
 
@@ -916,6 +1177,7 @@ if('serviceWorker' in navigator){
       updateIseaWarn();
       updateBoitierRule();
       updateSerrureUI();
+      updateCompletUI();
       updateSteps();
       renderSchema();
     });
@@ -941,10 +1203,22 @@ if('serviceWorker' in navigator){
       card.innerHTML = travauxSvg(t.id) + '<div class="fd-visual-label">' + esc(t.label) + '</div>';
       card.addEventListener('click', ()=>{
         travauxSelected = (travauxSelected === t.id) ? null : t.id;
+        // la lame finale « à remplacer également » ne concerne que lames seules / axe + lames
+        if(!isLameSel() && lameFinale){
+          lameFinale = false;
+          const cf = $('chip-lamefinale');
+          cf.classList.remove('on'); cf.style.background = ''; cf.style.borderColor = ''; cf.style.color = '';
+        }
+        // le type de lames ne concerne pas un remplacement d'axe seul
+        if((travauxSelected === 'axe' || travauxSelected === 'moteur') && toggles.lames){
+          toggles.lames = null;
+          document.querySelectorAll('.fd-toggle[data-field="lames"]').forEach(x=>x.classList.remove('on'));
+        }
         renderTravauxGrid();
         renderOptionsGrid();
         updateAxeRule();
         updateSerrureUI();
+        updateCompletUI();
         renderSchema();
         updateSteps();
       });
@@ -971,6 +1245,11 @@ if('serviceWorker' in navigator){
   }
 
   function optionsForTravaux(){
+    // les options sont désormais des cases dans le bloc au-dessus du schéma
+    optionsForTravauxSide();
+    return [];
+  }
+  function optionsForTravauxSide(){
     const noAlim = travauxSelected === 'tablier' || travauxSelected === 'lame';
     const w = $('sortie-wrap');
     if(w) w.style.display = noAlim ? 'none' : '';
@@ -978,7 +1257,6 @@ if('serviceWorker' in navigator){
       toggles.sortie = null;
       document.querySelectorAll('.fd-toggle[data-field="sortie"]').forEach(el=>el.classList.remove('on'));
     }
-    // une seule alimentation possible : dès qu'une est cochée, les autres disparaissent
     return OPTIONS_LIST.slice();
   }
 
@@ -1004,10 +1282,18 @@ if('serviceWorker' in navigator){
     const row = $('grid-options');
     row.innerHTML = '';
     const list = optionsForTravaux();
-    optionsSelected = optionsSelected.filter(o => list.indexOf(o) >= 0);
+    optionsSelected = optionsSelected.filter(o => list.indexOf(o) >= 0 || o === OPT_BOITIER);
+    // case « Boîtier de commande » du bloc d'options facultatives
+    const cbb = $('cb-boitier');
+    if(cbb){
+      const onB = optionsSelected.indexOf(OPT_BOITIER) >= 0;
+      cbb.classList.toggle('on', onB);
+      cbb.textContent = (onB ? '☑ ' : '☐ ') + 'Boîtier de commande';
+    }
     const hint = $('options-hint');
     if(hint){
-      hint.textContent = 'Tout ce qui est nécessaire à la préparation du chantier — plusieurs choix possibles.';
+      hint.textContent = '';
+      hint.style.display = 'none';
     }
     list.forEach(label=>{
       const chip = document.createElement('div');
@@ -1030,6 +1316,8 @@ if('serviceWorker' in navigator){
   }
 
   const OPT_BOITIER = 'Boîtier de commande à remplacer';
+  // l'étape 5 ne contient plus que la sortie de câble : on la masque quand elle n'a rien à demander
+  function sec5Vide(){ return !alimRequise() || (isComplet() && moteurLateral()); }
   function alimRequise(){ return travauxSelected !== 'tablier' && travauxSelected !== 'lame'; }
   function alimChoisie(){ return !!toggles.sortie; }
   function updateBoitierRule(){
@@ -1048,6 +1336,7 @@ if('serviceWorker' in navigator){
     renderOptionsGrid();
     updateNoOptionBtn();
     updateSerrureUI();
+    updateCompletUI();
     updateSteps();
     const c = $('chip-lamefinale');
     c.classList.toggle('on', lameFinale);
@@ -1055,6 +1344,34 @@ if('serviceWorker' in navigator){
     c.style.borderColor = lameFinale ? 'var(--steel)' : '';
     c.style.color = lameFinale ? '#fff' : '';
     renderSchema();
+  });
+
+  // cases du bloc d'options facultatives (boîtier, serrure)
+  function bindCbx(id, fn){
+    const el = $(id);
+    if(!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('keydown', e=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fn(); } });
+  }
+  // lame finale : verrous latéraux OU serrure, pas les deux
+  bindCbx('cb-serrure', ()=>{
+    if(!serrure && toggles.verrou === 'oui') toggles.verrou = null;
+    $('chip-serrure').click();
+    updateCompletUI();
+    renderSchema();
+  });
+  document.querySelectorAll('.fd-toggle[data-field="verrou"]').forEach(el=> el.addEventListener('click', ()=>{
+    if(toggles.verrou === 'oui' && serrure) $('chip-serrure').click();
+  }));
+  bindCbx('cb-lamefinale', ()=> $('chip-lamefinale').click());
+  bindCbx('cb-boitier', ()=>{
+    const i = optionsSelected.indexOf(OPT_BOITIER);
+    if(i >= 0) optionsSelected.splice(i, 1); else optionsSelected.push(OPT_BOITIER);
+    renderOptionsGrid();
+    updateBoitierRule();
+    updateNoOptionBtn();
+    renderSchema();
+    updateSteps();
   });
 
   $('chip-serrure').addEventListener('click', ()=>{
@@ -1065,6 +1382,7 @@ if('serviceWorker' in navigator){
     }
     updateSerrureUI();
     updateSteps();
+    renderSchema();
   });
 
   function updateIseaWarn(){
@@ -1104,11 +1422,12 @@ if('serviceWorker' in navigator){
       hintOf:()=> (travauxSelected === 'axe' || travauxSelected === 'moteur')
         ? "Indique le sens d'enroulement du tablier pour continuer."
         : "Renseigne le tablier : type de lames, type de lame (P116 ou Autre) et sens d'enroulement." },
-    { id:'sec-5', need:()=> cotesOk(), hint:'Complète les cotes relevées pour continuer.' },
+    { id:'sec-5', skip:()=> sec5Vide(), need:()=> cotesOk() && !completMissing(),
+      hintOf:()=> !cotesOk() ? 'Complète les cotes relevées pour continuer.' : completMissing().msg },
     { id:'sec-6',
       need:()=> (optionsSelected.indexOf(OPT_BOITIER) < 0 || (toggles.boitier && toggles.boitier.length))
         && (!alimRequise() || alimChoisie())
-        && (alimRequise() || !!stepDone['sec-5']),
+        && (alimRequise() || !!stepDone['sec-5'] || sec5Vide()),
       hintOf:()=> (alimRequise() && !alimChoisie())
         ? 'Choisis le côté de sortie de câble (droite ou gauche) pour continuer.'
         : (optionsSelected.indexOf(OPT_BOITIER) >= 0 && !(toggles.boitier && toggles.boitier.length))
@@ -1116,9 +1435,9 @@ if('serviceWorker' in navigator){
           : 'Sélectionne les options utiles (ou aucune) puis touche « Aucune option → continuer ».' },
     { id:'sec-7', need:()=> !!($('f-temps').value.trim() && parseFloat($('f-nbtech').value) > 0 && toggles.nacelle && toggles.pirl),
       hint:'Renseigne les moyens à prévoir (temps, nombre de techniciens, nacelle, PIRL) pour continuer.' },
-    { id:'sec-8', need:()=> !!stepDone['sec-7'],
-      hint:'Ajoute une remarque si besoin, ou touche « Aucune remarque → continuer ».' },
-    { id:'sec-actions', need:()=> !!stepDone['sec-7'], hint:'' },
+    // remarques facultatives : pas de blocage ici, le premier manque restant vient de validate()
+    { id:'sec-8', need:()=> true, hint:'' },
+    { id:'sec-actions', need:()=> true, hint:'' },
   ];
 
   function cotesOk(){
@@ -1134,24 +1453,37 @@ if('serviceWorker' in navigator){
     let open = true;
     let hint = '';
     let lastVisible = null;
+    // un seul repère à la fois : on repart de zéro à chaque mise à jour
+    document.querySelectorAll('.fd-section.todo').forEach(el=> el.classList.remove('todo'));
+    let lastShown = $('sec-1');
     STEPS.forEach(s=>{
       const el = $(s.id);
       if(!el) return;
       el.classList.remove('locked');
-      if(s.skip && s.skip()){ el.classList.add('locked'); return; }
-      lastVisible = el;
-      // repère discret sur la première rubrique incomplète
-      const prev = STEPS[STEPS.indexOf(s) - 1];
-      const target = prev ? $(prev.id) : $('sec-1');
+      const skipped = s.skip && s.skip();
+      // une rubrique masquée vérifie quand même ce qui la précède (cotes, configuration…)
       if(open && !s.need()){
         open = false;
         hint = (s.hintOf ? s.hintOf() : s.hint) || '';
-        if(target) target.classList.add('todo');
+        if(lastShown) lastShown.classList.add('todo');
       }
+      if(skipped){ el.classList.add('locked'); return; }
+      lastVisible = el;
+      lastShown = el;
     });
-    document.querySelectorAll('.fd-section.todo').forEach(el=>{
-      if(!hint) el.classList.remove('todo');
-    });
+    // tout est rempli d'après les étapes : on affiche le premier manque restant (photo, serrure…)
+    if(open){
+      try{
+        const m = validate(readForm());
+        if(m){
+          hint = m.msg;
+          // le repère va sur la rubrique qui contient le champ manquant (photos, serrure…)
+          const tEl = m.target ? document.querySelector(m.target) : null;
+          const sec = (tEl && tEl.closest('.fd-section')) || document.querySelector('.fd-section:last-of-type');
+          if(sec) sec.classList.add('todo');
+        }
+      }catch(e){}
+    }
     const nh = $('next-hint');
     nh.textContent = hint;
     nh.style.display = hint ? '' : 'none';
@@ -1170,7 +1502,8 @@ if('serviceWorker' in navigator){
     const isLame = travauxSelected === 'lame' || travauxSelected === 'axe_lame';
     const lameOnly = travauxSelected === 'lame';
     $('field-nblames').style.display = isLame ? '' : 'none';
-    $('field-lamefinale').style.display = isLame ? '' : 'none';
+    // la case « Lame finale à remplacer » est dans le bloc d'options facultatives
+    $('field-lamefinale').style.display = 'none';
     // en remplacement de lames seules, ces cotes ne servent pas
     // en tablier complet on garde la hauteur sous drapeau, pas l'enroulement
     const isTab = travauxSelected === 'tablier';
@@ -1254,12 +1587,47 @@ if('serviceWorker' in navigator){
     const ax1 = cx + 8, ax2 = cx + cw - 8, tube = 22;
     const mx = cx + cw/2;
 
-    if(spec) t(mx, 24, 14, '#1E3448', 'Travaux : ' + spec.label, { weight:'700' });
+    // légendes sous le dessin : alignées à gauche pour ne pas empiéter sur la colonne de droite
+    const LGX = cx - 108;
+    function tl(y, size, fill, txt, opt){ t(LGX, y, size, fill, txt, Object.assign({}, opt || {}, { anchor:'start' })); }
+    if(spec) t(mx, 14, 14, '#1E3448', 'Travaux : ' + spec.label, { weight:'700' });
 
     const axeOnly = axeOnlyEarly;
+    // rideau complet : maçonnerie selon le type de pose
+    const cfg = isComplet();
+    const pose = cfg ? toggles.pose : null;
+    const soude = cfg && toggles.soude === 'oui';
+    const fix = (cfg && needFixation()) ? toggles.fixation : null;
+    if(pose){
+      S.push('<defs><pattern id="hatch-mur" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#EEF1F4"/><line x1="0" y1="0" x2="0" y2="7" stroke="#B9C2CC" stroke-width="2"/></pattern></defs>');
+      const wTop = pose === 'applique' ? boxY : boxY - 16, wH = sol - wTop, ww = 28;
+      if(soude){
+        // structure métallique : poteaux acier (devant les coulisses en applique, à côté en tableau)
+        const pw = pose === 'applique' ? 22 + mw : 22;
+        [[cx - 22, pw], [cx + cw - (pw - 22), pw]].forEach(([x, w])=>{
+          S.push('<rect x="' + x + '" y="' + wTop + '" width="' + w + '" height="' + wH + '" fill="#8A939C" stroke="#1E3448" stroke-width="1.4"/>');
+        });
+      } else if(pose === 'applique'){
+        // mur continu derrière le rideau : coulisses et coffre posés en façade
+        S.push('<rect x="' + (cx - ww) + '" y="' + wTop + '" width="' + (cw + ww*2) + '" height="' + wH + '" fill="url(#hatch-mur)" stroke="#8A939C" stroke-width="1.2"/>');
+      } else {
+        // deux tableaux de maçonnerie : rideau posé entre murs
+        [cx - ww, cx + cw].forEach(x=>{
+          S.push('<rect x="' + x + '" y="' + wTop + '" width="' + ww + '" height="' + wH + '" fill="url(#hatch-mur)" stroke="#8A939C" stroke-width="1.2"/>');
+        });
+      }
+      if(soude) [cx - 11, cx + cw + 11].forEach(x=> t(x, (tabY + sol)/2 + 70, 10, '#FFFFFF', 'POTEAU ACIER', { weight:'700', rotate:true }));
+      else [cx - ww/2, cx + cw + ww/2].forEach(x=> t(x, (tabY + sol)/2 + 70, 10, '#5A646E', 'MUR', { weight:'700', rotate:true }));
+    }
     if((inBox || boxRef) && !axeOnly){
-      S.push('<rect x="' + (cx - 26) + '" y="' + (boxY - 16) + '" width="' + (cw + 52) + '" height="16" fill="#E4EAF0" stroke="#8A939C" stroke-width="1.2"/>');
-      t(mx, boxY - 4, 10.5, '#5A646E', 'LINTEAU', { weight:'700' });
+      if(pose === 'applique'){
+        // pose en applique : le linteau occupe toute la hauteur d'enroulement, coffre posé devant
+        S.push('<rect x="' + (cx - 28) + '" y="' + boxY + '" width="' + (cw + 56) + '" height="' + boxH + '" fill="' + (soude ? '#8A939C' : '#E4EAF0') + '" stroke="' + (soude ? '#1E3448' : '#8A939C') + '" stroke-width="1.2"/>');
+        t(mx, boxY - 6, 10.5, '#5A646E', "LINTEAU = HAUTEUR D'ENROULEMENT", { weight:'700' });
+      } else {
+        S.push('<rect x="' + (cx - 26) + '" y="' + (boxY - 16) + '" width="' + (cw + 52) + '" height="16" fill="#E4EAF0" stroke="#8A939C" stroke-width="1.2"/>');
+        t(mx, boxY - 4, 10.5, '#5A646E', 'LINTEAU', { weight:'700' });
+      }
     }
 
     if(boxRef){
@@ -1274,21 +1642,62 @@ if('serviceWorker' in navigator){
       [ax1, ax2].forEach(x=>{
         S.push('<rect x="' + (x - 5) + '" y="' + (acy - tube/2 - 7) + '" width="10" height="' + (tube + 14) + '" rx="2" fill="#D5DDE5" stroke="#1E3448" stroke-width="1.6"/>');
       });
-      S.push('<rect x="' + (mx - 26) + '" y="' + (acy - tube/2 - 5) + '" width="52" height="' + (tube + 10) + '" rx="4" fill="' + (hlMot ? '#C8811A' : '#C3CCD6') + '" stroke="#1E3448" stroke-width="1.6"/>');
-      t(mx, acy + 3.5, 9.5, hlMot ? '#FFFFFF' : '#12171C', 'MOTEUR', { weight:'700' });
-      [mx - 62, mx + 62].forEach(x=>{
-        S.push('<rect x="' + (x - 11) + '" y="' + (acy - tube/2 - 3) + '" width="22" height="' + (tube + 6) + '" rx="3" fill="#EAEFF4" stroke="#8A939C" stroke-width="1.4"/>');
-      });
+      const motBA = cfg && toggles.moteur === 'boutarbre';
+      if(motBA){
+        // moteur en bout d'arbre, monté sur le côté choisi (vu de l'intérieur)
+        const left = toggles.moteurcote === 'gauche';
+        const right = toggles.moteurcote === 'droite';
+        [[cx - 12, left], [cx + cw + 12, right]].forEach(([xc, on])=>{
+          if(!on && (left || right)) return;
+          S.push('<rect x="' + (xc - 16) + '" y="' + (acy - 18) + '" width="32" height="36" rx="4" fill="' + (on ? '#C8811A' : '#F1F4F7') + '" stroke="#1E3448" stroke-width="1.6"' + (on ? '' : ' stroke-dasharray="4 3"') + '/>');
+          t(xc, acy + 3.5, 9, on ? '#FFFFFF' : '#5A646E', on ? 'MOT.' : '?', { weight:'700' });
+        });
+      } else if(cfg && toggles.moteur === 'tubulaire' && toggles.moteurcote){
+        // moteur tubulaire logé dans l'axe, côté choisi (vu de l'intérieur)
+        const mxs = toggles.moteurcote === 'gauche' ? ax1 + 8 : ax2 - 8 - 50;
+        S.push('<rect x="' + mxs + '" y="' + (acy - tube/2 + 2) + '" width="50" height="' + (tube - 4) + '" rx="' + ((tube - 4)/2) + '" fill="#C8811A" stroke="#1E3448" stroke-width="1.4"/>');
+        t(mxs + 25, acy + 3.5, 8.5, '#FFFFFF', 'M. TUB.', { weight:'700' });
+      } else if(cfg && toggles.moteur === 'tubulaire'){
+        // côté pas encore choisi : point d'interrogation aux deux bouts de l'axe
+        [ax1 + 8, ax2 - 8 - 50].forEach(xs=>{
+          S.push('<rect x="' + xs + '" y="' + (acy - tube/2 + 2) + '" width="50" height="' + (tube - 4) + '" rx="' + ((tube - 4)/2) + '" fill="#F1F4F7" stroke="#1E3448" stroke-width="1.4" stroke-dasharray="4 3"/>');
+          t(xs + 25, acy + 3.5, 9, '#5A646E', '?', { weight:'700' });
+        });
+      } else {
+        const motTxt = (cfg && toggles.moteur === 'central') ? 'M. CENTRAL' : (cfg && toggles.moteur === 'tubulaire') ? 'M. TUBUL.' : 'MOTEUR';
+        const motW = motTxt === 'MOTEUR' ? 52 : 66;
+        S.push('<rect x="' + (mx - motW/2) + '" y="' + (acy - tube/2 - 5) + '" width="' + motW + '" height="' + (tube + 10) + '" rx="4" fill="' + (hlMot ? '#C8811A' : '#C3CCD6') + '" stroke="#1E3448" stroke-width="1.6"/>');
+        t(mx, acy + 3.5, 9.5, hlMot ? '#FFFFFF' : '#12171C', motTxt, { weight:'700' });
+      }
+      if(cfg && toggles.coffre === 'oui'){
+        S.push('<rect x="' + (cx - 4) + '" y="' + (boxY - 3) + '" width="' + (cw + 8) + '" height="' + (boxH + 6) + '" fill="none" stroke="#C8811A" stroke-width="2" stroke-dasharray="7 4"/>');
+      }
+      // ressorts (carrés gris) : uniquement pour le moteur central
+      if(!(cfg && (toggles.moteur === 'tubulaire' || toggles.moteur === 'boutarbre'))){
+        const plat = platOn();
+        const flag = travauxSelected && !plat;
+        [mx - 62, mx + 62].forEach(x=>{
+          S.push('<rect x="' + (x - 11) + '" y="' + (acy - tube/2 - 3) + '" width="22" height="' + (tube + 6) + '" rx="3" fill="#EAEFF4" stroke="' + (flag ? '#B3403A' : '#8A939C') + '" stroke-width="' + (flag ? 2 : 1.4) + '"' + (flag ? ' stroke-dasharray="4 2"' : '') + '/>');
+        });
+        // plat soudé : une barre orange qui relie les deux boîtes à ressort
+        if(plat){
+          const py = acy - tube/2 - 11;
+          S.push('<rect x="' + (mx - 73) + '" y="' + py + '" width="146" height="6" rx="1" fill="#C8811A" stroke="#1E3448" stroke-width="1.2"/>');
+          [mx - 62, mx + 62].forEach(x=> S.push('<line x1="' + x + '" y1="' + (py + 6) + '" x2="' + x + '" y2="' + (acy - tube/2 - 3) + '" stroke="#1E3448" stroke-width="2"/>'));
+        }
+      }
       t(mx, boxY + 14, 10, '#5A646E', 'AXE  \u2014  de gauche à droite, vu de face', { weight:'700' });
+      // repère de diamètre : à gauche, ou à l'intérieur de l'axe quand un moteur bout d'arbre occupe les côtés
+      const dx = (cfg && toggles.moteur === 'boutarbre') ? mx + 40 : ax1 - 16;
       if(ax){
-        S.push('<line x1="' + (ax1 - 16) + '" y1="' + (acy - tube/2) + '" x2="' + (ax1 - 16) + '" y2="' + (acy + tube/2) + '" stroke="#C8811A" stroke-width="1.6"/>');
-        S.push('<line x1="' + (ax1 - 21) + '" y1="' + (acy - tube/2) + '" x2="' + (ax1 - 11) + '" y2="' + (acy - tube/2) + '" stroke="#C8811A" stroke-width="1.6"/>');
-        S.push('<line x1="' + (ax1 - 21) + '" y1="' + (acy + tube/2) + '" x2="' + (ax1 - 11) + '" y2="' + (acy + tube/2) + '" stroke="#C8811A" stroke-width="1.6"/>');
+        S.push('<line x1="' + dx + '" y1="' + (acy - tube/2) + '" x2="' + dx + '" y2="' + (acy + tube/2) + '" stroke="#C8811A" stroke-width="1.6"/>');
+        S.push('<line x1="' + (dx - 5) + '" y1="' + (acy - tube/2) + '" x2="' + (dx + 5) + '" y2="' + (acy - tube/2) + '" stroke="#C8811A" stroke-width="1.6"/>');
+        S.push('<line x1="' + (dx - 5) + '" y1="' + (acy + tube/2) + '" x2="' + (dx + 5) + '" y2="' + (acy + tube/2) + '" stroke="#C8811A" stroke-width="1.6"/>');
         t(mx, boxY + boxH - 7, 12, '#C8811A', '\u2300 axe = ' + ax + ' mm', { weight:'700' });
       }
       // sens d'enroulement
       if(int_ || ext){
-        const ex = mx + (ext ? 1 : -1) * 96;
+        const ex = mx + (ext ? 1 : -1) * ((cfg && moteurLateral() && toggles.moteurcote) ? 30 : 96);
         S.push('<path d="M ' + ex + ' ' + (acy - 16) + ' A 18 18 0 ' + (ext ? '1' : '0') + ' ' + (ext ? '1' : '0') + ' ' + ex + ' ' + (acy + 16) + '" fill="none" stroke="#C8811A" stroke-width="2.4"/>');
         S.push('<polygon points="' + ex + ',' + (acy + 22) + ' ' + (ex - 5) + ',' + (acy + 12) + ' ' + (ex + 5) + ',' + (acy + 12) + '" fill="#C8811A"/>');
         t(mx, boxY - 24, 11.5, '#C8811A', "VU DE L'INTÉRIEUR \u2014 ENROULEMENT " + (ext ? "VERS L'EXTÉRIEUR" : "VERS L'INTÉRIEUR"), { weight:'700' });
@@ -1340,9 +1749,81 @@ if('serviceWorker' in navigator){
         S.push('<rect x="' + x + '" y="' + tabY + '" width="' + mw + '" height="' + tabH + '" fill="#D5DDE5" stroke="#1E3448" stroke-width="1.6"/>');
         t(x + mw/2, tabY + tabH/2, 10, '#12171C', 'COULISSE', { weight:'700', rotate:true });
       });
+      // tampons en extrémité de chaque lame (rideau complet)
+      if((cfg || optTablier()) && toggles.tampons === 'oui'){
+        for(let i = 0; i < nb; i++){
+          const y = tabY + i * lh + lh/2 - 5;
+          S.push('<rect x="' + (cx + mw) + '" y="' + y + '" width="6" height="10" rx="1.5" fill="#1E3448"/>');
+          S.push('<rect x="' + (cx + cw - mw - 6) + '" y="' + y + '" width="6" height="10" rx="1.5" fill="#1E3448"/>');
+        }
+      }
+      // lames anti-tempête : crochets dans les coulisses, 1 lame sur 2
+      if((cfg || optTablier()) && toggles.tempete === 'oui'){
+        for(let i = 0; i < nb; i += 2){
+          const y = tabY + i * lh + lh/2 - 4;
+          S.push('<path d="M ' + (cx + mw + 2) + ' ' + y + ' L ' + (cx + 6) + ' ' + y + ' L ' + (cx + 6) + ' ' + (y + 9) + '" fill="none" stroke="#12171C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>');
+          S.push('<path d="M ' + (cx + cw - mw - 2) + ' ' + y + ' L ' + (cx + cw - 6) + ' ' + y + ' L ' + (cx + cw - 6) + ' ' + (y + 9) + '" fill="none" stroke="#12171C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>');
+        }
+      }
+      // pose soudée : cordons de soudure le long des coulisses
+      if(soude){
+        // en applique : cordons des 2 côtés de chaque coulisse ; en tableau : côté extérieur
+        (pose === 'applique' ? [cx, cx + mw, cx + cw - mw, cx + cw] : [cx, cx + cw]).forEach(x=>{
+          for(let y = tabY + 14; y < sol - 10; y += 36){
+            S.push('<path d="M ' + (x - 4) + ' ' + y + ' l 4 4 l -4 4 l 4 4 l -4 4 l 4 4" fill="none" stroke="#C8811A" stroke-width="2.4" stroke-linejoin="round"/>');
+          }
+        });
+      }
+      // fixation des coulisses en applique
+      if(fix === 'equerres'){
+        // pattes de fixation au mur : plaque orange + boulon, côté extérieur des coulisses
+        [tabY + 28, tabY + tabH/2, sol - 40].forEach(y=>{
+          [cx - 16, cx + cw].forEach(x=>{
+            S.push('<rect x="' + x + '" y="' + (y - 7) + '" width="16" height="14" rx="2" fill="#C8811A" stroke="#1E3448" stroke-width="1.2"/>');
+            S.push('<circle cx="' + (x + 8) + '" cy="' + y + '" r="3" fill="#FFFFFF" stroke="#1E3448" stroke-width="1"/>');
+          });
+        });
+      } else if(fix === 'corniere_coulisses' || fix === 'corniere_coulisses_drapeaux'){
+        const yTop = fix === 'corniere_coulisses_drapeaux' ? boxY : tabY;
+        [cx - 7, cx + cw].forEach(x=>{
+          S.push('<rect x="' + x + '" y="' + yTop + '" width="7" height="' + (sol - yTop) + '" fill="#C8811A" stroke="#9A6210" stroke-width="1"/>');
+        });
+      }
       // lame finale + sol
       S.push('<rect x="' + (cx + mw) + '" y="' + (sol - 16) + '" width="' + (cw - mw*2) + '" height="16" fill="' + (hlFin ? '#FCF3E2' : '#C3CCD6') + '" stroke="#1E3448" stroke-width="1.8"/>');
-      if(hlFin) t(mx, sol - 4, 10.5, '#9A6210', travauxSelected === 'tablier' ? 'LAME FINALE COMPRISE' : 'LAME FINALE', { weight:'700' });
+      const serPos = (serrure && finaleConcernee()) ? toggles.serrurepos : null;
+      // avec serrure, les plats occupent la lame finale : le libellé passe au-dessus avec « SERRURE »
+      if(hlFin && !(serrure && finaleConcernee())) t(mx, sol - 4, 10.5, '#9A6210', travauxSelected === 'tablier' ? 'LAME FINALE COMPRISE' : 'LAME FINALE', { weight:'700' });
+      // serrure sur lame finale
+      if(serrure && finaleConcernee()){
+        const sx = serPos === 'gauche' ? cx + mw + 30 : serPos === 'droite' ? cx + cw - mw - 30 : mx;
+        const sy = sol - 8;
+        // 2 plats acier actionnés par la serrure, qui coulissent dans les coulisses G et D
+        S.push('<rect x="' + (cx + mw - 12) + '" y="' + (sy - 2) + '" width="' + (sx - 9 - (cx + mw - 12)) + '" height="4" fill="#5A646E" stroke="#12171C" stroke-width="0.8"/>');
+        S.push('<rect x="' + (sx + 9) + '" y="' + (sy - 2) + '" width="' + ((cx + cw - mw + 12) - (sx + 9)) + '" height="4" fill="#5A646E" stroke="#12171C" stroke-width="0.8"/>');
+        [cx + mw - 12, cx + cw - mw + 12].forEach(xe=> S.push('<polygon points="' + xe + ',' + (sy - 4) + ' ' + (xe + (xe < mx ? -5 : 5)) + ',' + sy + ' ' + xe + ',' + (sy + 4) + '" fill="#12171C"/>'));
+        S.push('<rect x="' + (sx - 9) + '" y="' + (sy - 7) + '" width="18" height="14" rx="2.5" fill="#1E3448" stroke="#C8811A" stroke-width="1.6"/>');
+        S.push('<circle cx="' + sx + '" cy="' + (sy - 1.5) + '" r="2.4" fill="#FFFFFF"/>');
+        S.push('<rect x="' + (sx - 1) + '" y="' + (sy - 1) + '" width="2" height="5" fill="#FFFFFF"/>');
+        const sd = $('f-serrure-dist').value.trim();
+        const slbl = (hlFin ? (travauxSelected === 'tablier' ? 'LAME FINALE COMPRISE + ' : 'LAME FINALE + ') : '') + 'SERRURE' +((serPos === 'gauche' || serPos === 'droite') && sd ? ' — ' + sd + ' mm' : '');
+        t(mx, sy - 13, 10, '#9A6210', slbl, { weight:'700' });
+        if((serPos === 'gauche' || serPos === 'droite') && sd){
+          const xf = serPos === 'gauche' ? cx + mw : cx + cw - mw;
+          S.push('<line x1="' + xf + '" y1="' + (sy + 12) + '" x2="' + sx + '" y2="' + (sy + 12) + '" stroke="#C8811A" stroke-width="1.4"/>');
+        }
+      }
+      // verrous latéraux manuels (tirettes) sur la lame finale, à droite et à gauche
+      if((cfg || optTablier()) && toggles.verrou === 'oui'){
+        const vy = sol - 8;
+        [[cx + mw, 1], [cx + cw - mw, -1]].forEach(([x0, d])=>{
+          // pêne engagé dans la coulisse + tirette sur la lame finale
+          const xa = d > 0 ? x0 - 8 : x0 - 12;
+          S.push('<rect x="' + xa + '" y="' + (vy - 3) + '" width="20" height="6" rx="1.5" fill="#C8811A" stroke="#1E3448" stroke-width="1.2"/>');
+          const kx = d > 0 ? x0 + 8 : x0 - 8;
+          S.push('<rect x="' + (kx - 3) + '" y="' + (vy - 7) + '" width="6" height="14" rx="1.5" fill="#1E3448"/>');
+        });
+      }
       S.push('<line x1="' + (cx - 34) + '" y1="' + sol + '" x2="' + (cx + cw + 34) + '" y2="' + sol + '" stroke="#12171C" stroke-width="2.4"/>');
       for(let x = cx - 30; x < cx + cw + 34; x += 14){
         S.push('<line x1="' + x + '" y1="' + sol + '" x2="' + (x - 8) + '" y2="' + (sol + 9) + '" stroke="#96A3B0" stroke-width="1"/>');
@@ -1368,22 +1849,80 @@ if('serviceWorker' in navigator){
     } else {
       // en tablier complet la cote porte sur les lames, pas sur les coulisses
       const isTab = travauxSelected === 'tablier' || isLameSel();
-      const x1 = isTab ? cx + mw : cx, x2 = isTab ? cx + cw - mw : cx + cw;
+      // pose en applique : cote intérieure entre coulisses (passage libre)
+      const libre = !isTab && pose === 'applique';
+      const x1 = (isTab || libre) ? cx + mw : cx, x2 = (isTab || libre) ? cx + cw - mw : cx + cw;
       cote(x1, ly, x2, ly);
-      t((x1 + x2)/2, ly + 19, 12, '#C8811A', (isTab ? 'LONGUEUR DES LAMES = ' : 'LARGEUR COULISSES COMPRISES = ') + (lc || '?') + ' mm', { weight:'700' });
+      t((x1 + x2)/2, ly + 19, 12, '#C8811A', (isTab ? 'LONGUEUR DES LAMES = ' : libre ? 'PASSAGE LIBRE ENTRE COULISSES = ' : 'LARGEUR COULISSES COMPRISES = ') + (lc || '?') + ' mm', { weight:'700' });
+    }
+
+    // légende de pose sous la cote de largeur
+    if(pose){
+      const lg = pose === 'tableau' ? 'POSE EN TABLEAU (ENTRE MURS)' : 'POSE EN APPLIQUE';
+      const lg2 = lg.replace(' (ENTRE MURS)', soude ? '' : ' (ENTRE MURS)')
+        + (soude ? (pose === 'applique' ? ' — SOUDÉE DES 2 CÔTÉS DES COULISSES' : ' — SOUDÉE SUR STRUCTURE MÉTALLIQUE') : '');
+      tl(ly + 42, 12, '#1E3448', lg2, { weight:'700' });
+      let lyy = ly + 60;
+      // fixation sur sa propre ligne, pour ne pas déborder sur la colonne de droite
+      if(fix){ tl(lyy, 11.5, '#1E3448', 'FIXATION : ' + fixationLabel(fix).toUpperCase(), { weight:'700' }); lyy += 18; }
+      if(toggles.coffre === 'oui'){ tl(lyy,11, '#9A6210', 'COFFRE TÔLE À PRÉVOIR (pointillés)', { weight:'700' }); lyy += 18; }
+    }
+    // information fournisseur : boîtes à ressort sans plat soudé
+    let legEnd = pose ? ly + 60 + (fix ? 18 : 0) + (toggles.coffre === 'oui' ? 18 : 0) : ly + 42;
+    if(travauxSelected && ressortsPresents()){
+      const plat = platOn();
+      tl(legEnd,11.5, plat ? '#9A6210' : '#B3403A', plat ? 'PLAT SOUDÉ RELIANT LES BOÎTES À RESSORT (barre orange)' : 'ATTENTION : SANS PLAT SOUDÉ SUR LES BOÎTES À RESSORT', { weight:'700' });
+      legEnd += 18;
+    }
+    // serrure : 2 plats acier coulissants dans les coulisses
+    if(serrure && finaleConcernee() && inTab){
+      tl(legEnd,11.5, '#1E3448', 'SERRURE LAME FINALE : 2 PLATS ACIER COULISSANTS G + D', { weight:'700' });
+      legEnd += 18;
+    }
+    // information fournisseur : tampons en extrémité des lames (rideau complet)
+    const optTab = cfg || optTablier();
+    if(optTab && toggles.lames !== 'cobra'){
+      const tp = toggles.tampons === 'oui';
+      // l'avertissement « sans tampons » ne concerne que le rideau complet (tampons posés de base)
+      if(tp || cfg){
+        tl(legEnd,11.5, tp ? '#1E3448' : '#B3403A', tp ? 'TAMPONS EN EXTRÉMITÉ DES LAMES' : 'ATTENTION : SANS TAMPONS EN EXTRÉMITÉ DES LAMES', { weight:'700' });
+        legEnd += 18;
+      }
+      if(toggles.tempete === 'oui'){
+        tl(legEnd,11.5, '#1E3448', 'LAMES ANTI-TEMPÊTE : CROCHETS 1 LAME SUR 2', { weight:'700' });
+        legEnd += 18;
+      }
+    }
+    if(optTab && toggles.verrou === 'oui'){
+      tl(legEnd,11.5, '#9A6210', 'VERROUS LATÉRAUX MANUELS SUR LAME FINALE (G + D)', { weight:'700' });
+      legEnd += 18;
+    }
+    if(optTablier() && toggles.finition === 'laque'){
+      tl(legEnd,11.5, '#1E3448', 'FINITION LAQUÉE RAL ' + ($('f-ral').value.trim() || '—'), { weight:'700' });
+      legEnd += 18;
     }
 
     // options retenues : en colonne à droite pour un schéma haut,
     // sous le dessin quand il est court (axe ou moteur seul) pour rester lisible
-    if(optionsSelected.length){
+    const cfgItems = cfg ? completRows({ toggles:toggles, ral:$('f-ral').value.trim() }).filter(r => r[1]).map(r => r[0] + ' : ' + r[1]) : [];
+    const listItems = optionsSelected.slice(0, 9).concat(cfgItems.length ? ['__CFG__'].concat(cfgItems) : []);
+    if(listItems.length){
       const below = axeOnly;
       const ox = below ? cx - 26 : cx + cw + 48;
-      let oy = below ? ly + 52 : boxY + 4;
+      let oy = below ? Math.max(ly + 52, legEnd + 10) : boxY + 4;
       const wrapAt = below ? 46 : 24;
       const fs = below ? 13 : 11.5;
-      t(ox, oy, below ? 13 : 11.5, '#1E3448', 'OPTIONS', { weight:'700', anchor:'start' });
-      oy += below ? 20 : 17;
-      optionsSelected.slice(0, 9).forEach(o=>{
+      if(optionsSelected.length){
+        t(ox, oy, below ? 13 : 11.5, '#1E3448', 'OPTIONS', { weight:'700', anchor:'start' });
+        oy += below ? 20 : 17;
+      }
+      listItems.forEach(o=>{
+        if(o === '__CFG__'){
+          if(optionsSelected.length) oy += 8;
+          t(ox, oy, fs, '#1E3448', 'CONFIGURATION', { weight:'700', anchor:'start' });
+          oy += fs + 6;
+          return;
+        }
         const words = String(o).split(' ');
         const lines = [];
         let cur = '';
@@ -1439,6 +1978,8 @@ if('serviceWorker' in navigator){
   function renderPhotoGrid(){
     const grid = $('fd-photo-grid');
     grid.innerHTML = '';
+    // le message d'aide tient compte des photos (ajout, suppression, brouillon rechargé)
+    setTimeout(()=>{ try{ updateSteps(); }catch(e){} }, 0);
     photos.forEach((p, i)=>{
       const ph = photoOf(p);
       const div = document.createElement('div');
@@ -1701,7 +2242,7 @@ if('serviceWorker' in navigator){
   function applyForm(data){
     fields.forEach(f => { if($('f-'+f)) $('f-'+f).value = data[f] || ''; });
     const t = data.toggles || {};
-    toggles = { lames:t.lames || null, enroulement:t.enroulement || null, isea:t.isea || null, nacelle:t.nacelle || null, pirl:t.pirl || null, boitier:Array.isArray(t.boitier) ? t.boitier : (t.boitier ? [t.boitier] : []), sortie:t.sortie || null, serrurepos:t.serrurepos || null };
+    toggles = { lames:t.lames || null, enroulement:t.enroulement || null, isea:t.isea || null, nacelle:t.nacelle || null, pirl:t.pirl || null, boitier:Array.isArray(t.boitier) ? t.boitier : (t.boitier ? [t.boitier] : []), sortie:t.sortie || null, serrurepos:t.serrurepos || null, pose:t.pose || null, coffre:t.coffre || null, moteur:t.moteur || null, secours:t.secours || null, parachute:t.parachute || null, finition:t.finition || null, fixation:t.fixation || null, verrou:t.verrou || null, soude:t.soude || null, moteurcote:t.moteurcote || null, plat:t.plat || ((Array.isArray(data.options) && data.options.indexOf('Plat soudé sur les boîtes à ressort') >= 0) ? 'oui' : null), tampons:t.tampons || null, tempete:t.tempete || null };
     serrure = !!data.serrure;
     document.querySelectorAll('.fd-toggle').forEach(el=>{
       const tv = toggles[el.dataset.field];
@@ -1723,6 +2264,8 @@ if('serviceWorker' in navigator){
     updateBoitierRule();
     updateNoOptionBtn();
     updateAxeRule();
+    updateSerrureUI();
+    { const ral = $('f-ral').value; updateCompletUI(); if(toggles.finition === 'laque') $('f-ral').value = ral; }
     updateSteps();
     renderSchema();
     updateTicketRef();
@@ -1735,7 +2278,8 @@ if('serviceWorker' in navigator){
       photos: [...photos],
       travaux: spec ? spec.label : '',
       options: [...optionsSelected],
-      lameFinale: lameFinale,
+      ressorts: ressortsPresents(),
+      lameFinale: isLameSel() && lameFinale,
       serrure: serrure
     };
     fields.forEach(f => data[f] = $('f-'+f).value.trim());
@@ -1790,8 +2334,9 @@ if('serviceWorker' in navigator){
     fields.forEach(f => $('f-'+f).value = '');
     photos = [];
     renderPhotoGrid();
-    toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:[], sortie:null, serrurepos:null };
+    toggles = { lames:null, enroulement:null, isea:null, nacelle:null, pirl:null, boitier:[], sortie:null, serrurepos:null, pose:null, coffre:null, moteur:null, secours:null, parachute:null, finition:null, fixation:null, verrou:null, soude:null, moteurcote:null, plat:null, tampons:null, tempete:null };
     document.querySelectorAll('.fd-toggle').forEach(t=>t.classList.remove('on'));
+    $('complet-wrap').style.display = 'none'; $('ral-wrap').style.display = 'none';
     travauxSelected = null;
     serrure = false;
     optionsSelected = [];
@@ -1806,6 +2351,8 @@ if('serviceWorker' in navigator){
     updateBoitierRule();
     updateNoOptionBtn();
     updateAxeRule();
+    updateSerrureUI();
+    { const ral = $('f-ral').value; updateCompletUI(); if(toggles.finition === 'laque') $('f-ral').value = ral; }
     updateSteps();
     renderSchema();
     updateTicketRef();
@@ -1870,6 +2417,7 @@ if('serviceWorker' in navigator){
     if(isLameSel()){
       if(!data.nblames) return { msg:'Le nombre de lames à remplacer est obligatoire.', target:'#f-nblames' };
     }
+    { const cm = completMissing(); if(cm) return cm; }
     if(!data.temps) return { msg:'Le temps par technicien est obligatoire.', target:'#f-temps' };
     if(!data.nbtech) return { msg:'Le nombre de techniciens est obligatoire.', target:'#f-nbtech' };
     if(parseFloat(String(data.nbtech).replace(',','.')) <= 0) return { msg:'Le nombre de techniciens doit être supérieur à 0 — merci de le saisir.', target:'#f-nbtech' };
@@ -1928,14 +2476,19 @@ if('serviceWorker' in navigator){
       kv('Hauteur sous drapeau', mm(data['hauteur-tableau'])),
       kv("Hauteur drapeau", mm(data['hauteur-totale'])),
       ((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) ? kv('Hauteur totale du rideau', ((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) + ' mm') : null,
-      kv((/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur coulisses comprises'), mm(data['largeur-coulisses'])),
+      kv(largLabel(data), mm(data['largeur-coulisses'])),
       data['longueur-axe'] ? kv("Longueur de l'axe", mm(data['longueur-axe'])) : null,
       kv("Diamètre de l'axe motorisé", mm(data['diametre-axe'])),
       data.nblames ? kv('Nombre de lames à remplacer', data.nblames) : null,
       data.lameFinale ? kv('Lame finale', 'À remplacer également') : null,
-      data.serrure ? kv('Serrure sur lame finale', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + mm(data['serrure-dist']) + ' du fond de coulisse' : '')) : null,
+      data.serrure ? kv('Serrure sur lame finale (2 plats acier coulissants G + D)', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + mm(data['serrure-dist']) + ' du fond de coulisse' : '')) : null,
       kv('Marque / N° de série', data['marque-serie']),
     ]);
+
+    if(data.travaux === 'Rideau métallique complet') bloc('Configuration du rideau complet', completRows(data).map(r => kv(r[0], r[1])));
+    if(TRAV_OPT_LAMES.indexOf(data.travaux) >= 0) bloc(data.travaux === 'Tablier complet' ? 'Options du tablier' : 'Options des lames', tablierRows(data).map(r => kv(r[0], r[1])));
+
+    if(data.ressorts) bloc('Boîtes à ressort', [ kv('Plat soudé reliant les boîtes à ressort', data.toggles.plat === 'oui' ? 'Oui' : 'Non') ]);
 
     if(data.toggles.boitier && data.toggles.boitier.length) bloc('Boîtier de commande', [ kv('Type à poser', boitierLabel(data.toggles.boitier)) ]);
 
@@ -2242,14 +2795,28 @@ if('serviceWorker' in navigator){
         { k:'Hauteur sous drapeau', v:data['hauteur-tableau'] },
         { k:"Hauteur drapeau", v:data['hauteur-totale'] },
         { k:'Hauteur totale du rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
-        { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur des coulisses'), v:data['largeur-coulisses'] },
+        { k:largLabel(data), v:data['largeur-coulisses'] },
         { k:"Longueur de l'axe", v:data['longueur-axe'] },
         { k:'Diamètre de l\u2019axe motorisé', v:data['diametre-axe'] },
       ]);
       if(data.nblames) row('Nombre de lames à remplacer', data.nblames);
       if(data.lameFinale) row('Lame finale', 'À remplacer également');
-      if(data.serrure) row('Serrure sur lame finale', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + (data['serrure-dist'] ? data['serrure-dist'] + ' mm' : '') + ' du fond de coulisse' : ''));
+      if(data.serrure) row('Serrure sur lame finale (2 plats acier coulissants G + D)', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + (data['serrure-dist'] ? data['serrure-dist'] + ' mm' : '') + ' du fond de coulisse' : ''));
       row('Marque / N° de série', data['marque-serie']);
+
+      if(data.travaux === 'Rideau métallique complet'){
+        section('Configuration du rideau complet');
+        completRows(data).forEach(r => row(r[0], r[1]));
+      }
+      if(TRAV_OPT_LAMES.indexOf(data.travaux) >= 0){
+        section(data.travaux === 'Tablier complet' ? 'Options du tablier' : 'Options des lames');
+        tablierRows(data).forEach(r => row(r[0], r[1]));
+      }
+      if(data.ressorts){
+        if(data.toggles.plat === 'oui') row('Plat soudé reliant les boîtes à ressort', 'Oui');
+        else callout('Boîtes à ressort', 'SANS plat soudé', 'red');
+      }
+      if(data.travaux === 'Rideau métallique complet' && data.toggles.lames !== 'cobra' && data.toggles.tampons !== 'oui') callout('Lames', 'SANS tampons en extrémité des lames', 'red');
 
       if(data.toggles.boitier && data.toggles.boitier.length) callout('Boîtier de commande à remplacer', boitierLabel(data.toggles.boitier));
 
@@ -2300,13 +2867,23 @@ if('serviceWorker' in navigator){
       { k:'Hauteur sous drapeau', v:data['hauteur-tableau'] },
       { k:"Hauteur drapeau", v:data['hauteur-totale'] },
       { k:'Hauteur totale du rideau', v:((parseFloat(data['hauteur-tableau'])||0) + (parseFloat(data['hauteur-totale'])||0)) || '' },
-      { k:(/Tablier complet|lame/i.test(data.travaux || '') ? 'Longueur des lames' : 'Largeur des coulisses'), v:data['largeur-coulisses'] },
+      { k:largLabel(data), v:data['largeur-coulisses'] },
       { k:"Longueur de l'axe", v:data['longueur-axe'] },
       { k:'Diamètre de l\u2019axe motorisé', v:data['diametre-axe'] },
     ]);
     if(data.nblames) row('Nombre de lames à remplacer', data.nblames);
     if(data.lameFinale) row('Lame finale', 'À remplacer également');
-    if(data.serrure) row('Serrure sur lame finale', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + (data['serrure-dist'] ? data['serrure-dist'] + ' mm' : '') + ' du fond de coulisse' : ''));
+    if(data.serrure) row('Serrure sur lame finale (2 plats acier coulissants G + D)', serrurePosLabel(data.toggles.serrurepos) + ((data.toggles.serrurepos === 'droite' || data.toggles.serrurepos === 'gauche') ? ' \u2014 ' + (data['serrure-dist'] ? data['serrure-dist'] + ' mm' : '') + ' du fond de coulisse' : ''));
+
+    if(data.travaux === 'Rideau métallique complet'){
+      section('Configuration du rideau complet');
+      completRows(data).forEach(r => row(r[0], r[1]));
+    }
+    if(TRAV_OPT_LAMES.indexOf(data.travaux) >= 0){
+      section(data.travaux === 'Tablier complet' ? 'Options du tablier' : 'Options des lames');
+      tablierRows(data).forEach(r => row(r[0], r[1]));
+    }
+    if(data.ressorts) row('Plat soudé reliant les boîtes à ressort', data.toggles.plat === 'oui' ? 'Oui' : 'Non');
 
     if(data.toggles.sortie) row('Sortie de câble', data.toggles.sortie === 'droite' ? 'À droite' : 'À gauche');
     if(data.toggles.boitier && data.toggles.boitier.length) callout('Boîtier de commande à remplacer', boitierLabel(data.toggles.boitier));
@@ -2358,6 +2935,8 @@ if('serviceWorker' in navigator){
   updateNoOptionBtn();
   updateAxeRule();
   document.querySelectorAll('.fd-body input, .fd-body textarea').forEach(el => el.addEventListener('input', updateSteps));
+  $('f-ral').addEventListener('input', renderSchema);
+  $('f-serrure-dist').addEventListener('input', renderSchema);
   updateSteps();
   document.querySelectorAll('.fd-section.todo').forEach(el=>el.classList.remove('todo'));
   $('next-hint').style.display = 'none';

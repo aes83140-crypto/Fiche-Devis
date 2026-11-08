@@ -334,6 +334,9 @@
     transition:all .2s ease;
   }
   .fd-msg.show{padding:16px 18px;max-height:240px;opacity:1;border:1px solid;box-shadow:var(--shadow);}
+  /* le message reste visible à l'écran, même quand la page défile jusqu'au champ en erreur */
+  .fd-msg.show{position:fixed;left:16px;right:16px;bottom:16px;margin:0 auto;max-width:640px;z-index:9000;}
+  .fd-photo-btn{text-transform:none;letter-spacing:normal;}
   .fd-msg.error{background:var(--red-bg);color:var(--red);border-color:#E9BEB9;}
   .fd-msg.success{background:var(--green-bg);color:var(--green);border-color:#C3DAC6;}
 
@@ -451,7 +454,7 @@
     position:absolute;bottom:5px;right:5px;width:28px;height:28px;border-radius:50%;
     background:rgba(18,23,28,.62);color:#fff;border:none;font-size:13px;line-height:1;cursor:pointer;
   }
-  .fd-anno{position:fixed;inset:0;background:rgba(12,17,22,.88);z-index:9500;display:flex;flex-direction:column;}
+  .fd-anno{position:fixed;inset:0;background:rgba(12,17,22,.98);z-index:9500;display:flex;flex-direction:column;}
   .fd-anno.hidden{display:none;}
   .fd-anno-bar{
     display:flex;align-items:center;gap:8px;padding:12px 14px;flex-wrap:wrap;
@@ -625,7 +628,7 @@ if('serviceWorker' in navigator){
         </div>
       </div>
       <div class="fd-field full">
-        <label>Photos <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span> (au moins 1 obligatoire)</label>
+        <label>Photos <span class="req" style="font-size:0.78em;font-weight:700;">obligatoire</span> (au moins 1)</label>
         <div class="fd-photo-actions">
           <label class="fd-photo-btn cam" for="f-photo-cam">📷 Prendre une photo</label>
           <input type="file" id="f-photo-cam" accept="image/*" capture="environment" style="display:none;">
@@ -659,7 +662,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.5</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -674,6 +677,7 @@ if('serviceWorker' in navigator){
   const fields = ['tech','site','mail','equip','fq','loc','marque','modele','temps','nbtech','pieces','remarque'];
   let toggles = { nacelle:null, pirl:null };
   let chips = { arret:false, urgent:false, preventif:false };
+  function ouiNonCap(v){ return v === 'oui' ? 'Oui' : v === 'non' ? 'Non' : (v || ''); }
   let photos = []; // dataURLs (jpeg compressés)
 
 
@@ -789,6 +793,14 @@ if('serviceWorker' in navigator){
     function checkBreak(need){
       if(y + need > pageH - 24){ doc.addPage(); y = 26; }
     }
+    // la police intégrée du PDF ne connaît que l'alphabet latin : on remplace le reste (≥, emoji…)
+    function pdfSafe(s){
+      return String(s)
+        .replace(/[≥]/g, '>=').replace(/[≤]/g, '<=').replace(/[≠]/g, '!=')
+        .replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-')
+        .replace(/[\uD800-\uDFFF]/g, '').replace(/[☀-➿️]/g, '')
+        .replace(/[^\u0000-ÿ€Œœ…™]/g, ch => ch.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\u0000-ÿ]/g, '?'));
+    }
 
     function section(title){
       checkBreak(30);
@@ -804,7 +816,7 @@ if('serviceWorker' in navigator){
     }
 
     function row(label, value){
-      const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
+      const val = (value === undefined || value === null || value === '') ? '\u2014' : pdfSafe(String(value));
       doc.setFont('helvetica','normal'); doc.setFontSize(11);
       const lines = doc.splitTextToSize(val, contentW - LABEL_X - 8);
       const h = Math.max(13.5, lines.length * 5.8 + 7.6);
@@ -821,24 +833,34 @@ if('serviceWorker' in navigator){
     }
 
     function block(label, value){
-      const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
+      const val = (value === undefined || value === null || value === '') ? '\u2014' : pdfSafe(String(value));
       doc.setFont('helvetica','normal'); doc.setFontSize(11);
       const lines = doc.splitTextToSize(val, contentW - 14);
-      const h = 15 + lines.length * 5.8;
-      checkBreak(h + 4);
-      fillC(SURF);
-      doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
-      doc.text(label.toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
-      doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
-      doc.text(lines, margin + 7, y + 16.5);
-      y += h + 3.4;
+      // un long texte continue sur les pages suivantes au lieu d'\u00eatre coup\u00e9
+      const LH = 4.7;
+      let i = 0, first = true;
+      while(i < lines.length){
+        const room = (pageH - 24) - y - 6;
+        let n = Math.floor((room - 17) / LH);
+        const left = lines.length - i;
+        if(n < Math.min(2, left)){ doc.addPage(); y = 26; continue; }
+        n = Math.min(n, left);
+        const h = 17 + n * LH;
+        fillC(SURF);
+        doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
+        doc.text((first ? label : label + ' (suite)').toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
+        doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
+        lines.slice(i, i + n).forEach((ln, k)=> doc.text(ln, margin + 7, y + 16.5 + k * LH));
+        y += h + 3.4;
+        i += n; first = false;
+      }
     }
 
     function callout(label, value, tone){
       const bg = tone === 'red' ? REDBG : GREENBG;
       const fg = tone === 'red' ? RED : GREEN;
-      const val = (value === undefined || value === null || value === '') ? '\u2014' : String(value);
+      const val = (value === undefined || value === null || value === '') ? '\u2014' : pdfSafe(String(value));
       doc.setFont('helvetica','bold'); doc.setFontSize(7.8);
       const labelLines = doc.splitTextToSize(label.toUpperCase(), contentW - 16);
       doc.setFontSize(13.5);
@@ -867,8 +889,13 @@ if('serviceWorker' in navigator){
         doc.roundedRect(x, y, w, 19, 2.5, 2.5, 'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(7.2); setC(SOFT);
         doc.text(it.k.toUpperCase(), x + 5.5, y + 7, { charSpace:0.35 });
-        doc.setFontSize(12.5); setC(INK);
-        doc.text(String(it.v || '\u2014'), x + 5.5, y + 15);
+        // valeur longue : on r\u00e9duit la taille, puis on raccourcit, pour rester dans la case
+        let v = pdfSafe(String(it.v || '\u2014'));
+        let fs = 12.5;
+        doc.setFontSize(fs); setC(INK);
+        while(fs > 7.5 && doc.getTextWidth(v) > w - 11){ fs -= 0.5; doc.setFontSize(fs); }
+        while(v.length > 1 && doc.getTextWidth(v) > w - 11){ v = v.slice(0, -2) + '\u2026'; }
+        doc.text(v, x + 5.5, y + 15);
       });
       y += 23;
     }
@@ -964,10 +991,10 @@ if('serviceWorker' in navigator){
 
       section('Moyens \u00E0 prévoir');
       tiles([
-        { k:'Temps / technicien', v:(data.temps ? data.temps + ' h' : '') },
+        { k:'Temps / technicien', v:(data.temps ? String(data.temps).replace('.', ',') + ' h' : '') },
         { k:'Nb techniciens', v:data.nbtech },
-        { k:'Nacelle', v:data.toggles.nacelle },
-        { k:'PIRL', v:data.toggles.pirl },
+        { k:'Nacelle', v:ouiNonCap(data.toggles.nacelle) },
+        { k:'PIRL', v:ouiNonCap(data.toggles.pirl) },
       ]);
 
       section("Statut de l'intervention");
@@ -1018,7 +1045,12 @@ if('serviceWorker' in navigator){
     c.addEventListener('click', ()=>{
       const type = c.dataset.type;
       chips[type] = !chips[type];
-      c.classList.toggle('on', chips[type]);
+      // « Préventif » est incompatible avec « Porte à l'arrêt » et « Urgent »
+      if(chips[type]){
+        if(type === 'preventif'){ chips.arret = false; chips.urgent = false; }
+        else { chips.preventif = false; }
+      }
+      document.querySelectorAll('.fd-chip').forEach(x=> x.classList.toggle('on', !!chips[x.dataset.type]));
     });
   });
 
@@ -1250,12 +1282,18 @@ if('serviceWorker' in navigator){
     document.querySelectorAll('.fd-chip').forEach(c=>{
       c.classList.toggle('on', !!chips[c.dataset.type]);
     });
+    // les photos ne sont pas conservées : on ne garde pas celles de la fiche en cours
+    photos = [];
+    if(typeof renderPhotoGrid === 'function') renderPhotoGrid();
     updateTicketRef();
   }
 
   function readForm(){
     const data = { toggles: {...toggles}, chips: {...chips}, photos: [...photos] };
     fields.forEach(f => data[f] = $('f-'+f).value.trim());
+    // remarque masquée = remarque retirée : elle n'est pas envoyée
+    const rb = $('remarque-box');
+    if(rb && rb.style.display === 'none') data.remarque = '';
     return data;
   }
 
@@ -1283,7 +1321,7 @@ if('serviceWorker' in navigator){
     try{
       applyForm(p.data);
       if(Array.isArray(p.data.photos) && p.data.photos.length && typeof renderPhotoGrid === 'function'){ photos = p.data.photos; renderPhotoGrid(); }
-      if(typeof showMsg === 'function') showMsg('Saisie en cours récupérée.', true);
+      if(typeof showMsg === 'function') showMsg('Saisie en cours récupérée.', true, true);
     }catch(e){}
     __draftOff = false;
   }, 0);
@@ -1361,10 +1399,10 @@ if('serviceWorker' in navigator){
     ]);
 
     bloc('Moyens à prévoir', [
-      kv('Temps par technicien', (data.temps ? data.temps + ' h' : '')),
+      kv('Temps par technicien', (data.temps ? String(data.temps).replace('.', ',') + ' h' : '')),
       kv('Nombre de techniciens', nbtechDisplay),
-      kv('Nacelle', data.toggles.nacelle),
-      kv('PIRL', data.toggles.pirl),
+      kv('Nacelle', ouiNonCap(data.toggles.nacelle)),
+      kv('PIRL', ouiNonCap(data.toggles.pirl)),
     ]);
 
     bloc('Pièces à devis', [ (data.pieces || '\u2014') ]);
@@ -1430,12 +1468,15 @@ if('serviceWorker' in navigator){
   function validate(data){
     if(!data.tech) return { msg:'Le technicien est obligatoire.', target:'#f-tech' };
     if(!data.site) return { msg:'Le nom du site est obligatoire.', target:'#f-site' };
-    if(!data.equip) return { msg:"Le n° d'équipement est obligatoire.", target:'#f-equip' };
+    // même ordre que l'écran : mail client avant le n° d'équipement
     if(!data.mail) return { msg:'Le mail client est obligatoire.', target:'#f-mail' };
     if(!mailOk(data.mail)) return { msg:"L'adresse mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mail' };
+    if(!data.equip) return { msg:"Le n° d'équipement est obligatoire.", target:'#f-equip' };
     if(!data.temps) return { msg:'Le temps par technicien est obligatoire.', target:'#f-temps' };
+    if(!(parseFloat(String(data.temps).replace(',','.')) > 0)) return { msg:'Le temps par technicien doit être supérieur à 0.', target:'#f-temps' };
     if(!data.nbtech) return { msg:'Le nombre de techniciens est obligatoire.', target:'#f-nbtech' };
     if(parseFloat(String(data.nbtech).replace(',','.')) <= 0) return { msg:'Le nombre de techniciens doit être supérieur à 0 — merci de le saisir.', target:'#f-nbtech' };
+    if(!/^\d+$/.test(String(data.nbtech))) return { msg:'Le nombre de techniciens doit être un nombre entier.', target:'#f-nbtech' };
     if(!toggles.nacelle) return { msg:'Merci de préciser si une nacelle est nécessaire.', target:'.fd-toggle[data-field="nacelle"]' };
     if(!toggles.pirl) return { msg:'Merci de préciser si un PIRL est nécessaire.', target:'.fd-toggle[data-field="pirl"]' };
     if(!data.chips.arret && !data.chips.urgent && !data.chips.preventif) return { msg:"Le statut de l'intervention est obligatoire.", target:'.fd-chip-row' };
@@ -1505,7 +1546,7 @@ if('serviceWorker' in navigator){
         showMsg('Le partage a échoué (' + detail + ') — utilise "Télécharger le PDF" puis joins-le manuellement.', false);
       });
     } else {
-      const text = formatText(data, { note: '📎 PDF à télécharger (bouton dédié) et à joindre manuellement.' });
+      const text = formatText(data, { note: '📎 Les 2 PDF (interne et fournisseur) se téléchargent automatiquement : joins-les à ce mail.' });
       try{
         const url = 'mailto:' + '' + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
         const a = document.createElement('a');

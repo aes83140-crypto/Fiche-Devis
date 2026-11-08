@@ -144,7 +144,7 @@
 
   input[type=date]{-webkit-appearance:none;appearance:none;text-align:left;}
   input[type=date]::-webkit-date-and-time-value{text-align:left;}
-  input[type=text],input[type=email],input[type=date],input[type=number],textarea,select{
+  input[type=text],input[type=email],input[type=tel],input[type=date],input[type=number],textarea,select{
     width:100%;font-family:var(--sans);font-size:16.5px;color:var(--ink);background:#fff;
     border:1.5px solid var(--line-2);border-radius:12px;padding:14px 15px;outline:none;
     transition:border-color .15s, box-shadow .15s;
@@ -336,6 +336,8 @@
     transition:all .2s ease;
   }
   .fd-msg.show{padding:16px 18px;max-height:240px;opacity:1;border:1px solid;box-shadow:var(--shadow);}
+  /* le message reste visible à l'écran, même quand la page défile jusqu'au champ en erreur */
+  .fd-msg.show{position:fixed;left:16px;right:16px;bottom:16px;margin:0 auto;max-width:640px;z-index:9000;}
   .fd-msg.error{background:var(--red-bg);color:var(--red);border-color:#E9BEB9;}
   .fd-msg.success{background:var(--green-bg);color:var(--green);border-color:#C3DAC6;}
 
@@ -722,7 +724,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">R&eacute;alisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.5</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
 </div>
 
 <script>
@@ -1328,7 +1330,11 @@ if('serviceWorker' in navigator){
       card.innerHTML = buildConfigIconSVG(spec, false) + '<div class="fd-visual-label">'+spec.label+'</div>';
       card.addEventListener('click', ()=>{
         configSelected = (configSelected === spec.id) ? null : spec.id;
+        // nouveau type de porte : la partie fixe repart de zéro (largeur, côté unique, saisie manuelle)
         fixeSelected = false;
+        fixeUniqueOn = false;
+        pfUserEdited = false;
+        $('f-largeur-pf').value = '';
         renderConfigGrid();
         renderConfigDetail();
         updateTicketRef();
@@ -1379,7 +1385,7 @@ if('serviceWorker' in navigator){
     if(no108 && mecaSelected === '108'){ mecaSelected = null; meca108Btn.classList.remove('on'); }
     $('btn-toggle-fixe').addEventListener('click', ()=>{
       fixeSelected = !fixeSelected;
-      if(!fixeSelected){ fixeUniqueOn = false; pfUserEdited = false; }
+      if(!fixeSelected){ fixeUniqueOn = false; pfUserEdited = false; $('f-largeur-pf').value = ''; }
       renderConfigDetail();
     });
     if(canUnique){
@@ -1484,6 +1490,11 @@ if('serviceWorker' in navigator){
     $('btn-vitrage').classList.toggle('on', vitrageOn);
     $('wrap-vitrage').style.display = gammeSelected === '30' ? '' : 'none';
     document.querySelectorAll('.fd-toggle[data-field="meca"]').forEach(x=>x.classList.toggle('on', x.dataset.val === mecaSelected));
+    // une largeur de partie fixe saisie à la main n'est pas recalculée
+    pfUserEdited = !!data.pfUserEdited;
+    // fiche reprise : pas de photos de la fiche précédente (le brouillon les remet ensuite)
+    photos = []; photoInt = null; photoExt = null;
+    renderPhotoGrid(); renderPhotoInt(); renderPhotoExt();
     renderConfigGrid();
     renderConfigDetail();
   }
@@ -1501,6 +1512,9 @@ if('serviceWorker' in navigator){
     const spec = configSelected ? effectiveSpec(CONFIG_TYPES.find(c=>c.id===configSelected), fixeSelected, fixeUniqueOn, fixeUniqueSide) : null;
     data.config = configSelected;
     data.fixeSelected = fixeSelected;
+    data.pfUserEdited = pfUserEdited;
+    // sans partie fixe, pas de largeur de partie fixe dans le PDF ni le texte
+    if(!fixeSelected) data['largeur-pf'] = '';
     data.fixeUniqueOn = fixeUniqueOn;
     data.fixeUniqueSide = fixeUniqueSide;
     data.configLabel = spec ? spec.label : '';
@@ -1534,8 +1548,14 @@ if('serviceWorker' in navigator){
     __draftOff = true;
     try{
       applyForm(p.data);
-      if(Array.isArray(p.data.photos) && p.data.photos.length && typeof renderPhotoGrid === 'function'){ photos = p.data.photos; renderPhotoGrid(); }
-      if(typeof showMsg === 'function') showMsg('Saisie en cours récupérée.', true);
+      if(Array.isArray(p.data.photos) && p.data.photos.length && typeof renderPhotoGrid === 'function'){
+        // les photos intérieure / extérieure retournent dans leur emplacement
+        const ph = p.data.photos.slice();
+        if(p.data.photoInt && ph.length){ photoInt = ph.shift(); renderPhotoInt(); }
+        if(p.data.photoExt && ph.length){ photoExt = ph.shift(); renderPhotoExt(); }
+        photos = ph; renderPhotoGrid();
+      }
+      if(typeof showMsg === 'function') showMsg('Saisie en cours récupérée.', true, true);
     }catch(e){}
     __draftOff = false;
   }, 0);
@@ -1556,6 +1576,8 @@ if('serviceWorker' in navigator){
     $('f-date').value = new Date().toISOString().slice(0, 10);
     photos = [];
     renderPhotoGrid();
+    photoInt = null; photoExt = null;
+    renderPhotoInt(); renderPhotoExt();
     configSelected = null;
     fixeSelected = false;
     fixeUniqueOn = false;
@@ -1572,6 +1594,7 @@ if('serviceWorker' in navigator){
     document.querySelectorAll('.fd-toggle[data-field="meca"]').forEach(x=>x.classList.remove('on'));
     renderConfigGrid();
     renderConfigDetail();
+    if(typeof updateTicketRef === 'function') updateTicketRef();
   }
   $('f-date').value = new Date().toISOString().slice(0, 10);
 
@@ -1619,6 +1642,8 @@ if('serviceWorker' in navigator){
       const val = String(value);
       doc.setFont('helvetica','normal'); doc.setFontSize(11);
       const lines = doc.splitTextToSize(val, contentW - LABEL_X - 8);
+      // texte long : affiché en bloc pleine largeur qui continue sur les pages suivantes
+      if(lines.length > 10){ block(label, val); return; }
       const h = Math.max(13.5, lines.length * 5.8 + 7.6);
       checkBreak(h + 4);
       fillC(SURF); doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
@@ -1632,14 +1657,24 @@ if('serviceWorker' in navigator){
       if(!has(value)) return;
       doc.setFont('helvetica','normal'); doc.setFontSize(11);
       const lines = doc.splitTextToSize(String(value), contentW - 14);
-      const h = 15 + lines.length * 5.8;
-      checkBreak(h + 4);
-      fillC(SURF); doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
-      doc.text(label.toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
-      doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
-      doc.text(lines, margin + 7, y + 16.5);
-      y += h + 3.4;
+      // un long texte continue sur les pages suivantes au lieu d'être coupé
+      const LH = 4.7;
+      let i = 0, first = true;
+      while(i < lines.length){
+        const room = (pageH - 24) - y - 6;
+        let n = Math.floor((room - 17) / LH);
+        const left = lines.length - i;
+        if(n < Math.min(2, left)){ doc.addPage(); y = 26; continue; }
+        n = Math.min(n, left);
+        const h = 17 + n * LH;
+        fillC(SURF); doc.roundedRect(margin, y, contentW, h, 2.5, 2.5, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.8); setC(SOFT);
+        doc.text((first ? label : label + ' (suite)').toUpperCase(), margin + 7, y + 8.4, { charSpace:0.35 });
+        doc.setFont('helvetica','normal'); doc.setFontSize(11); setC(INK);
+        lines.slice(i, i + n).forEach((ln, k)=> doc.text(ln, margin + 7, y + 16.5 + k * LH));
+        y += h + 3.4;
+        i += n; first = false;
+      }
     }
     function callout(label, value, tone){
       const bg = tone === 'red' ? REDBG : GREENBG, fg = tone === 'red' ? RED : GREEN;
@@ -1873,14 +1908,16 @@ if('serviceWorker' in navigator){
     if(!mailOk(data.mail)) return { msg:"L'adresse mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mail' };
     if(!data.tel) return { msg:'Le téléphone client est obligatoire.', target:'#f-tel' };
     if(!data.cpville) return { msg:'Le code postal ou la ville est obligatoire.', target:'#f-cpville' };
-    if(!data.config) return { msg:'Le type de configuration est obligatoire.', target:'#grid-config' };
-    if(!data.hauteur) return { msg:'La hauteur de passage libre est obligatoire.', target:'#f-hauteur' };
-    if(!data.largeur) return { msg:'La largeur de passage libre est obligatoire.', target:'#f-largeur' };
-    if(fixeSelected && configSelected !== '2v' && !data['largeur-pf']) return { msg:'La largeur des parties fixes est obligatoire.', target:'#f-largeur-pf' };
+    // même ordre que l'écran : motif (section 1) avant la configuration, largeur avant hauteur
     if(!data['motif-precision']) return { msg:'Les précisions sur le motif sont obligatoires.', target:'#f-motif-precision' };
+    if(!data.config) return { msg:'Le type de configuration est obligatoire.', target:'#grid-config' };
+    if(!data.largeur) return { msg:'La largeur de passage libre est obligatoire.', target:'#f-largeur' };
+    if(!data.hauteur) return { msg:'La hauteur de passage libre est obligatoire.', target:'#f-hauteur' };
+    if(fixeSelected && configSelected !== '2v' && !data['largeur-pf']) return { msg:'La largeur des parties fixes est obligatoire.', target:'#f-largeur-pf' };
     if(!data.meca) return { msg:'La hauteur du mécanisme est obligatoire.', target:'.fd-toggle[data-field="meca"]' };
-    if(!data.photoInt) return { msg:'La photo intérieure est obligatoire.', target:'#f-photo-int-cam' };
-    if(!data.photoExt) return { msg:'La photo extérieure est obligatoire.', target:'#f-photo-ext-cam' };
+    // la cible est le bouton photo visible (les champs fichier sont cachés)
+    if(!data.photoInt) return { msg:'La photo intérieure est obligatoire.', target:'label[for="f-photo-int-cam"]' };
+    if(!data.photoExt) return { msg:'La photo extérieure est obligatoire.', target:'label[for="f-photo-ext-cam"]' };
     return null;
   }
 

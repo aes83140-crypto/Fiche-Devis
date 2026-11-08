@@ -169,6 +169,13 @@
   .st-cart{display:grid;gap:10px;}
   .st-line{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 10px 10px 14px;background:var(--surface-2);}
   .st-line input[type=text]{padding:11px 12px;font-size:15.5px;}
+  /* pièce hors catalogue : le champ de description prend toute la largeur */
+  .st-line.free{grid-template-columns:minmax(0,1fr) auto;}
+  .st-line.free input[type=text]{grid-column:1 / -1;}
+  /* historique : un nom de client long ne fait plus déborder la page */
+  #st-hist{grid-template-columns:minmax(0,1fr);}
+  /* message toujours visible à l'écran */
+  .fd-msg.err,.fd-msg.ok{position:fixed;left:16px;right:16px;bottom:16px;margin:0 auto;max-width:640px;z-index:9000;box-shadow:0 10px 30px -12px rgba(0,0,0,.4);}
   .st-qty{display:flex;align-items:center;border:1.5px solid var(--line-2);border-radius:12px;background:#fff;overflow:hidden;}
   .st-qty button{width:44px;height:44px;border:none;background:none;font-size:20px;color:var(--steel);cursor:pointer;}
   .st-qty input{width:46px;border:none;border-radius:0;padding:0;text-align:center;font-weight:700;font-size:16px;box-shadow:none !important;}
@@ -284,7 +291,7 @@
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.20</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
 </div>
 
 <script>
@@ -296,7 +303,9 @@
   let CAT = SEED, type = '', cart = [], showAll = false, photos = [];
   const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const esc = s => String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  // sur le site en ligne, les photos du catalogue sont rangées directement dans img/
   const imgSrc = it => !it.i ? '' : (/^https?:/.test(it.i) ? it.i : 'img/' + encodeURIComponent(it.i));
+  const ALL = '*'; // famille « Tout »
 
   function index(){ CAT.forEach(it => { it._s = fold([it.r, it.r.replace(/-/g, ''), it.d, it.t, it.m, it.c].join(' ')); }); }
   index();
@@ -324,22 +333,25 @@
     const open = showAll || (type && rest.indexOf(type) >= 0);
     $('st-types').innerHTML = top.map(t => btn(t[0], t[1], true)).join('') +
       '<button type="button" class="st-type more" id="st-more">' + (open ? 'Moins de familles ▴' : 'Toutes les familles (' + rest.length + ') ▾') + '</button>' +
-      (open ? '<div style="flex-basis:100%;height:0;"></div>' + btn('', 'Tout', false) + rest.map(t => btn(t, t.charAt(0) + t.slice(1).toLowerCase(), false)).join('') : '');
-    $('st-more').addEventListener('click', () => { showAll = !open; if(!showAll && rest.indexOf(type) >= 0) type = ''; renderTypes(); renderResults(); });
+      (open ? '<div style="flex-basis:100%;height:0;"></div>' + btn(ALL, 'Tout', false) + rest.map(t => btn(t, t.charAt(0) + t.slice(1).toLowerCase(), false)).join('') : '');
+    $('st-more').addEventListener('click', () => { showAll = !open; if(!showAll && (rest.indexOf(type) >= 0 || type === ALL)) type = ''; renderTypes(); renderResults(); });
     $('st-types').querySelectorAll('.st-type[data-t]').forEach(b => b.addEventListener('click', () => { type = (type === b.dataset.t) ? '' : b.dataset.t; renderTypes(); renderResults(); }));
   }
   function inCart(ref){ return cart.find(l => l.ref === ref); }
-  function match(words){ return CAT.filter(it => (!type || it.t === type) && words.every(w => it._s.indexOf(w.replace(/-/g, '')) >= 0 || it._s.indexOf(w) >= 0)); }
+  // toutesFamilles : les propositions sous la recherche cherchent dans tout le catalogue
+  function match(words, toutesFamilles){ return CAT.filter(it => (toutesFamilles || !type || type === ALL || it.t === type) && words.every(w => it._s.indexOf(w.replace(/-/g, '')) >= 0 || it._s.indexOf(w) >= 0)); }
+  // surlignage calculé sur le texte brut (les balises <mark> ne sont jamais re-découpées)
   function mark(txt, words){
-    let s = esc(txt);
-    words.forEach(w => {
-      if(w.length < 2) return;
-      const f = fold(txt), k = f.indexOf(w);
-      if(k < 0) return;
-      const raw = txt.substr(k, w.length);
-      s = s.replace(esc(raw), '<mark>' + esc(raw) + '</mark>');
-    });
-    return s;
+    txt = String(txt || '');
+    const f = fold(txt), r = [];
+    words.forEach(w => { if(w.length < 2) return; const k = f.indexOf(w); if(k >= 0) r.push([k, Math.min(txt.length, k + w.length)]); });
+    if(!r.length) return esc(txt);
+    r.sort((a, b) => a[0] - b[0]);
+    const m = [r[0]];
+    r.slice(1).forEach(x => { const last = m[m.length - 1]; if(x[0] <= last[1]) last[1] = Math.max(last[1], x[1]); else m.push(x); });
+    let out = '', p = 0;
+    m.forEach(([a, b]) => { out += esc(txt.slice(p, a)) + '<mark>' + esc(txt.slice(a, b)) + '</mark>'; p = b; });
+    return out + esc(txt.slice(p));
   }
   function addRef(ref){
     const l = inCart(ref);
@@ -350,7 +362,7 @@
     const box = $('st-sugg');
     const words = fold($('f-q').value).trim().split(/\s+/).filter(Boolean);
     if(!words.length){ box.classList.remove('on'); box.innerHTML = ''; return; }
-    const found = match(words);
+    const found = match(words, true);
     box.innerHTML = found.length ? found.slice(0, 8).map(it => {
       const on = !!inCart(it.r);
       return '<button type="button" class="st-sg' + (on ? ' in' : '') + '" data-s="' + esc(it.r) + '">' +
@@ -382,10 +394,12 @@
       $('st-zoom-img').src = imgSrc(it); $('st-zoom-ref').textContent = it.r; $('st-zoom-desc').textContent = it.d; $('st-zoom').classList.add('on');
     }));
   }
+  // une ligne « pièce introuvable » vide ne compte pas comme une pièce
+  const vraiesLignes = () => cart.filter(l => l.ref || String(l.d || '').trim());
   function renderCart(){
-    $('st-count').textContent = cart.length;
+    $('st-count').textContent = vraiesLignes().length;
     if(!cart.length){ $('st-cart').innerHTML = '<div class="st-empty">Aucune pièce. Recherche une pièce et touche « + ».</div>'; save(); return; }
-    $('st-cart').innerHTML = cart.map((l, i) => '<div class="st-line">' +
+    $('st-cart').innerHTML = cart.map((l, i) => '<div class="st-line' + (l.ref ? '' : ' free') + '">' +
       (l.ref ? '<div style="min-width:0;"><div class="st-ref">' + esc(l.ref) + '</div><div class="st-desc">' + esc(l.d) + '</div></div>'
              : '<input type="text" data-f="' + i + '" placeholder="Décris la pièce (marque, modèle, cote…)" value="' + esc(l.d) + '">') +
       '<div class="st-qty"><button type="button" data-m="' + i + '" aria-label="Moins">−</button><input type="number" inputmode="numeric" min="1" data-q="' + i + '" value="' + l.q + '"><button type="button" data-p="' + i + '" aria-label="Plus">+</button></div>' +
@@ -394,18 +408,20 @@
     c.querySelectorAll('[data-m]').forEach(b => b.addEventListener('click', () => { const l = cart[b.dataset.m]; l.q = Math.max(1, l.q - 1); renderCart(); }));
     c.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => { cart[b.dataset.p].q++; renderCart(); }));
     c.querySelectorAll('[data-q]').forEach(b => b.addEventListener('change', () => { cart[b.dataset.q].q = Math.max(1, parseInt(b.value, 10) || 1); renderCart(); }));
-    c.querySelectorAll('[data-f]').forEach(b => b.addEventListener('input', () => { cart[b.dataset.f].d = b.value; save(); }));
+    c.querySelectorAll('[data-f]').forEach(b => b.addEventListener('input', () => { cart[b.dataset.f].d = b.value; $('st-count').textContent = vraiesLignes().length; save(); }));
     c.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => { cart.splice(+b.dataset.d, 1); renderCart(); renderResults(); }));
     save();
   }
   function msg(t, ok){ const m = $('fd-msg'); m.textContent = t; m.className = 'fd-msg ' + (ok ? 'ok' : 'err'); clearTimeout(msg._t); msg._t = setTimeout(() => { m.className = 'fd-msg'; }, ok ? 1800 : 6000); }
 
+  // quelque chose est saisi (pièces, client, porte, mail, remarque ou photos)
+  function demandeEnCours(){ return !!(vraiesLignes().length || ['f-client','f-porte','f-mail','f-rem'].some(id => $(id).value.trim()) || photos.length); }
   const HIST = 'record-st-hist';
   const hEsc = v => String(v || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   function histLoad(){ try{ const l = JSON.parse(localStorage.getItem(HIST) || '[]'); return Array.isArray(l) ? l : []; }catch(e){ return []; } }
   function histSave(l){ try{ localStorage.setItem(HIST, JSON.stringify(l.slice(0, 10))); }catch(e){} }
   function histAdd(){
-    const e = { ts: Date.now(), c:$('f-client').value.trim(), p:$('f-porte').value.trim(), e:$('f-mail').value.trim(), r:$('f-rem').value.trim(), cart: JSON.parse(JSON.stringify(cart)) };
+    const e = { ts: Date.now(), c:$('f-client').value.trim(), p:$('f-porte').value.trim(), e:$('f-mail').value.trim(), r:$('f-rem').value.trim(), cart: JSON.parse(JSON.stringify(vraiesLignes())) };
     histSave([e, ...histLoad()]); renderHist();
   }
   function renderHist(){
@@ -422,7 +438,7 @@
     }).join('');
     box.querySelectorAll('[data-h]').forEach(b => b.addEventListener('click', () => {
       const e = histLoad()[+b.dataset.h]; if(!e) return;
-      if((cart.length || $('f-client').value || $('f-porte').value) && !confirm('Remplacer la demande en cours ?')) return;
+      if(demandeEnCours() && !confirm('Remplacer la demande en cours ?')) return;
       $('f-client').value = e.c || ''; $('f-porte').value = e.p || ''; $('f-mail').value = e.e || ''; $('f-rem').value = e.r || '';
       cart = e.cart || []; photos = []; renderPhotos(); renderCart(); save();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -463,21 +479,25 @@
     const client = $('f-client').value.trim(), porte = $('f-porte').value.trim(), rem = $('f-rem').value.trim(), cmail = $('f-mail').value.trim();
     if(cmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cmail)){ msg('L\'adresse mail du client semble incorrecte.'); $('f-mail').focus(); return; }
     const lines = cart.filter(l => l.ref || l.d.trim());
-    if(!client && !porte && !lines.length && !rem && !photos.length){ msg('La demande est vide : ajoute au moins une pièce, une photo ou une remarque.'); $('f-q').focus(); return; }
+    if(!lines.length && !rem && !photos.length){ msg('La demande est vide : ajoute au moins une pièce, une photo ou une remarque.'); $('f-q').focus(); return; }
     const L = ['DEVIS À RÉALISER', '', 'Client / site : ' + (client || '—'), 'N° de porte : ' + (porte || '—'), 'Mail client : ' + (cmail || '—'), '', 'PIÈCES (' + lines.length + ')'];
     lines.forEach(l => L.push('• ' + l.q + ' × ' + (l.ref ? l.ref + ' — ' + l.d : '[hors catalogue] ' + l.d.trim())));
     if(rem) L.push('', 'Remarque : ' + rem);
     L.push('', '— Envoyé depuis la fiche sous-traitant RECORD');
-    const subject = ['Devis a Réaliser', client, porte ? 'porte ' + porte : ''].filter(Boolean).join(' - ');
-    try{ if(window.RecordCommun) RecordCommun.statLog('Sous-traitant', 'ST', 'mail'); }catch(e){}
-    histAdd();
+    const subject = ['Devis à Réaliser', client, porte ? 'porte ' + porte : ''].filter(Boolean).join(' - ');
     const body = L.join('\n');
-    const mailto = () => { location.href = 'mailto:' + DEST + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); };
+    // l'historique et la statistique ne sont enregistrés que si la demande part vraiment
+    const envoyee = () => { try{ if(window.RecordCommun) RecordCommun.statLog('Sous-traitant', 'ST', 'mail'); }catch(e){} histAdd(); };
+    const mailto = () => { envoyee(); location.href = 'mailto:' + DEST + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); };
     if(photos.length){
       const stamp = (porte || client || 'photo').replace(/[^A-Za-z0-9-]+/g, '-').slice(0, 30);
       const files = photos.map((d, i) => RecordCommun.dataUrlToFileSync(d, 'ST-' + stamp + '-' + (i + 1) + '.jpg'));
       if(navigator.share && navigator.canShare && navigator.canShare({ files })){
-        navigator.share({ title: subject, text: body, files }).then(() => msg('Demande envoyée.', true)).catch(e => { if(!e || e.name !== 'AbortError') mailto(); });
+        navigator.share({ title: subject, text: body, files }).then(() => { envoyee(); msg('Demande envoyée.', true); }).catch(e => {
+          if(e && e.name === 'AbortError') return; // partage annulé : rien n'est enregistré
+          mailto();
+          msg('Le partage avec les photos a échoué : ta messagerie s\'ouvre, joins les photos au mail avant d\'envoyer.');
+        });
         return;
       }
       mailto();
@@ -488,7 +508,7 @@
     msg('Ta messagerie s\'ouvre : vérifie puis envoie.', true);
   });
   $('btn-reset').addEventListener('click', () => {
-    if((cart.length || $('f-client').value || $('f-porte').value) && !confirm('Effacer la demande en cours ?')) return;
+    if(demandeEnCours() && !confirm('Effacer la demande en cours ?')) return;
     $('f-client').value = ''; $('f-porte').value = ''; $('f-mail').value = ''; $('f-rem').value = ''; $('f-q').value = ''; cart = []; type = ''; photos = [];
     renderPhotos(); renderTypes(); renderCart(); renderResults();
   });

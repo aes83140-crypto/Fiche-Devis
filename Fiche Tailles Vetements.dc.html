@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- React servi depuis le site (copie locale identique à unpkg) : la fiche s'ouvre aussi hors connexion -->
+<script>window.__resources={"https://unpkg.com/react@18.3.1/umd/react.production.min.js":"./lib/react.production.min.js","https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js":"./lib/react-dom.production.min.js"};</script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -230,7 +232,7 @@
     <div style="text-align:center;margin-top:10px;">
       <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8A939C;">Réalisation</div>
       <div style="font-size:13.5px;font-weight:650;color:#5A646E;margin-top:2px;">Christophe BATAILLE</div>
-      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;margin-top:4px;">v2026-10.1</div>
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;margin-top:4px;">v2026-11.1</div>
     </div>
 
   </div>
@@ -322,6 +324,15 @@ class Component extends DCLogic {
   };
 
   componentDidMount() {
+    try {
+      const d = JSON.parse(localStorage.getItem('record-brouillon-vetements') || 'null');
+      if (d && Date.now() - d.ts < 7 * 864e5) this.setState({ tech: d.tech || '', genre: d.genre || null, selections: d.selections || {} });
+    } catch (e) {}
+    setTimeout(() => { this._draftReady = true; }, 0);
+    // en quittant la page (appareil photo, autre appli…), on enregistre tout de suite
+    const now = () => { if (this._draftReady) { clearTimeout(this._draftT); this.saveDraft(); } };
+    window.addEventListener('pagehide', now);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') now(); });
     fetch('listes.json?v=' + Date.now(), { cache:'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d && Array.isArray(d.techniciens)) this.setState({ techniciens: d.techniciens }); })
@@ -353,8 +364,28 @@ class Component extends DCLogic {
   setGenreHomme = () => this.setState({ genre:'homme' });
   setGenreFemme = () => this.setState({ genre:'femme' });
   resetGenre = () => this.setState({ genre:null, selections:{} });
-  submit = () => this.setState({ step:'summary' });
-  submitAndMail = () => { this.setState({ step:'summary' }, () => this.sendMail()); };
+  // contrôle avant récapitulatif / envoi : nom, au moins un article, tailles et quantités cohérentes
+  checkForm() {
+    const v = this.renderVals();
+    if (!String(this.state.tech || '').trim()) return 'Indique ton nom (Technicien) avant de continuer.';
+    if (!this.state.genre) return 'Choisis Homme ou Femme avant de continuer.';
+    const sansTaille = v.allItems.filter(it => it.notUnique && !it.value && String(it.qty || '').trim());
+    if (sansTaille.length) return 'Choisis une taille pour : ' + sansTaille.map(it => it.name).join(', ') + '.';
+    const badQty = v.chosenItems.filter(it => String(it.qty || '').trim() && !/^[1-9]\d{0,2}$/.test(String(it.qty).trim()));
+    if (badQty.length) return 'Quantité incorrecte (nombre entier de 1 à 999) pour : ' + badQty.map(it => it.name).join(', ') + '.';
+    if (!v.chosenItems.length) return 'Aucun article choisi : sélectionne au moins une taille.';
+    return null;
+  }
+  submit = () => { const err = this.checkForm(); if (err) { alert(err); return; } this.setState({ step:'summary' }); };
+  submitAndMail = () => { const err = this.checkForm(); if (err) { alert(err); return; } this.setState({ step:'summary' }, () => this.sendMail()); };
+
+  /* Brouillon : nom, genre et tailles survivent à un passage dans une autre appli */
+  saveDraft() { try { localStorage.setItem('record-brouillon-vetements', JSON.stringify({ ts: Date.now(), tech: this.state.tech, genre: this.state.genre, selections: this.state.selections })); } catch (e) {} }
+  draftLater() {
+    if (!this._draftReady) return; // pas avant d'avoir relu le brouillon existant
+    clearTimeout(this._draftT);
+    this._draftT = setTimeout(() => this.saveDraft(), 400);
+  }
   backToForm = () => this.setState({ step:'form' });
   printNow = () => window.print();
 
@@ -363,9 +394,11 @@ class Component extends DCLogic {
       const img = new Image();
       img.onload = () => {
         try {
+          // logo réduit à 300 px : en pleine résolution il pesait ~20 Mo dans chaque PDF
+          const sc = img.naturalWidth > 300 ? 300 / img.naturalWidth : 1;
           const c = document.createElement('canvas');
-          c.width = img.naturalWidth; c.height = img.naturalHeight;
-          c.getContext('2d').drawImage(img, 0, 0);
+          c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
           resolve({ url: c.toDataURL('image/png'), ratio: img.naturalWidth / img.naturalHeight });
         } catch (e) { resolve(null); }
       };
@@ -408,7 +441,10 @@ class Component extends DCLogic {
     doc.text('Fiche tailles vêtements — RECORD', marginX, y); y += 9;
     doc.setFont('helvetica','normal'); doc.setFontSize(11);
     doc.setTextColor(90,100,110);
-    doc.text('Technicien : ' + techLabel + '   ·   Genre : ' + genreLabel + '   ·   Date : ' + dateLabel, marginX, y);
+    // en-tête sur deux lignes : un nom long ne déborde plus de la page
+    doc.text('Technicien : ' + techLabel, marginX, y, { maxWidth: pageW - marginX * 2 - 30 });
+    y += 6;
+    doc.text('Genre : ' + genreLabel + '   ·   Date : ' + dateLabel, marginX, y);
     y += 10;
 
     chosenItems.forEach(c => {
@@ -505,19 +541,23 @@ class Component extends DCLogic {
   }
 
   async sendMail() {
+    // double appui : un seul envoi à la fois
+    if (this._sending) return;
+    this._sending = true;
+    setTimeout(() => { this._sending = false; }, 3000);
     const v = this.renderVals();
     const techLabel = v.techOrDefault, genreLabel = v.genreLabel, dateLabel = v.dateLabel;
     let doc;
     try { doc = await this.buildPdf(techLabel, genreLabel, dateLabel, v.chosenItems); }
     catch (e) { this.setState({ mailMsg: "Le PDF n'a pas pu être généré (" + (e.message || 'erreur') + ")." }); return; }
-    const fileName = 'Fiche-tailles-' + techLabel.replace(/[^a-z0-9]+/gi,'-') + '.pdf';
+    const fileName = 'Fiche-tailles-' + techLabel.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g, '') + '.pdf';
     const subject = 'Fiche tailles vêtements - ' + techLabel;
     const blob = doc.output('blob');
     const file = new File([blob], fileName, { type:'application/pdf' });
     const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files:[file] }));
     if (canAttach) {
       navigator.share({ title: subject, text: subject, files:[file] })
-        .then(() => this.setState({ mailMsg:'Partage envoyé.' }))
+        .then(() => { try { localStorage.removeItem('record-brouillon-vetements'); } catch (e) {} this.setState({ mailMsg:'Partage envoyé.' }); })
         .catch(e => { if (e && e.name === 'AbortError') return; this.setState({ mailMsg:'Le partage a échoué — télécharge le PDF et joins-le manuellement.' }); });
     } else {
       try {
@@ -540,6 +580,7 @@ class Component extends DCLogic {
   }
 
   renderVals() {
+    this.draftLater(); // brouillon enregistré après chaque changement affiché
     const genre = this.state.genre;
     const sel = this.state.selections;
 
@@ -565,12 +606,16 @@ class Component extends DCLogic {
       return { title, items, hasItems: items.length > 0 };
     });
 
-    const q = (this.state.tech || '').toLowerCase();
+    // recherche du nom sans tenir compte des accents (« loic » trouve « Loïc »)
+    const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const q = fold(this.state.tech);
     const techFiltered = (this.state.techniciens || [])
-      .filter(t => !q || t.toLowerCase().indexOf(q) >= 0)
+      .filter(t => !q || fold(t).indexOf(q) >= 0)
       .map(t => ({ label: t, select: () => this.selectTech(t) }));
 
-    const chosenItems = allItems.filter(it => it.isUnique ? !!it.qty : !!it.value);
+    // récapitulatif et PDF dans le même ordre que le formulaire
+    const chosenItems = allItems.filter(it => it.isUnique ? !!it.qty : !!it.value)
+      .sort((a, b) => catOrder.indexOf(a.cat) - catOrder.indexOf(b.cat));
     const dateLabel = new Date().toLocaleDateString('fr-FR');
     const genreLabel = genre === 'homme' ? 'Homme' : genre === 'femme' ? 'Femme' : '';
     const techOrDefault = this.state.tech || 'Technicien';
@@ -579,6 +624,7 @@ class Component extends DCLogic {
       chosenItems.map(c => '- ' + c.name + ' (' + c.color + ', ' + c.ref + ') : ' + c.value + ' — Qté ' + (c.qty || 1)).join('\n');
 
     return {
+      allItems,
       tech: this.state.tech, onTechChange: this.onTechChange,
       noGenre: !genre, hasGenre: !!genre,
       setGenreHomme: this.setGenreHomme, setGenreFemme: this.setGenreFemme, resetGenre: this.resetGenre,

@@ -503,7 +503,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-10.5</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -537,6 +537,7 @@ if('serviceWorker' in navigator){
         <select id="help-fiche">
           <option value="Aucune / général">Aucune / général</option>
           <option value="Demande de devis">Demande de devis</option>
+          <option value="Devis sous-traitant">Devis sous-traitant</option>
           <option value="Relevé Vantaux SAV">Relevé Vantaux SAV</option>
           <option value="Rideaux métalliques">Rideaux métalliques</option>
           <option value="Relevé porte neuve">Relevé porte neuve</option>
@@ -910,7 +911,7 @@ if('serviceWorker' in navigator){
 
   /* ---------- Statistiques d'utilisation ---------- */
   const STAT_KEY = 'record-stats-usage';
-  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', PN:'Porte neuve', FO:'Service Support', ST:'Sous-traitant' };
+  const FICHE_LABEL = { FD:'Fiche devis', RV:'Relevé Vantaux SAV', RM:'Rideaux métalliques', PN:'Porte neuve', FO:'Service Support', ST:'Sous-traitant', PS:'Panneaux' };
   function sbReady(){ return !!(window.RECORD_SUPABASE_URL && window.RECORD_SUPABASE_KEY); }
   function sbHeaders(extra){
     return Object.assign({ apikey: window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY, 'Content-Type':'application/json' }, extra || {});
@@ -1061,7 +1062,7 @@ if('serviceWorker' in navigator){
     }
     const byTech = {}, byFiche = {}, byMonth = {};
     rows.forEach(r=>{
-      byTech[r.t] = byTech[r.t] || { total:0, FD:0, RV:0, RM:0, FO:0, PN:0, last:'' };
+      byTech[r.t] = byTech[r.t] || { total:0, FD:0, ST:0, RV:0, RM:0, FO:0, PN:0, PS:0, last:'' };
       const b = byTech[r.t];
       b.total++; if(b[r.f] !== undefined) b[r.f]++;
       if(!b.last || r.d > b.last) b.last = r.d;
@@ -1088,17 +1089,19 @@ if('serviceWorker' in navigator){
     html += '<div style="overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px;">'
       + '<table style="width:100%;border-collapse:collapse;">'
       + '<thead><tr style="background:var(--surface);">'
-      + ['Technicien','Devis','Vantaux','Rideaux','Porte neuve','Service Support','Total','Dernière'].concat(statManage ? [''] : [])
+      + ['Technicien','Devis','Sous-traitant','Vantaux','Rideaux','Porte neuve','Autres','Total','Dernière'].concat(statManage ? [''] : [])
         .map((t,ix)=>'<th style="' + cell + 'text-align:' + (ix ? 'center' : 'left') + ';font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);font-weight:700;">' + t + '</th>').join('')
       + '</tr></thead><tbody>';
     techs.forEach(t=>{
       const b = byTech[t];
       html += '<tr><td style="' + cell + 'font-weight:600;">' + t + '</td>'
         + '<td style="' + num + '">' + (b.FD || '·') + '</td>'
+        + '<td style="' + num + '">' + (b.ST || '·') + '</td>'
         + '<td style="' + num + '">' + (b.RV || '·') + '</td>'
         + '<td style="' + num + '">' + (b.RM || '·') + '</td>'
         + '<td style="' + num + '">' + (b.PN || '·') + '</td>'
-        + '<td style="' + num + '">' + (b.FO || '·') + '</td>'
+        // « Autres » = tout ce qui n'a pas sa colonne (Service Support, Panneaux…), pour que le total tombe juste
+        + '<td style="' + num + '">' + ((b.total - b.FD - b.ST - b.RV - b.RM - b.PN) || '·') + '</td>'
         + '<td style="' + num + 'font-weight:700;">' + b.total + '</td>'
         + '<td style="' + num + 'color:var(--ink-mute);">' + fdate(b.last) + '</td>'
         + (statManage ? '<td style="' + cell + 'text-align:center;width:44px;"><button type="button" class="stat-del" data-tech="' + encodeURIComponent(t) + '" title="Supprimer cette ligne" aria-label="Supprimer ' + t.replace(/"/g,'') + '" style="width:34px;height:34px;border-radius:9px;border:1px solid #E9BEB9;background:var(--red-bg);color:var(--red);font-size:18px;font-weight:700;line-height:1;cursor:pointer;">×</button></td>' : '')
