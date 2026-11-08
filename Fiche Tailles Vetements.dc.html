@@ -380,7 +380,8 @@ class Component extends DCLogic {
   submitAndMail = () => { const err = this.checkForm(); if (err) { alert(err); return; } this.setState({ step:'summary' }, () => this.sendMail()); };
 
   /* Brouillon : nom, genre et tailles survivent à un passage dans une autre appli */
-  saveDraft() { try { localStorage.setItem('record-brouillon-vetements', JSON.stringify({ ts: Date.now(), tech: this.state.tech, genre: this.state.genre, selections: this.state.selections })); } catch (e) {} }
+  saveDraft() { if (this._sentSnap && this._sentSnap === this.draftSnap()) return; /* fiche envoyée et inchangée */ try { localStorage.setItem('record-brouillon-vetements', JSON.stringify({ ts: Date.now(), tech: this.state.tech, genre: this.state.genre, selections: this.state.selections })); } catch (e) {} }
+  draftSnap() { return JSON.stringify([this.state.tech, this.state.genre, this.state.selections]); }
   draftLater() {
     if (!this._draftReady) return; // pas avant d'avoir relu le brouillon existant
     clearTimeout(this._draftT);
@@ -435,15 +436,16 @@ class Component extends DCLogic {
     const logo = await this.loadLogoPng();
     if (logo) {
       const lw = 24, lh = lw / logo.ratio;
-      try { doc.addImage(logo.url, 'PNG', pageW - marginX - lw, 11, lw, lh); } catch (e) {}
+      try { doc.addImage(logo.url, 'PNG', pageW - marginX - lw, 11, lw, lh, undefined, 'FAST'); } catch (e) {}
     }
     doc.setFont('helvetica','bold'); doc.setFontSize(16);
     doc.text('Fiche tailles vêtements — RECORD', marginX, y); y += 9;
     doc.setFont('helvetica','normal'); doc.setFontSize(11);
     doc.setTextColor(90,100,110);
     // en-tête sur deux lignes : un nom long ne déborde plus de la page
-    doc.text('Technicien : ' + techLabel, marginX, y, { maxWidth: pageW - marginX * 2 - 30 });
-    y += 6;
+    const techLines = doc.splitTextToSize('Technicien : ' + techLabel, pageW - marginX * 2 - 30);
+    doc.text(techLines, marginX, y);
+    y += 6 + (techLines.length - 1) * 4.7; // un nom long sur plusieurs lignes ne chevauche plus la ligne suivante
     doc.text('Genre : ' + genreLabel + '   ·   Date : ' + dateLabel, marginX, y);
     y += 10;
 
@@ -452,7 +454,7 @@ class Component extends DCLogic {
       doc.setFillColor(255,255,255);
       doc.roundedRect(marginX, y, cardW, rowH, 3, 3, 'F');
       const img = imgCache[c.photo];
-      if (img) { try { doc.addImage(img, 'PNG', marginX + 4, y + 4, 16, 16); } catch (e) {} }
+      if (img) { try { doc.addImage(img, 'PNG', marginX + 4, y + 4, 16, 16, undefined, 'FAST'); /* images compressées : PDF léger */ } catch (e) {} }
       const textX = marginX + 26;
       doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(18,23,28);
       doc.text(c.name, textX, y + 9, { maxWidth: cardW - 60 });
@@ -510,7 +512,7 @@ class Component extends DCLogic {
         doc.setFillColor(255,255,255);
         doc.roundedRect(marginX, y, cardW, rowH, 3, 3, 'F');
         const img = imgCache[i];
-        if (img) { try { doc.addImage(img, 'PNG', marginX + 3, y + 3, 15, 15); } catch(e) {} }
+        if (img) { try { doc.addImage(img, 'PNG', marginX + 3, y + 3, 15, 15, undefined, 'FAST'); } catch(e) {} }
         const textX = marginX + 22;
         doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(18,23,28);
         doc.text(g.name, textX, y + 8, { maxWidth: cardW - 105 });
@@ -550,14 +552,14 @@ class Component extends DCLogic {
     let doc;
     try { doc = await this.buildPdf(techLabel, genreLabel, dateLabel, v.chosenItems); }
     catch (e) { this.setState({ mailMsg: "Le PDF n'a pas pu être généré (" + (e.message || 'erreur') + ")." }); return; }
-    const fileName = 'Fiche-tailles-' + techLabel.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g, '') + '.pdf';
+    const fileName = 'Fiche-tailles-' + techLabel.replace(/Œ/g,'OE').replace(/œ/g,'oe').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g, '') + '.pdf';
     const subject = 'Fiche tailles vêtements - ' + techLabel;
     const blob = doc.output('blob');
     const file = new File([blob], fileName, { type:'application/pdf' });
     const canAttach = !!(navigator.share && navigator.canShare && navigator.canShare({ files:[file] }));
     if (canAttach) {
       navigator.share({ title: subject, text: subject, files:[file] })
-        .then(() => { try { localStorage.removeItem('record-brouillon-vetements'); } catch (e) {} this.setState({ mailMsg:'Partage envoyé.' }); })
+        .then(() => { this._sentSnap = this.draftSnap(); try { localStorage.removeItem('record-brouillon-vetements'); } catch (e) {} this.setState({ mailMsg:'Partage envoyé.' }); })
         .catch(e => { if (e && e.name === 'AbortError') return; this.setState({ mailMsg:'Le partage a échoué — télécharge le PDF et joins-le manuellement.' }); });
     } else {
       try {
