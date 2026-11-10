@@ -158,14 +158,19 @@
                     <div style="flex:1;min-width:0;border:1px solid #CCD3DB;border-radius:10px;padding:10px 12px;font-size:15px;color:#5A646E;background:#F6F8FA;">Taille unique</div>
                   </sc-if>
                   <sc-if value="{{ item.notUnique }}" hint-placeholder-val="{{ true }}">
-                    <select value="{{ item.value }}" onChange="{{ item.set }}" style="flex:1;min-width:0;border:1px solid #CCD3DB;border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;color:#12171C;background:#F6F8FA;">
-                      <option value="">— Sélectionner une taille —</option>
-                      <sc-for list="{{ item.sizes }}" as="sz" hint-placeholder-count="3">
-                        <option value="{{ sz }}">{{ sz }}</option>
+                    <!-- boutons de taille (une liste déroulante générée ici restait vide sur certains Android) -->
+                    <div style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px;">
+                      <sc-for list="{{ item.sizeBtns }}" as="sz" hint-placeholder-count="3">
+                        <sc-if value="{{ sz.on }}" hint-placeholder-val="{{ false }}">
+                          <button type="button" onClick="{{ sz.pick }}" style="min-width:46px;min-height:42px;padding:8px 10px;border-radius:10px;border:1.5px solid #1E3448;background:#1E3448;color:#fff;font-size:14.5px;font-weight:700;font-family:inherit;cursor:pointer;">{{ sz.label }}</button>
+                        </sc-if>
+                        <sc-if value="{{ sz.off }}" hint-placeholder-val="{{ true }}">
+                          <button type="button" onClick="{{ sz.pick }}" style="min-width:46px;min-height:42px;padding:8px 10px;border-radius:10px;border:1px solid #CCD3DB;background:#F6F8FA;color:#12171C;font-size:14.5px;font-weight:600;font-family:inherit;cursor:pointer;">{{ sz.label }}</button>
+                        </sc-if>
                       </sc-for>
-                    </select>
+                    </div>
                   </sc-if>
-                  <input type="number" min="1" placeholder="Qté" value="{{ item.qty }}" onChange="{{ item.setQty }}" style="width:64px;flex-shrink:0;border:1px solid #CCD3DB;border-radius:10px;padding:10px 8px;font-size:15px;font-family:inherit;color:#12171C;background:#F6F8FA;text-align:center;"></input>
+                  <input type="number" min="1" placeholder="Qté" value="{{ item.qty }}" onChange="{{ item.setQty }}" style="width:64px;flex-shrink:0;align-self:flex-start;min-height:42px;box-sizing:border-box;border:1px solid #CCD3DB;border-radius:10px;padding:10px 8px;font-size:15px;font-family:inherit;color:#12171C;background:#F6F8FA;text-align:center;"></input>
                 </div>
               </div>
             </sc-for>
@@ -232,7 +237,7 @@
     <div style="text-align:center;margin-top:10px;">
       <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8A939C;">Réalisation</div>
       <div style="font-size:13.5px;font-weight:650;color:#5A646E;margin-top:2px;">Christophe BATAILLE</div>
-      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;margin-top:4px;">v2026-11.1</div>
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;color:#8A939C;opacity:.55;margin-top:4px;">v2026-11.2</div>
     </div>
 
   </div>
@@ -596,7 +601,8 @@ class Component extends DCLogic {
         key, ref: g.ref, color: g.color, name: g.name,
         gender: g.gender, cat: g.cat, sizes: g.sizes, value, qty, qtyLabel: qty || 1, isUnique, notUnique: !isUnique,
         photo: './vetement-photos/v' + i + '.png',
-        set: (e) => this.setSize(key, e.target.value),
+        // toucher la taille déjà choisie l'annule
+        sizeBtns: g.sizes.map(sz => ({ label: sz, on: value === sz, off: value !== sz, pick: () => this.setSize(key, value === sz ? '' : sz) })),
         setQty: (e) => this.setQty(key, e.target.value)
       };
     });
