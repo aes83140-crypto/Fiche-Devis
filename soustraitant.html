@@ -312,14 +312,18 @@
   let BASE = SEED, EXTRA = [];
   function merge(){
     const map = new Map(BASE.map(it => [it.r, it]));
-    EXTRA.forEach(x => { if(x.masque) map.delete(x.r); else map.set(x.r, { r:x.r, d:x.d || '', t:x.t || '', m:x.m || '', c:x.c || '', i:x.i || '' }); });
+    EXTRA.forEach(x => { if(x.masque === true || x.masque === 'true') map.delete(x.r); else map.set(x.r, { r:x.r, d:x.d || '', t:x.t || '', m:x.m || '', c:x.c || '', i:x.i || '' }); });
     CAT = [...map.values()]; index(); renderTypes(); renderResults();
   }
   fetch('catalogue-st.json', { cache:'no-store' }).then(r => r.ok ? r.json() : null).then(j => { if(Array.isArray(j) && j.length){ BASE = j; merge(); } }).catch(()=>{});
-  if(window.RECORD_SUPABASE_URL && window.RECORD_SUPABASE_KEY){
+  // config.js est chargé APRÈS ce script : on attend la fin du chargement de la page
+  // pour que RECORD_SUPABASE_URL / RECORD_SUPABASE_KEY soient définis.
+  function loadExtra(){
+    if(!(window.RECORD_SUPABASE_URL && window.RECORD_SUPABASE_KEY)) return;
     fetch(window.RECORD_SUPABASE_URL + '/rest/v1/catalogue?select=r,d,t,m,c,i,masque', { headers:{ apikey:window.RECORD_SUPABASE_KEY, Authorization:'Bearer ' + window.RECORD_SUPABASE_KEY }, cache:'no-store' })
       .then(r => r.ok ? r.json() : null).then(j => { if(Array.isArray(j) && j.length){ EXTRA = j; merge(); } }).catch(()=>{});
   }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadExtra); else loadExtra();
 
   function save(){ try{ localStorage.setItem(DRAFT, JSON.stringify({ c:$('f-client').value, p:$('f-porte').value, e:$('f-mail').value, r:$('f-rem').value, cart })); }catch(e){} }
   function load(){ try{ const d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); if(!d) return; $('f-client').value = d.c || ''; $('f-porte').value = d.p || ''; $('f-mail').value = d.e || ''; $('f-rem').value = d.r || ''; cart = Array.isArray(d.cart) ? d.cart : []; }catch(e){} }
