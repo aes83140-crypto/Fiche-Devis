@@ -291,7 +291,7 @@
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.3</div>
 </div>
 
 <script>
@@ -477,7 +477,7 @@
 
   $('btn-mail').addEventListener('click', () => {
     const client = $('f-client').value.trim(), porte = $('f-porte').value.trim(), rem = $('f-rem').value.trim(), cmail = $('f-mail').value.trim();
-    if(cmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cmail)){ msg('L\'adresse mail du client semble incorrecte.'); $('f-mail').focus(); return; }
+    if(cmail && !(window.RecordCommun && RecordCommun.mailsOk ? RecordCommun.mailsOk(cmail) : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cmail))){ msg('Une adresse mail du client semble incorrecte.'); $('f-mail').focus(); return; }
     const lines = cart.filter(l => l.ref || l.d.trim());
     if(!lines.length && !rem && !photos.length){ msg('La demande est vide : ajoute au moins une pièce, une photo ou une remarque.'); $('f-q').focus(); return; }
     const L = ['DEVIS À RÉALISER', '', 'Client / site : ' + (client || '—'), 'N° de porte : ' + (porte || '—'), 'Mail client : ' + (cmail || '—'), '', 'PIÈCES (' + lines.length + ')'];
@@ -526,5 +526,6 @@
 </script>
 <script src="config.js"></script>
 <script src="commun.js"></script>
+<script>try{ RecordCommun.multiMail('f-mail'); }catch(e){}</script>
 </body>
 </html>

@@ -887,7 +887,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.1</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.3</div>
 </div>
 
 <script>
@@ -895,6 +895,8 @@ if('serviceWorker' in navigator){
   const $ = id => document.getElementById(id);
   // Fonctions communes à toutes les fiches : voir commun.js
   const { lsGet, lsSet, dedupe, mailOk, pdfFileName, photoOf, dataUrlToFileSync, resizeImage, setupCombo, statLog, statFlush } = window.RecordCommun;
+  // plusieurs adresses mail client possibles (« + Ajouter une adresse »)
+  RecordCommun.multiMail('f-mailclient');
   function histLoad(){ return RecordCommun.histLoad(HIST_KEY); }
   function histSave(list){ RecordCommun.histSave(HIST_KEY, list); }
   function loadSharedLists(){ return RecordCommun.chargerTechniciens(refreshAllDatalists); }
@@ -1412,7 +1414,7 @@ if('serviceWorker' in navigator){
   });
 
   const STEPS = [
-    { id:'sec-2', need:()=> !!($('f-tech').value.trim() && $('f-client').value.trim() && $('f-equip').value.trim() && mailOk($('f-mailclient').value)),
+    { id:'sec-2', need:()=> !!($('f-tech').value.trim() && $('f-client').value.trim() && $('f-equip').value.trim() && RecordCommun.mailsOk($('f-mailclient').value)),
       hint:'Renseigne le technicien, le site client, un mail client valide et le n° d\'équipement pour continuer.' },
     { id:'sec-3', need:()=> !!travauxSelected, hint:'Choisis le type de travaux pour continuer.' },
     { id:'sec-4',
@@ -2395,7 +2397,7 @@ if('serviceWorker' in navigator){
     if(!data.tech) return { msg:'Le technicien est obligatoire.', target:'#f-tech' };
     if(!data.client) return { msg:'Le nom et la ville du site client sont obligatoires.', target:'#f-client' };
     if(!data.mailclient) return { msg:'Le mail client est obligatoire.', target:'#f-mailclient' };
-    if(!mailOk(data.mailclient)) return { msg:"L'adresse mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mailclient' };
+    if(!RecordCommun.mailsOk(data.mailclient)) return { msg:"Une des adresses mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mailclient' };
     if(!data.equip) return { msg:"Le n° d'équipement RECORD (Astea) est obligatoire.", target:'#f-equip' };
     if(!data.travaux) return { msg:'Le type de travaux est obligatoire.', target:'#grid-travaux' };
     if(travauxSelected !== 'axe' && travauxSelected !== 'moteur'){
@@ -2649,8 +2651,11 @@ if('serviceWorker' in navigator){
       items = (items || []).filter(it => it && String(it.v || '').trim() !== '');
       if(!items.length) return;
       emit();
-      const rowH = 11.5;
-      const bh = 15 + items.length * rowH + 3;
+      const rowH = 11.5, lineH = 5.2;
+      // plusieurs adresses mail : une par ligne (chacune se copie seule)
+      doc.setFont('courier','bold'); doc.setFontSize(11);
+      items.forEach(it => { it.lines = String(it.v).split(/;\s*/).filter(Boolean).reduce((a, part) => a.concat(doc.splitTextToSize(part, contentW - 72)), []); });
+      const bh = 15 + items.reduce((h, it) => h + rowH + (it.lines.length - 1) * lineH, 0) + 3;
       checkBreak(bh + 5);
       fillC(SURF);
       doc.roundedRect(margin, y, contentW, bh, 3, 3, 'F');
@@ -2663,8 +2668,8 @@ if('serviceWorker' in navigator){
         doc.setFont('helvetica','normal'); doc.setFontSize(7); setC(SOFT);
         doc.text(it.k.toUpperCase(), margin + 8, ry, { charSpace:0.3 });
         doc.setFont('courier','bold'); doc.setFontSize(11); setC(INK);
-        doc.text(doc.splitTextToSize(String(it.v), contentW - 62)[0], margin + 62, ry + 0.6);
-        ry += rowH;
+        it.lines.forEach((l, i) => doc.text(l, margin + 62, ry + 0.6 + i * lineH));
+        ry += rowH + (it.lines.length - 1) * lineH;
       });
       y += bh + 4;
     }
@@ -2780,6 +2785,7 @@ if('serviceWorker' in navigator){
     if(variant === 'fournisseur'){
       callout('RÉFÉRENCE À RAPPELER OBLIGATOIREMENT SUR VOTRE DEVIS — SANS ELLE, IL NE POURRA PAS ÊTRE TRAITÉ',
         'Réf. ' + (data.equip || '\u2014') + '  (n\u00B0 équipement RECORD)', 'red');
+      row('Technicien RECORD', data.tech);
 
       section('Type de travaux');
       callout('Périmètre de l\'intervention', data.travaux, 'red');
