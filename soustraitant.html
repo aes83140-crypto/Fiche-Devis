@@ -291,7 +291,7 @@
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.3</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.4</div>
 </div>
 
 <script>
@@ -312,7 +312,7 @@
   let BASE = SEED, EXTRA = [];
   function merge(){
     const map = new Map(BASE.map(it => [it.r, it]));
-    EXTRA.forEach(x => { if(x.masque === true || x.masque === 'true') map.delete(x.r); else map.set(x.r, { r:x.r, d:x.d || '', t:x.t || '', m:x.m || '', c:x.c || '', i:x.i || '' }); });
+    EXTRA.forEach(x => { if(x.masque === true || x.masque === 'true') map.delete(x.r); else { const o = map.get(x.r) || {}; map.set(x.r, { r:x.r, d:x.d || o.d || '', t:x.t || o.t || '', m:x.m || o.m || '', c:x.c || o.c || '', i:x.i || o.i || '' }); } });
     CAT = [...map.values()]; index(); renderTypes(); renderResults();
   }
   fetch('catalogue-st.json', { cache:'no-store' }).then(r => r.ok ? r.json() : null).then(j => { if(Array.isArray(j) && j.length){ BASE = j; merge(); } }).catch(()=>{});
@@ -367,13 +367,13 @@
     const words = fold($('f-q').value).trim().split(/\s+/).filter(Boolean);
     if(!words.length){ box.classList.remove('on'); box.innerHTML = ''; return; }
     const found = match(words, true);
-    box.innerHTML = found.length ? found.slice(0, 8).map(it => {
+    box.innerHTML = found.length ? (found.length > 8 ? '<div class="st-empty" style="padding:8px 12px;text-align:left;">' + found.length + ' pièces : fais défiler la liste</div>' : '') + found.map(it => {
       const on = !!inCart(it.r);
       return '<button type="button" class="st-sg' + (on ? ' in' : '') + '" data-s="' + esc(it.r) + '">' +
         '<span class="st-thumb">' + (it.i ? '<img loading="lazy" src="' + imgSrc(it) + '" alt="">' : '<span>—</span>') + '</span>' +
         '<span style="min-width:0;"><span class="st-ref" style="display:block;">' + mark(it.r, words) + '</span><span class="st-desc" style="display:block;">' + mark(it.d, words) + '</span></span>' +
         '<span class="st-sg-add">' + (on ? '✓ ajoutée' : '+ Ajouter') + '</span></button>';
-    }).join('') + (found.length > 8 ? '<div class="st-empty" style="padding:10px;">' + (found.length - 8) + ' autres : continue à taper</div>' : '')
+    }).join('')
       : '<div class="st-empty">Aucune proposition. Utilise « Pièce introuvable ».</div>';
     box.classList.add('on');
     box.querySelectorAll('[data-s]').forEach(b => b.addEventListener('mousedown', e => e.preventDefault()));
@@ -385,13 +385,13 @@
     if(!type){ box.innerHTML = '<div class="st-empty">Tape une référence ou un mot : les propositions s\'affichent sous la recherche. Tu peux aussi choisir une famille.</div>'; return; }
     const found = match(words);
     if(!found.length){ box.innerHTML = '<div class="st-empty">Aucune pièce trouvée. Utilise « Pièce introuvable » ci-dessous.</div>'; return; }
-    box.innerHTML = found.slice(0, 40).map(it => {
+    box.innerHTML = found.map(it => {
       const on = !!inCart(it.r);
       return '<div class="st-res' + (on ? ' in' : '') + '">' +
         '<button type="button" class="st-thumb" data-z="' + esc(it.r) + '">' + (it.i ? '<img loading="lazy" src="' + imgSrc(it) + '" alt="">' : '<span>Sans photo</span>') + '</button>' +
         '<div style="min-width:0;"><div class="st-ref">' + esc(it.r) + '</div><div class="st-desc">' + esc(it.d) + '</div>' + (it.t ? '<span class="st-tag">' + esc(it.t) + '</span>' : '') + '</div>' +
         '<button type="button" class="st-add" data-a="' + esc(it.r) + '" aria-label="Ajouter">' + (on ? '✓' : '+') + '</button></div>';
-    }).join('') + (found.length > 40 ? '<div class="st-empty">' + (found.length - 40) + ' autres résultats : précise ta recherche.</div>' : '');
+    }).join('');
     box.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => addRef(b.dataset.a)));
     box.querySelectorAll('[data-z]').forEach(b => b.addEventListener('click', () => {
       const it = CAT.find(i => i.r === b.dataset.z); if(!it || !it.i) return;
