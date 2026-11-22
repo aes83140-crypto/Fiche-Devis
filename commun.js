@@ -20,6 +20,62 @@
 
   function mailOk(v){ return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(String(v || '').trim()); }
 
+  /* ---------- Plusieurs adresses mail client (facultatif) ----------
+     Le champ existant reste la 1re adresse ; « + Ajouter une adresse » ouvre d'autres cases.
+     Pour le reste de la fiche (brouillon, historique, PDF, texte du mail), champ.value
+     renvoie toutes les adresses séparées par « ; » et, en écriture, les répartit dans les cases. */
+  function mailsListe(v){ return String(v || '').split(/[;,\s]+/).map(s => s.trim()).filter(Boolean); }
+  function mailsOk(v){ const l = mailsListe(v); return l.length > 0 && l.every(mailOk); }
+
+  let mmCss = false;
+  function multiMail(id){
+    const inp = document.getElementById(id);
+    if(!inp || inp.__multiMail) return;
+    inp.__multiMail = true;
+    if(!mmCss){
+      mmCss = true;
+      const st = document.createElement('style');
+      st.textContent = '.mm-row{display:flex;gap:8px;align-items:center;margin-top:8px;}.mm-row input{flex:1;min-width:0;}' +
+        '.mm-del{flex:0 0 auto;width:40px;height:40px;border-radius:10px;border:1px solid #E9BEB9;background:#FBEAE8;color:#B3403A;font-size:20px;line-height:1;cursor:pointer;font-family:inherit;}' +
+        '.mm-add{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 2px;border:0;background:none;color:#2F5674;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit;}';
+      document.head.appendChild(st);
+    }
+    const natif = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    const zone = document.createElement('div');
+    const ajout = document.createElement('button');
+    ajout.type = 'button'; ajout.className = 'mm-add'; ajout.textContent = '+ Ajouter une adresse mail client';
+    inp.insertAdjacentElement('afterend', zone);
+    zone.insertAdjacentElement('afterend', ajout);
+    const signale = () => inp.dispatchEvent(new Event('input', { bubbles: true }));
+    function ligne(val){
+      const r = document.createElement('div'); r.className = 'mm-row';
+      const e = document.createElement('input');
+      e.type = 'email'; e.inputMode = 'email'; e.autocomplete = 'off'; e.placeholder = 'autre@client.fr'; e.className = 'mm-extra';
+      natif.set.call(e, val || '');
+      e.addEventListener('input', ev => { ev.stopPropagation(); signale(); });
+      e.addEventListener('change', ev => ev.stopPropagation());
+      const x = document.createElement('button');
+      x.type = 'button'; x.className = 'mm-del'; x.textContent = '×'; x.setAttribute('aria-label', 'Retirer cette adresse');
+      x.addEventListener('click', () => { r.remove(); signale(); });
+      r.append(e, x); zone.appendChild(r);
+      return e;
+    }
+    ajout.addEventListener('click', () => { ligne('').focus(); });
+    const extras = () => [...zone.querySelectorAll('input.mm-extra')];
+    Object.defineProperty(inp, 'value', {
+      configurable: true,
+      get(){ return [natif.get.call(inp)].concat(extras().map(e => natif.get.call(e))).map(s => s.trim()).filter(Boolean).join('; '); },
+      set(v){
+        const l = mailsListe(v);
+        natif.set.call(inp, l[0] || '');
+        zone.innerHTML = '';
+        l.slice(1).forEach(a => ligne(a));
+      }
+    });
+    // valeur déjà présente (brouillon chargé avant ce script) : répartie dans les cases
+    if(/[;,\s]/.test(natif.get.call(inp).trim())) inp.value = natif.get.call(inp);
+  }
+
   function pdfFileName(prefix, chantier, equip){
     const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
     return [prefix, clean(chantier) || 'chantier', clean(equip) || 'equipement'].join('-') + '.pdf';
@@ -433,5 +489,5 @@
   setTimeout(() => archFlush(), 4000);
 
   window.RecordCommun = { TECH_KEY, lsGet, lsSet, dedupe, mailOk, pdfFileName, photoOf, dataUrlToFileSync,
-    resizeImage, setupCombo, histLoad, histSave, statLog, statFlush, chargerTechniciens, archiveFiche, archFlush };
+    resizeImage, setupCombo, histLoad, histSave, statLog, statFlush, chargerTechniciens, archiveFiche, archFlush, mailsOk, mailsListe, multiMail };
 })();

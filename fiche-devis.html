@@ -662,7 +662,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.2</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.3</div>
   <div id="fd-sync-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:2px;"></div>
 </div>
 
@@ -671,6 +671,8 @@ if('serviceWorker' in navigator){
   const $ = id => document.getElementById(id);
   // Fonctions communes à toutes les fiches : voir commun.js
   const { lsGet, lsSet, dedupe, mailOk, pdfFileName, photoOf, dataUrlToFileSync, resizeImage, setupCombo, statLog, statFlush } = window.RecordCommun;
+  // plusieurs adresses mail client possibles (« + Ajouter une adresse »)
+  RecordCommun.multiMail('f-mail');
   function histLoad(){ return RecordCommun.histLoad(HIST_KEY); }
   function histSave(list){ RecordCommun.histSave(HIST_KEY, list); }
   function loadSharedLists(){ return RecordCommun.chargerTechniciens(refreshAllDatalists); }
@@ -971,6 +973,7 @@ if('serviceWorker' in navigator){
         { k:'Modèle', v:data.modele },
       ]);
       row('Site', data.site);
+      row('Technicien RECORD', data.tech);
 
       section('Pièces à chiffrer');
       block('Descriptif', data.pieces);
@@ -1472,7 +1475,7 @@ if('serviceWorker' in navigator){
     if(!data.site) return { msg:'Le nom du site est obligatoire.', target:'#f-site' };
     // même ordre que l'écran : mail client avant le n° d'équipement
     if(!data.mail) return { msg:'Le mail client est obligatoire.', target:'#f-mail' };
-    if(!mailOk(data.mail)) return { msg:"L'adresse mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mail' };
+    if(!RecordCommun.mailsOk(data.mail)) return { msg:"Une des adresses mail client n'est pas valide (exemple : nom@societe.fr).", target:'#f-mail' };
     if(!data.equip) return { msg:"Le n° d'équipement est obligatoire.", target:'#f-equip' };
     if(!data.temps) return { msg:'Le temps par technicien est obligatoire.', target:'#f-temps' };
     if(!(parseFloat(String(data.temps).replace(',','.')) > 0)) return { msg:'Le temps par technicien doit être supérieur à 0.', target:'#f-temps' };
