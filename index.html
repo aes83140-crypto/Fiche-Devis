@@ -1761,7 +1761,12 @@ if('serviceWorker' in navigator){
     '.noel-flocon{position:absolute;top:-10px;color:#fff;pointer-events:none;z-index:0;opacity:.75;font-size:11px;line-height:1;animation:noel-chute linear infinite;}' +
     '@keyframes noel-chute{0%{transform:translate(0,-10px) rotate(0)}100%{transform:translate(18px,190px) rotate(200deg)}}' +
     '.noel-sapin{display:inline-block;margin-left:6px;}' +
-    '@media (prefers-reduced-motion: reduce){.noel-ampoule,.noel-flocon{animation:none}}';
+    '.noel-traineau{position:absolute;top:30px;left:0;z-index:2;pointer-events:none;white-space:nowrap;font-size:22px;line-height:1;animation:noel-vol 22s linear infinite;}' +
+    '.noel-traineau span{display:inline-block;animation:noel-trot .6s ease-in-out infinite alternate;}' +
+    '.noel-traineau span:nth-child(2){animation-delay:.15s}.noel-traineau span:nth-child(3),.noel-traineau span:nth-child(4){animation-delay:.3s}' +
+    '@keyframes noel-vol{0%{transform:translate(-140px,0)}45%{transform:translate(calc(100vw + 40px),-8px)}100%{transform:translate(calc(100vw + 40px),-8px)}}' +
+    '@keyframes noel-trot{from{transform:translateY(0)}to{transform:translateY(-3px)}}' +
+    '@media (prefers-reduced-motion: reduce){.noel-ampoule,.noel-flocon,.noel-traineau span{animation:none}.noel-traineau{display:none}}';
   document.head.appendChild(css);
 
   // guirlande : un fil qui ondule et des ampoules de couleur qui clignotent
@@ -1796,9 +1801,21 @@ if('serviceWorker' in navigator){
     }
   }
 
-  // petit sapin à côté du titre
+  // le Père Noël et ses rennes traversent le bandeau de temps en temps
+  var tr = document.createElement('div');
+  tr.className = 'noel-traineau';
+  tr.setAttribute('aria-hidden', 'true');
+  // retourné en miroir pour que les rennes regardent vers la droite, devant le traîneau
+  tr.innerHTML = '<div style="display:inline-block;transform:scaleX(-1)"><span>🦌</span><span>🦌</span><span>🛷</span><span>🎅</span></div>';
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden;';
+  tr.style.animationDelay = '1.5s';
+  wrap.appendChild(tr);
+  t.appendChild(wrap);
+
+  // petit sapin et Père Noël à côté du titre
   var titre = t.querySelector('.fd-title');
-  if(titre){ var s = document.createElement('span'); s.className = 'noel-sapin'; s.textContent = '🎄'; s.setAttribute('aria-hidden', 'true'); titre.appendChild(s); }
+  if(titre){ var s = document.createElement('span'); s.className = 'noel-sapin'; s.textContent = '🎄🎅'; s.setAttribute('aria-hidden', 'true'); titre.appendChild(s); }
 })();
 </script>
 </body>
