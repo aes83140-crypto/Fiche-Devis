@@ -503,7 +503,7 @@ if('serviceWorker' in navigator){
 <div class="fd-footer-credit">
   <div class="fd-credit-label">Réalisation</div>
   <div class="fd-credit-name">Christophe BATAILLE</div>
-  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.2</div>
+  <div class="fd-build-tag" style="font-family:var(--mono);font-size:10px;color:var(--ink-mute);opacity:.55;margin-top:4px;">v2026-11.4</div>
 </div>
 
 <div class="fd-modal hidden" id="help-modal">
@@ -1742,6 +1742,63 @@ if('serviceWorker' in navigator){
   $('admin-modal').addEventListener('click', (e)=>{
     if(e.target.id === 'admin-modal') $('admin-modal').classList.add('hidden');
   });
+})();
+</script>
+
+<!-- Déco de Noël : s'efface toute seule le 1er janvier 2027 (rien à retirer). -->
+<script>
+(function(){
+  if(new Date() >= new Date(2027, 0, 1)) return;
+  var t = document.querySelector('.fd-ticket');
+  if(!t) return;
+  var calme = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var css = document.createElement('style');
+  css.textContent =
+    '.noel-guirlande{position:absolute;left:0;right:0;top:0;height:26px;pointer-events:none;z-index:1;}' +
+    '.noel-guirlande svg{width:100%;height:100%;display:block;}' +
+    '.noel-ampoule{position:absolute;width:6px;height:10px;margin-left:-3px;border-radius:50% 50% 45% 45%;animation:noel-brille 1.6s ease-in-out infinite;}' +
+    '@keyframes noel-brille{0%,100%{opacity:1}50%{opacity:.45}}' +
+    '.noel-flocon{position:absolute;top:-10px;color:#fff;pointer-events:none;z-index:0;opacity:.75;font-size:11px;line-height:1;animation:noel-chute linear infinite;}' +
+    '@keyframes noel-chute{0%{transform:translate(0,-10px) rotate(0)}100%{transform:translate(18px,190px) rotate(200deg)}}' +
+    '.noel-sapin{display:inline-block;margin-left:6px;}' +
+    '@media (prefers-reduced-motion: reduce){.noel-ampoule,.noel-flocon{animation:none}}';
+  document.head.appendChild(css);
+
+  // guirlande : un fil qui ondule et des ampoules de couleur qui clignotent
+  var cols = ['#E5484D', '#F5B83D', '#46A758', '#5EB1EF'];
+  var n = 18, pts = '', amp = '';
+  for(var i = 0; i <= n; i++){
+    var x = i * 100 / n, y = (i % 2 ? 10 : 4);
+    pts += (i ? ' L' : 'M') + x + ' ' + y;
+    if(i > 0 && i < n){
+      // ampoules en HTML (garder leur forme quelle que soit la largeur de l'écran)
+      amp += '<span class="noel-ampoule" style="left:' + x + '%;top:' + (y * 26 / 18 + 1) + 'px;background:' + cols[i % 4] + ';box-shadow:0 0 6px ' + cols[i % 4] + ';animation-delay:' + (i % 4) * 0.4 + 's"></span>';
+    }
+  }
+  var g = document.createElement('div');
+  g.className = 'noel-guirlande';
+  g.setAttribute('aria-hidden', 'true');
+  g.innerHTML = '<svg viewBox="0 0 100 18" preserveAspectRatio="none"><path d="' + pts + '" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1" vector-effect="non-scaling-stroke"/></svg>' + amp;
+  t.appendChild(g);
+
+  // quelques flocons dans le bandeau bleu seulement
+  if(!calme){
+    for(var k = 0; k < 14; k++){
+      var f = document.createElement('span');
+      f.className = 'noel-flocon';
+      f.setAttribute('aria-hidden', 'true');
+      f.textContent = k % 3 ? '•' : '❄';
+      f.style.left = (Math.random() * 96) + '%';
+      f.style.fontSize = (k % 3 ? 5 + Math.random() * 4 : 10 + Math.random() * 5) + 'px';
+      f.style.animationDuration = (6 + Math.random() * 6) + 's';
+      f.style.animationDelay = (-Math.random() * 12) + 's';
+      t.appendChild(f);
+    }
+  }
+
+  // petit sapin à côté du titre
+  var titre = t.querySelector('.fd-title');
+  if(titre){ var s = document.createElement('span'); s.className = 'noel-sapin'; s.textContent = '🎄'; s.setAttribute('aria-hidden', 'true'); titre.appendChild(s); }
 })();
 </script>
 </body>
